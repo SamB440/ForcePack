@@ -34,40 +34,46 @@ public class Main extends JavaPlugin implements Listener {
 	public void ResourcePackStatus(PlayerResourcePackStatusEvent prpse)
 	{
 		final Player p = prpse.getPlayer();
-		if(prpse.getStatus() == PlayerResourcePackStatusEvent.Status.DECLINED)
+		if(!p.hasPermission("ForcePack.bypass"))
 		{
-			log.info(p.getName() + " declined the resource pack.");
-			waiting.remove(p.getUniqueId());
-			p.kickPlayer(ChatColor.translateAlternateColorCodes('&', getConfig().getString("Server.Messages.Declined_Message")));
-		}
-		else if(prpse.getStatus() == PlayerResourcePackStatusEvent.Status.ACCEPTED || prpse.getStatus() == PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED)
-		{
-			log.info(p.getName() + " accepted the resource pack.");
-			waiting.remove(p.getUniqueId());
-			p.sendMessage(ChatColor.translateAlternateColorCodes('&', getConfig().getString("Server.Messages.Accepted_Message")));
-		}
-		else if(prpse.getStatus() == PlayerResourcePackStatusEvent.Status.FAILED_DOWNLOAD)
-		{
-		waiting.remove(p.getUniqueId());
-		p.sendMessage(ChatColor.translateAlternateColorCodes('&', getConfig().getString("Server.Messages.Failed_Download_Message")));
+			if(prpse.getStatus() == PlayerResourcePackStatusEvent.Status.DECLINED)
+			{
+				log.info(p.getName() + " declined the resource pack.");
+				waiting.remove(p.getUniqueId());
+				p.kickPlayer(ChatColor.translateAlternateColorCodes('&', getConfig().getString("Server.Messages.Declined_Message")));
+			}
+			else if(prpse.getStatus() == PlayerResourcePackStatusEvent.Status.ACCEPTED || prpse.getStatus() == PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED)
+			{
+				log.info(p.getName() + " accepted the resource pack.");
+				waiting.remove(p.getUniqueId());
+				p.sendMessage(ChatColor.translateAlternateColorCodes('&', getConfig().getString("Server.Messages.Accepted_Message")));
+			}
+			else if(prpse.getStatus() == PlayerResourcePackStatusEvent.Status.FAILED_DOWNLOAD)
+			{
+				waiting.remove(p.getUniqueId());
+				p.sendMessage(ChatColor.translateAlternateColorCodes('&', getConfig().getString("Server.Messages.Failed_Download_Message")));
+			}
 		}
 	}	
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent pje)
 	{
 		final Player p = pje.getPlayer();
-		waiting.add(p.getUniqueId());
-		Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable()
+		if(!p.hasPermission("ForcePack.bypass"))
 		{
-			@Override
-			public void run() 
+			waiting.add(p.getUniqueId());
+			Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable()
 			{
-				if(waiting.contains(p.getUniqueId()))
+				@Override
+				public void run() 
 				{
-					p.kickPlayer(ChatColor.translateAlternateColorCodes('&', getConfig().getString("Server.Messages.Declined_Message")));
+					if(waiting.contains(p.getUniqueId()))
+					{
+						p.kickPlayer(ChatColor.translateAlternateColorCodes('&', getConfig().getString("Server.Messages.Declined_Message")));
+					}
 				}
-			}
-		}, getConfig().getInt("Server.Timeout_ticks"));
+			}, getConfig().getInt("Server.Timeout_ticks"));
+		}
 	}
 	public void createConfig()
 	{
