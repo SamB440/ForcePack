@@ -36,22 +36,28 @@ public class Main extends JavaPlugin implements Listener {
 		final Player p = prpse.getPlayer();
 		if(!p.hasPermission("ForcePack.bypass"))
 		{
-			if(prpse.getStatus() == PlayerResourcePackStatusEvent.Status.DECLINED)
+			if(waiting.contains(p.getUniqueId()) && prpse.getStatus() == PlayerResourcePackStatusEvent.Status.DECLINED)
 			{
 				log.info(p.getName() + " declined the resource pack.");
 				waiting.remove(p.getUniqueId());
 				p.kickPlayer(ChatColor.translateAlternateColorCodes('&', getConfig().getString("Server.Messages.Declined_Message")));
+				String player = getConfig().getString("Server.Actions.On_Deny.Command").replaceAll("[player]", p.getName());
+				Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), player);
 			}
-			else if(prpse.getStatus() == PlayerResourcePackStatusEvent.Status.ACCEPTED || prpse.getStatus() == PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED)
+			else if(waiting.contains(p.getUniqueId()) && prpse.getStatus() == PlayerResourcePackStatusEvent.Status.ACCEPTED || prpse.getStatus() == PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED)
 			{
 				log.info(p.getName() + " accepted the resource pack.");
 				waiting.remove(p.getUniqueId());
 				p.sendMessage(ChatColor.translateAlternateColorCodes('&', getConfig().getString("Server.Messages.Accepted_Message")));
+				String player = getConfig().getString("Server.Actions.On_Accept.Command").replace("[player]", p.getName());
+				Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), player);
 			}
-			else if(prpse.getStatus() == PlayerResourcePackStatusEvent.Status.FAILED_DOWNLOAD)
+			else if(waiting.contains(p.getUniqueId()) && prpse.getStatus() == PlayerResourcePackStatusEvent.Status.FAILED_DOWNLOAD)
 			{
 				waiting.remove(p.getUniqueId());
 				p.sendMessage(ChatColor.translateAlternateColorCodes('&', getConfig().getString("Server.Messages.Failed_Download_Message")));
+				String player = getConfig().getString("Server.Actions.On_Fail.Command").replaceAll("[player]", p.getName());
+				Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), player);
 			}
 		}
 	}	
@@ -77,9 +83,12 @@ public class Main extends JavaPlugin implements Listener {
 	}
 	public void createConfig()
 	{
-		getConfig().addDefault("Server.Messages.Declined_Message", "&cYou must accept the resource pack to play on our server. Don't know how? Check out &ehttp://s.moep.tv/rp.");
+		getConfig().addDefault("Server.Messages.Declined_Message", "&cYou must accept the resource pack to play on our server. Don't know how? Check out &ehttp://www.islandearth.net/rp.html.");
 		getConfig().addDefault("Server.Messages.Accepted_Message", "&aThank you for accepting our resource pack! You can now play.");
 		getConfig().addDefault("Server.Messages.Failed_Download_Message", "&cThe resource pack download failed. Please reconnect and try again.");
+		getConfig().addDefault("Server.Actions.On_Accept.Command", "say [player] accepted the resource pack!");
+		getConfig().addDefault("Server.Actions.On_Deny.Command", "say [player] denied the resource pack!");
+		getConfig().addDefault("Server.Actions.On_Fail.Command", "say [player] failed to download the resource pack!");
 		getConfig().addDefault("Server.Timeout_ticks", 550);
 		saveConfig();
 	}
