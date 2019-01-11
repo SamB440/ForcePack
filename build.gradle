@@ -6,19 +6,17 @@
  * user guide available at https://docs.gradle.org/4.3/userguide/java_library_plugin.html
  */
 
-plugins {
-    id 'org.spongepowered.plugin' version '0.9.0'
-}
-
-group = 'net.islandearth'
-version = '1.0.0-SNAPSHOT'
-description = 'Forces players to use your resourcepack'
-
 // Apply the java-library plugin to add support for Java Library
 apply plugin: 'java-library'
 
+repositories {
+	mavenCentral()
+	maven {
+		name = 'sponge'
+		url = 'https://repo.spongepowered.org/maven'
+	}
+}
 // In this section you declare where to find the dependencies of your project
-
 dependencies {
     compile 'org.spongepowered:spongeapi:7.1.0'
 }
