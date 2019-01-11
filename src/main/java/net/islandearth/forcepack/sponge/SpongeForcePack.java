@@ -15,7 +15,7 @@ import net.islandearth.forcepack.sponge.listener.ResourcePackListener;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 
-@Plugin(id = "forcepack", name = "ForcePack", version = "1.0.0-SNAPSHOT", description = "Forces players to use your resourcepack")
+@Plugin(id = "forcepack", name = "ForcePack", version = "1.0.0", description = "Forces players to use your resourcepack")
 public class SpongeForcePack {
 	
 	@Inject
