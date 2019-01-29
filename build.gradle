@@ -1,0 +1,47 @@
+plugins {
+	id 'net.ltgt.apt' version '0.10'
+}
+
+apply plugin: 'java'
+
+group = pluginGroup
+version = pluginVersion
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    
+    mavenCentral()
+    mavenLocal()
+    maven {
+        name = 'destroystokyo-repo'
+        url = 'https://repo.destroystokyo.com/repository/maven-public/'
+    }
+    maven {
+        name = 'sonatype'
+        url = 'https://oss.sonatype.org/content/groups/public/'
+    }
+    maven {
+    	name = 'maxim'
+    	url = 'http://repo.mvdw-software.com/content/groups/public/'
+    }
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compileOnly 'org.spigotmc:spigot:1.13.2-R0.1-SNAPSHOT'
+    compileOnly 'net.islandearth:updater:1.0.2-SNAPSHOT'
+    compileOnly 'be.maximvdw:spigotsite-api:0.3.2-SNAPSHOT'
+    compileOnly 'org.projectlombok:lombok:1.18.2'
+    compileOnly 'com.djrapitops:plan:4.5.1-SNAPSHOT'
+	apt 'org.projectlombok:lombok:1.18.2'
+}
+
+import org.apache.tools.ant.filters.ReplaceTokens
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        filter ReplaceTokens, tokens: [version: version]
+    }
+}

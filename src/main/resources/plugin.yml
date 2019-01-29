@@ -1,5 +1,5 @@
 name: ForcePack
-main: net.IslandEarth.ForcePack.ForcePack
+main: net.islandearth.forcepack.spigot.ForcePack
 author: SamB440
 website: http://www.islandearth.net
-version: 1.0.3
+version: 1.0.4
