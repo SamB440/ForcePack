@@ -30,13 +30,14 @@ public class ForcePack extends JavaPlugin implements Listener {
 	
 	public void createConfig() {
 		getConfig().options().copyDefaults(true);
+		getConfig().addDefault("Server.ResourcePack.url", "https://faithfulpack.com/dl/104/");
+		getConfig().addDefault("Server.ResourcePack.hash", "BA52452AD77CAAA7530876950C8E2D020699EBDD");
 		getConfig().addDefault("Server.Messages.Declined_Message", "&cYou must accept the resource pack to play on our server. Don't know how? Check out &ehttp://www.islandearth.net/rp.html.");
 		getConfig().addDefault("Server.Messages.Accepted_Message", "&aThank you for accepting our resource pack! You can now play.");
 		getConfig().addDefault("Server.Messages.Failed_Download_Message", "&cThe resource pack download failed. Please reconnect and try again.");
 		getConfig().addDefault("Server.Actions.On_Accept.Command", "say [player] accepted the resource pack!");
 		getConfig().addDefault("Server.Actions.On_Deny.Command", "say [player] denied the resource pack!");
 		getConfig().addDefault("Server.Actions.On_Fail.Command", "say [player] failed to download the resource pack!");
-		getConfig().addDefault("Server.Timeout_ticks", 550);
 		getConfig().addDefault("Server.kick", true);
 		saveConfig();
 	}

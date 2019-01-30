@@ -1,7 +1,7 @@
 package net.islandearth.forcepack.spigot.listener;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -15,10 +15,12 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 
 import net.islandearth.forcepack.spigot.ForcePack;
+import net.islandearth.forcepack.spigot.resourcepack.ResourcePack;
+import net.islandearth.forcepack.spigot.utils.Scheduler;
 
 public class ResourcePackListener implements Listener {
 	
-	private List<UUID> waiting = new ArrayList<>();
+	private Map<UUID, ResourcePack> waiting = new HashMap<>();
 	private ForcePack plugin;
 	
 	public ResourcePackListener(ForcePack plugin) {
@@ -62,20 +64,24 @@ public class ResourcePackListener implements Listener {
 				}
 			}
 		}
-	}	
+	}
 	
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent pje) {
 		Player player = pje.getPlayer();
 		if (!player.hasPermission("ForcePack.bypass")) {
-			waiting.add(player.getUniqueId());
-			Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-				if (waiting.contains(player.getUniqueId())) {
-					plugin.getLogger().info(player.getName() + " timed out.");
-					player.kickPlayer(ChatColor.translateAlternateColorCodes('&', getConfig().getString("Server.Messages.Declined_Message")));
-					waiting.remove(player.getUniqueId());
+			String url = getConfig().getString("Server.ResourcePack.url");
+			String hash = getConfig().getString("Server.ResourcePack.hash");
+			ResourcePack pack = new ResourcePack(url, hash);
+			waiting.put(player.getUniqueId(), pack);
+			Scheduler scheduler = new Scheduler();
+			scheduler.setTask(Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+				if (waiting.containsKey(player.getUniqueId())) {
+					player.setResourcePack(url, pack.getHashHex());
+				} else {
+					scheduler.cancel();
 				}
-			}, getConfig().getInt("Server.Timeout_ticks"));
+			}, 0L, 20L));
 		}
 	}
 	
@@ -83,7 +89,7 @@ public class ResourcePackListener implements Listener {
 	public void onQuit(PlayerQuitEvent pqe) {
 		Player player = pqe.getPlayer();
 		if (!player.hasPermission("ForcePack.bypass")) {
-			if (waiting.contains(player.getUniqueId())) {
+			if (waiting.containsKey(player.getUniqueId())) {
 				waiting.remove(player.getUniqueId());
 			}
 		}
