@@ -33,33 +33,41 @@ public class ResourcePackListener implements Listener {
 		if (!player.hasPermission("ForcePack.bypass")) {
 			switch (prpse.getStatus()) {
 				case DECLINED: {
+					if (waiting.containsKey(player.getUniqueId())) waiting.remove(player.getUniqueId());
 					plugin.getLogger().info(player.getName() + " declined the resource pack.");
-					String cmd = getConfig().getString("Server.Actions.On_Deny.Command").replaceAll("[player]", player.getName());
-					Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd);
+					for (String cmd : getConfig().getStringList("Server.Actions.On_Deny.Command")) {
+						Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replaceAll("[player]", player.getName()));
+					}
 					if (getConfig().getBoolean("Server.kick")) {
 						player.kickPlayer(ChatColor.translateAlternateColorCodes('&', getConfig().getString("Server.Messages.Declined_Message")));
 					} else {
 						player.sendMessage(ChatColor.translateAlternateColorCodes('&', getConfig().getString("Server.Messages.Declined_Message")));
 					}
-					waiting.remove(player.getUniqueId());
 					break;
 				}
 				
 				case FAILED_DOWNLOAD: {
+					if (waiting.containsKey(player.getUniqueId())) waiting.remove(player.getUniqueId());
 					plugin.getLogger().info(player.getName() + " failed to download the resource pack.");
 					player.sendMessage(ChatColor.translateAlternateColorCodes('&', getConfig().getString("Server.Messages.Failed_Download_Message")));
-					String cmd = getConfig().getString("Server.Actions.On_Fail.Command").replaceAll("[player]", player.getName());
-					Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd);
-					waiting.remove(player.getUniqueId());
+					for (String cmd : getConfig().getStringList("Server.Actions.On_Fail.Command")) {
+						Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replaceAll("[player]", player.getName()));
+					}
 					break;
 				}
 				
-				default: {
+				case SUCCESSFULLY_LOADED: {
+					if (waiting.containsKey(player.getUniqueId())) waiting.remove(player.getUniqueId());
 					plugin.getLogger().info(player.getName() + " accepted the resource pack.");
 					player.sendMessage(ChatColor.translateAlternateColorCodes('&', getConfig().getString("Server.Messages.Accepted_Message")));
-					String cmd = getConfig().getString("Server.Actions.On_Accept.Command").replace("[player]", player.getName());
-					Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd);
-					waiting.remove(player.getUniqueId());
+					for (String cmd : getConfig().getStringList("Server.Actions.On_Accept.Command")) {
+						Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replaceAll("[player]", player.getName()));
+					}
+					break;
+				}
+				
+				case ACCEPTED: {
+					if (waiting.containsKey(player.getUniqueId())) waiting.remove(player.getUniqueId());
 					break;
 				}
 			}

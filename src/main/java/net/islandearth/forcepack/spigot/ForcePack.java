@@ -1,5 +1,6 @@
 package net.islandearth.forcepack.spigot;
 
+import java.util.Arrays;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
@@ -35,9 +36,9 @@ public class ForcePack extends JavaPlugin implements Listener {
 		getConfig().addDefault("Server.Messages.Declined_Message", "&cYou must accept the resource pack to play on our server. Don't know how? Check out &ehttps://samb440.gitlab.io/resourcepack.html.");
 		getConfig().addDefault("Server.Messages.Accepted_Message", "&aThank you for accepting our resource pack! You can now play.");
 		getConfig().addDefault("Server.Messages.Failed_Download_Message", "&cThe resource pack download failed. Please reconnect and try again.");
-		getConfig().addDefault("Server.Actions.On_Accept.Command", "say [player] accepted the resource pack!");
-		getConfig().addDefault("Server.Actions.On_Deny.Command", "say [player] denied the resource pack!");
-		getConfig().addDefault("Server.Actions.On_Fail.Command", "say [player] failed to download the resource pack!");
+		getConfig().addDefault("Server.Actions.On_Accept.Command", Arrays.asList("say [player] accepted the resource pack!"));
+		getConfig().addDefault("Server.Actions.On_Deny.Command", Arrays.asList("say [player] denied the resource pack!"));
+		getConfig().addDefault("Server.Actions.On_Fail.Command", Arrays.asList("say [player] failed to download the resource pack!"));
 		getConfig().addDefault("Server.kick", true);
 		saveConfig();
 	}
