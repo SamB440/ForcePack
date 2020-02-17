@@ -2,15 +2,20 @@ package net.islandearth.forcepack.spigot.utils;
 
 import org.bukkit.Bukkit;
 
-import lombok.Getter;
-import lombok.Setter;
-
 /**
  * @author SamB440
  */
 public class Scheduler {
 	
-	@Getter @Setter private int task;
+	private int task;
+
+	public int getTask() {
+		return task;
+	}
+
+	public void setTask(int task) {
+		this.task = task;
+	}
 
 	public void cancel()
 	{

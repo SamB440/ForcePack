@@ -1,6 +1,7 @@
 name: ForcePack
 main: net.islandearth.forcepack.spigot.ForcePack
 author: SamB440
-website: http://www.islandearth.net
-version: 1.0.7
+website: https://fortitude.islandearth.net
+depend: [Languagy]
+version: @version@
 api-version: 1.13
