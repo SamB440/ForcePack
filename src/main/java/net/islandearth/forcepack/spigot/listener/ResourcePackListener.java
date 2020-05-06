@@ -35,7 +35,7 @@ public class ResourcePackListener implements Listener {
 					waiting.remove(player.getUniqueId());
 					plugin.getLogger().info(player.getName() + " declined the resource pack.");
 					for (String cmd : getConfig().getStringList("Server.Actions.On_Deny.Command")) {
-						Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replaceAll("[player]", player.getName()));
+						Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("[player]", player.getName()));
 					}
 
 					if (getConfig().getBoolean("Server.kick")) player.kickPlayer(Translations.DECLINED.get(player));
@@ -49,7 +49,7 @@ public class ResourcePackListener implements Listener {
 					plugin.getLogger().info(player.getName() + " failed to download the resource pack.");
 					Translations.DOWNLOAD_FAILED.send(player);
 					for (String cmd : getConfig().getStringList("Server.Actions.On_Fail.Command")) {
-						Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replaceAll("[player]", player.getName()));
+						Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("[player]", player.getName()));
 					}
 					break;
 				}
@@ -59,7 +59,7 @@ public class ResourcePackListener implements Listener {
 					plugin.getLogger().info(player.getName() + " accepted the resource pack.");
 					Translations.ACCEPTED.send(player);
 					for (String cmd : getConfig().getStringList("Server.Actions.On_Accept.Command")) {
-						Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replaceAll("[player]", player.getName()));
+						Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("[player]", player.getName()));
 					}
 					break;
 				}
