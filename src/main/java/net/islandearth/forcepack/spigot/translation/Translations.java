@@ -1,7 +1,7 @@
 package net.islandearth.forcepack.spigot.translation;
 
 import net.islandearth.forcepack.spigot.ForcePack;
-import net.islandearth.languagy.language.Language;
+import net.islandearth.languagy.api.language.Language;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;

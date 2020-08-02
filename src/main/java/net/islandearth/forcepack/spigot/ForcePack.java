@@ -3,10 +3,10 @@ package net.islandearth.forcepack.spigot;
 import net.islandearth.forcepack.spigot.api.ForcePackAPI;
 import net.islandearth.forcepack.spigot.listener.ResourcePackListener;
 import net.islandearth.forcepack.spigot.translation.Translations;
-import net.islandearth.languagy.language.Language;
-import net.islandearth.languagy.language.LanguagyImplementation;
-import net.islandearth.languagy.language.LanguagyPluginHook;
-import net.islandearth.languagy.language.Translator;
+import net.islandearth.languagy.api.language.Language;
+import net.islandearth.languagy.api.language.LanguagyImplementation;
+import net.islandearth.languagy.api.language.LanguagyPluginHook;
+import net.islandearth.languagy.api.language.Translator;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -25,6 +25,7 @@ public final class ForcePack extends JavaPlugin implements ForcePackAPI, Languag
 		this.generateLang();
 		this.createConfig();
 		this.registerListeners();
+		this.hook(this);
 		this.getLogger().info("[ForcePack] Enabled!");
 	}
 	

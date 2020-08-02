@@ -26,13 +26,16 @@ repositories {
         name = 'sonatype'
         url = 'https://oss.sonatype.org/content/groups/public/'
     }
+    maven {
+        url = 'https://campfire.islandearth.net/maven/'
+    }
 }
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
     compileOnly 'org.spigotmc:spigot:1.13.2-R0.1-SNAPSHOT'
-    compileOnly 'com.gitlab.SamB440:languagy:master-SNAPSHOT'
 
+    implementation 'net.islandearth:languagy-api:2.0.2-SNAPSHOT'
     // JAX-B dependencies for JDK 9+
     implementation "jakarta.xml.bind:jakarta.xml.bind-api:2.3.2"
     implementation "org.glassfish.jaxb:jaxb-runtime:2.3.2"
