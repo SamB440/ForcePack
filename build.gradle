@@ -41,6 +41,10 @@ dependencies {
     implementation "org.glassfish.jaxb:jaxb-runtime:2.3.2"
 }
 
+shadowJar {
+    relocate 'net.islandearth.languagy', 'net.islandearth.forcepack.spigot.languagy'
+}
+
 build.dependsOn shadowJar
 import org.apache.tools.ant.filters.ReplaceTokens
 

@@ -60,4 +60,9 @@ public final class ForcePack extends JavaPlugin implements ForcePackAPI, Languag
 	public static ForcePackAPI getAPI() {
 		return plugin;
 	}
+
+	@Override
+	public boolean debug() {
+		return true;
+	}
 }
