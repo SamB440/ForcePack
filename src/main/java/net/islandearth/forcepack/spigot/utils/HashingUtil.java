@@ -1,6 +1,6 @@
 package net.islandearth.forcepack.spigot.utils;
 
-import javax.xml.bind.DatatypeConverter;
+import jakarta.xml.bind.DatatypeConverter;
 
 public class HashingUtil {
 	

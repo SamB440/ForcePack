@@ -13,7 +13,8 @@ import java.util.List;
 public enum Translations {
 	DECLINED("&cYou must accept the resource pack to play on our server. Don't know how? Check out &ehttps://samb440.gitlab.io/resourcepack.html."),
 	ACCEPTED("&aThank you for accepting our resource pack! You can now play."),
-	DOWNLOAD_FAILED("&cThe resource pack download failed. Please reconnect and try again.");
+	DOWNLOAD_FAILED("&cThe resource pack download failed. Please reconnect and try again."),
+	PROMPT_TEXT("&ePlease accept our resource pack to improve your server experience!");
 
 	private final String defaultValue;
 	private final boolean isList;

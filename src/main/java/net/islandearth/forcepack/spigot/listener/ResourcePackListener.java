@@ -1,7 +1,10 @@
 package net.islandearth.forcepack.spigot.listener;
 
+import io.papermc.lib.PaperLib;
 import net.islandearth.forcepack.spigot.ForcePack;
+import net.islandearth.forcepack.spigot.resourcepack.PaperResourcePack;
 import net.islandearth.forcepack.spigot.resourcepack.ResourcePack;
+import net.islandearth.forcepack.spigot.resourcepack.SpigotResourcePack;
 import net.islandearth.forcepack.spigot.translation.Translations;
 import net.islandearth.forcepack.spigot.utils.Scheduler;
 import org.bukkit.Bukkit;
@@ -19,8 +22,8 @@ import java.util.UUID;
 
 public class ResourcePackListener implements Listener {
 	
-	private Map<UUID, ResourcePack> waiting = new HashMap<>();
-	private ForcePack plugin;
+	private final Map<UUID, ResourcePack> waiting = new HashMap<>();
+	private final ForcePack plugin;
 	
 	public ResourcePackListener(ForcePack plugin) {
 		this.plugin = plugin;
@@ -78,16 +81,21 @@ public class ResourcePackListener implements Listener {
 		if (!player.hasPermission("ForcePack.bypass")) {
 			String url = getConfig().getString("Server.ResourcePack.url");
 			String hash = getConfig().getString("Server.ResourcePack.hash");
-			ResourcePack pack = new ResourcePack(url, hash);
+			final ResourcePack pack;
+			if (PaperLib.isPaper()) {
+				pack = new PaperResourcePack(url, hash);
+			} else {
+				pack = new SpigotResourcePack(url, hash);
+			}
 			waiting.put(player.getUniqueId(), pack);
 			Scheduler scheduler = new Scheduler();
 			scheduler.setTask(Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
 				if (waiting.containsKey(player.getUniqueId())) {
-					player.setResourcePack(url, pack.getHashHex());
+					pack.setResourcePack(player);
 				} else {
 					scheduler.cancel();
 				}
-			}, 0L, 20L));
+			}, 0L, getConfig().getInt("Server.Update GUI Speed", 20)));
 		}
 	}
 	

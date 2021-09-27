@@ -1,11 +1,12 @@
 package net.islandearth.forcepack.spigot.resourcepack;
 
 import net.islandearth.forcepack.spigot.utils.HashingUtil;
+import org.bukkit.entity.Player;
 
-public class ResourcePack {
+public abstract class ResourcePack {
 
-	private String url;
-	private String hash;
+	protected final String url;
+	protected final String hash;
 	private boolean isPromptOpen;
 
 	public String getUrl() {
@@ -33,4 +34,6 @@ public class ResourcePack {
 	public byte[] getHashHex() {
 		return HashingUtil.toByteArray(hash);
 	}
+
+	public abstract void setResourcePack(Player player);
 }

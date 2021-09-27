@@ -1,13 +1,13 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '4.0.4'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
     id 'java'
 }
 
 group = pluginGroup
 version = pluginVersion
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+java.sourceCompatibility = JavaVersion.VERSION_11
+java.targetCompatibility = JavaVersion.VERSION_11
 
 repositories {
     mavenCentral()
@@ -19,37 +19,34 @@ repositories {
         url = 'https://repo.codemc.org/repository/maven-snapshots/'
     }
     maven {
-        name = 'destroystokyo-repo'
-        url = 'https://repo.destroystokyo.com/repository/maven-public/'
+        name = 'papermc'
+        url = 'https://papermc.io/repo/repository/maven-public/'
     }
     maven {
         name = 'sonatype'
         url = 'https://oss.sonatype.org/content/groups/public/'
     }
-    maven {
-        url = 'https://campfire.islandearth.net/maven/'
-    }
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    compileOnly 'org.spigotmc:spigot:1.13.2-R0.1-SNAPSHOT'
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
+    compileOnly "io.papermc.paper:paper-api:1.17.1-R0.1-SNAPSHOT"
 
-    implementation 'net.islandearth:languagy-api:2.0.2-SNAPSHOT'
+    implementation "io.papermc:paperlib:1.0.6"
+    implementation 'com.gitlab.samb440:languagy:2.0.3-RELEASE' // languagy
     // JAX-B dependencies for JDK 9+
-    implementation "jakarta.xml.bind:jakarta.xml.bind-api:2.3.2"
-    implementation "org.glassfish.jaxb:jaxb-runtime:2.3.2"
+    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:3.0.1'
+    implementation 'org.glassfish.jaxb:jaxb-runtime:3.0.1'
 }
 
 shadowJar {
     relocate 'net.islandearth.languagy', 'net.islandearth.forcepack.spigot.languagy'
+    relocate 'io.papermc.lib', 'net.islandearth.forcepack.spigot.paperlib'
 }
 
 build.dependsOn shadowJar
 import org.apache.tools.ant.filters.ReplaceTokens
 
 processResources {
-    from(sourceSets.main.resources.srcDirs) {
-        filter ReplaceTokens, tokens: [version: version]
-    }
+    filter ReplaceTokens, tokens: [version: version]
 }
