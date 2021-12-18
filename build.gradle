@@ -13,7 +13,7 @@ repositories {
     mavenCentral()
     mavenLocal()
     maven { url "https://erethon.de/repo/" }
-    maven { url "https://jitpack.io" }
+    maven { url 'https://repo.convallyria.com/snapshots' }
     maven {
         name = 'codemc-repo'
         url = 'https://repo.codemc.org/repository/maven-snapshots/'
@@ -33,7 +33,7 @@ dependencies {
     compileOnly "org.spigotmc:spigot-api:1.18.1-R0.1-SNAPSHOT"
 
     implementation "io.papermc:paperlib:1.0.7"
-    implementation 'com.gitlab.samb440:languagy:2.0.3-RELEASE' // languagy
+    implementation 'net.islandearth:languagy:2.0.4-SNAPSHOT' // languagy
     // JAX-B dependencies for JDK 9+
     implementation 'jakarta.xml.bind:jakarta.xml.bind-api:3.0.1'
     implementation 'org.glassfish.jaxb:jaxb-runtime:3.0.1'
