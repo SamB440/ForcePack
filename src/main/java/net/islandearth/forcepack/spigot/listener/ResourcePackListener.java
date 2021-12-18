@@ -1,10 +1,7 @@
 package net.islandearth.forcepack.spigot.listener;
 
-import io.papermc.lib.PaperLib;
 import net.islandearth.forcepack.spigot.ForcePack;
-import net.islandearth.forcepack.spigot.resourcepack.PaperResourcePack;
 import net.islandearth.forcepack.spigot.resourcepack.ResourcePack;
-import net.islandearth.forcepack.spigot.resourcepack.SpigotResourcePack;
 import net.islandearth.forcepack.spigot.translation.Translations;
 import net.islandearth.forcepack.spigot.utils.Scheduler;
 import org.bukkit.Bukkit;
@@ -21,10 +18,10 @@ import java.util.Map;
 import java.util.UUID;
 
 public class ResourcePackListener implements Listener {
-	
+
 	private final Map<UUID, ResourcePack> waiting = new HashMap<>();
 	private final ForcePack plugin;
-	
+
 	public ResourcePackListener(ForcePack plugin) {
 		this.plugin = plugin;
 	}
@@ -33,60 +30,44 @@ public class ResourcePackListener implements Listener {
 	public void ResourcePackStatus(PlayerResourcePackStatusEvent prpse) {
 		Player player = prpse.getPlayer();
 		if (!player.hasPermission("ForcePack.bypass")) {
-			switch (prpse.getStatus()) {
+			waiting.remove(player.getUniqueId());
+			plugin.getLogger().info(player.getName() + " sent status: " + prpse.getStatus());
+
+			final PlayerResourcePackStatusEvent.Status status = prpse.getStatus();
+
+			for (String cmd : getConfig().getStringList("Server.Actions." + status.name() + ".Commands")) {
+				Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("[player]", player.getName()));
+			}
+
+			final boolean kick = getConfig().getBoolean("Server.Actions." + status.name() + ".kick");
+
+			switch (status) {
 				case DECLINED: {
-					waiting.remove(player.getUniqueId());
-					plugin.getLogger().info(player.getName() + " declined the resource pack.");
-					for (String cmd : getConfig().getStringList("Server.Actions.On_Deny.Command")) {
-						Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("[player]", player.getName()));
-					}
-
-					if (getConfig().getBoolean("Server.kick")) player.kickPlayer(Translations.DECLINED.get(player));
+					if (kick) player.kickPlayer(Translations.DECLINED.get(player));
 					else Translations.DECLINED.send(player);
+					break;
+				}
 
-					break;
-				}
-				
 				case FAILED_DOWNLOAD: {
-					waiting.remove(player.getUniqueId());
-					plugin.getLogger().info(player.getName() + " failed to download the resource pack.");
-					Translations.DOWNLOAD_FAILED.send(player);
-					for (String cmd : getConfig().getStringList("Server.Actions.On_Fail.Command")) {
-						Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("[player]", player.getName()));
-					}
+					if (kick) player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player));
+					else Translations.DOWNLOAD_FAILED.send(player);
 					break;
 				}
-				
+
 				case SUCCESSFULLY_LOADED: {
-					waiting.remove(player.getUniqueId());
-					plugin.getLogger().info(player.getName() + " accepted the resource pack.");
-					Translations.ACCEPTED.send(player);
-					for (String cmd : getConfig().getStringList("Server.Actions.On_Accept.Command")) {
-						Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("[player]", player.getName()));
-					}
-					break;
-				}
-				
-				case ACCEPTED: {
-					waiting.remove(player.getUniqueId());
+					if (kick) player.kickPlayer(Translations.ACCEPTED.get(player));
+					else Translations.ACCEPTED.send(player);
 					break;
 				}
 			}
 		}
 	}
-	
+
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent pje) {
 		Player player = pje.getPlayer();
 		if (!player.hasPermission("ForcePack.bypass")) {
-			String url = getConfig().getString("Server.ResourcePack.url");
-			String hash = getConfig().getString("Server.ResourcePack.hash");
-			final ResourcePack pack;
-			if (PaperLib.isPaper()) {
-				pack = new PaperResourcePack(url, hash);
-			} else {
-				pack = new SpigotResourcePack(url, hash);
-			}
+			final ResourcePack pack = plugin.getResourcePack();
 			waiting.put(player.getUniqueId(), pack);
 			Scheduler scheduler = new Scheduler();
 			scheduler.setTask(Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
@@ -98,7 +79,7 @@ public class ResourcePackListener implements Listener {
 			}, 0L, getConfig().getInt("Server.Update GUI Speed", 20)));
 		}
 	}
-	
+
 	@EventHandler
 	public void onQuit(PlayerQuitEvent pqe) {
 		Player player = pqe.getPlayer();
@@ -106,7 +87,7 @@ public class ResourcePackListener implements Listener {
 			waiting.remove(player.getUniqueId());
 		}
 	}
-	
+
 	private FileConfiguration getConfig() {
 		return plugin.getConfig();
 	}

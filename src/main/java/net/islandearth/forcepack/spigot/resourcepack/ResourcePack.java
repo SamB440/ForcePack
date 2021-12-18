@@ -1,13 +1,14 @@
 package net.islandearth.forcepack.spigot.resourcepack;
 
+import net.islandearth.forcepack.spigot.ForcePack;
 import net.islandearth.forcepack.spigot.utils.HashingUtil;
 import org.bukkit.entity.Player;
 
 public abstract class ResourcePack {
 
+	protected final ForcePack plugin;
 	protected final String url;
 	protected final String hash;
-	private boolean isPromptOpen;
 
 	public String getUrl() {
 		return url;
@@ -17,18 +18,10 @@ public abstract class ResourcePack {
 		return hash;
 	}
 
-	public boolean isPromptOpen() {
-		return isPromptOpen;
-	}
-
-	public void setPromptOpen(boolean promptOpen) {
-		isPromptOpen = promptOpen;
-	}
-
-	public ResourcePack(String url, String hash) {
+	public ResourcePack(final ForcePack plugin, String url, String hash) {
+		this.plugin = plugin;
 		this.url = url;
 		this.hash = hash;
-		this.isPromptOpen = true;
 	}
 	
 	public byte[] getHashHex() {
