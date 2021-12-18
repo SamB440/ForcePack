@@ -120,7 +120,7 @@ public final class ForcePack extends JavaPlugin implements ForcePackAPI, Languag
 
 	private void performLegacyCheck() throws IOException {
 		final Map<String, PlayerResourcePackStatusEvent.Status> sections = Map.of(
-				"Server.Actions.On_Accept", PlayerResourcePackStatusEvent.Status.ACCEPTED,
+				"Server.Actions.On_Accept", PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED,
 				"Server.Actions.On_Deny", PlayerResourcePackStatusEvent.Status.DECLINED,
 				"Server.Actions.On_Fail", PlayerResourcePackStatusEvent.Status.FAILED_DOWNLOAD);
 		final boolean kick = getConfig().getBoolean("Server.kick");
@@ -130,7 +130,7 @@ public final class ForcePack extends JavaPlugin implements ForcePackAPI, Languag
 			if (section != null) {
 				getLogger().warning("Detected legacy '" + sectionName + "' action, converting your config now (consider regenerating config for comments and new settings!)...");
 				getConfig().set("Server.Actions." + status.name() + ".Commands", section.getStringList("Command"));
-				getConfig().set("Server.Actions." + status.name() + ".kick", kick);
+				getConfig().set("Server.Actions." + status.name() + ".kick", status != PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED && kick);
 				getConfig().set(sectionName, null);
 				getConfig().set("Server.kick", null);
 				getConfig().save(new File(getDataFolder() + File.separator + "config.yml"));
