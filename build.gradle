@@ -42,6 +42,7 @@ dependencies {
 shadowJar {
     relocate 'net.islandearth.languagy', 'net.islandearth.forcepack.spigot.languagy'
     relocate 'io.papermc.lib', 'net.islandearth.forcepack.spigot.paperlib'
+    classifier("")
 }
 
 build.dependsOn shadowJar
