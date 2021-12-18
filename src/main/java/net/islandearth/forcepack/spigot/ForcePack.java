@@ -151,6 +151,10 @@ public final class ForcePack extends JavaPlugin implements ForcePackAPI, Languag
 		return getConfig().getBoolean("debug");
 	}
 
+	public void log(String info) {
+		if (debug()) getLogger().info(info);
+	}
+
 	public static ForcePackAPI getAPI() {
 		return getPlugin(ForcePack.class);
 	}

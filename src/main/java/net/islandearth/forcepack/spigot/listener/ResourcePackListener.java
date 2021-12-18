@@ -3,6 +3,7 @@ package net.islandearth.forcepack.spigot.listener;
 import net.islandearth.forcepack.spigot.ForcePack;
 import net.islandearth.forcepack.spigot.resourcepack.ResourcePack;
 import net.islandearth.forcepack.spigot.translation.Translations;
+import net.islandearth.forcepack.spigot.utils.GeyserUtil;
 import net.islandearth.forcepack.spigot.utils.Scheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -27,11 +28,12 @@ public class ResourcePackListener implements Listener {
 	}
 
 	@EventHandler
-	public void ResourcePackStatus(PlayerResourcePackStatusEvent prpse) {
-		Player player = prpse.getPlayer();
-		if (!player.hasPermission("ForcePack.bypass")) {
+	public void onStatus(PlayerResourcePackStatusEvent prpse) {
+		final Player player = prpse.getPlayer();
+		boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player);
+		if (!player.hasPermission("ForcePack.bypass") && !geyser) {
 			waiting.remove(player.getUniqueId());
-			plugin.getLogger().info(player.getName() + " sent status: " + prpse.getStatus());
+			plugin.log(player.getName() + " sent status: " + prpse.getStatus());
 
 			final PlayerResourcePackStatusEvent.Status status = prpse.getStatus();
 
@@ -66,7 +68,8 @@ public class ResourcePackListener implements Listener {
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent pje) {
 		Player player = pje.getPlayer();
-		if (!player.hasPermission("ForcePack.bypass")) {
+		boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player);
+		if (!player.hasPermission("ForcePack.bypass") && !geyser) {
 			final ResourcePack pack = plugin.getResourcePack();
 			waiting.put(player.getUniqueId(), pack);
 			Scheduler scheduler = new Scheduler();
@@ -83,9 +86,7 @@ public class ResourcePackListener implements Listener {
 	@EventHandler
 	public void onQuit(PlayerQuitEvent pqe) {
 		Player player = pqe.getPlayer();
-		if (!player.hasPermission("ForcePack.bypass")) {
-			waiting.remove(player.getUniqueId());
-		}
+		waiting.remove(player.getUniqueId());
 	}
 
 	private FileConfiguration getConfig() {
