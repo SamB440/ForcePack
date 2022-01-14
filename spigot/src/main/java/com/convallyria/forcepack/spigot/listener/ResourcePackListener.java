@@ -68,13 +68,20 @@ public class ResourcePackListener implements Listener {
 			final ResourcePack pack = plugin.getResourcePacks().get(0);
 			waiting.put(player.getUniqueId(), pack);
 			Scheduler scheduler = new Scheduler();
-			scheduler.setTask(Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+			Runnable packTask = () -> {
 				if (waiting.containsKey(player.getUniqueId())) {
 					pack.setResourcePack(player.getUniqueId());
 				} else {
 					scheduler.cancel();
 				}
-			}, 0L, getConfig().getInt("Server.Update GUI Speed", 20)));
+			};
+
+			if (getConfig().getBoolean("Update GUI")) {
+				scheduler.setTask(Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, packTask,
+						0L, getConfig().getInt("Server.Update GUI Speed", 20)));
+			} else {
+				packTask.run();
+			}
 		}
 	}
 
