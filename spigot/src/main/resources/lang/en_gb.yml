@@ -1,4 +1,5 @@
 declined: "&cYou must accept the resource pack to play on our server. Don't know how? Check out &ehttps://samb440.gitlab.io/resourcepack.html."
 accepted: "&aThank you for accepting our resource pack! You can now play."
 download_failed: "&cThe resource pack download failed. Please reconnect and try again."
-prompt_text: "&ePlease accept our resource pack to improve your server experience!" # ONLY ON PAPER! https://papermc.io
+prompt_text: "&ePlease accept our resource pack to improve your server experience!" # Only on 1.18+ (1.17 does not have API)
+reloading: "&aRe-applying your resource pack due to an update!"

@@ -1,8 +1,10 @@
 package com.convallyria.forcepack.spigot;
 
+import co.aikar.commands.PaperCommandManager;
 import com.convallyria.forcepack.api.ForcePackAPI;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.HashingUtil;
+import com.convallyria.forcepack.spigot.command.ForcePackCommand;
 import io.papermc.lib.PaperLib;
 import com.convallyria.forcepack.spigot.listener.ResourcePackListener;
 import com.convallyria.forcepack.spigot.resourcepack.SpigotResourcePack;
@@ -21,8 +23,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI, LanguagyPluginHook {
 
@@ -36,11 +40,18 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI, L
 		return List.of(resourcePack);
 	}
 
+	private final Map<UUID, ResourcePack> waiting = new HashMap<>();
+
+	public Map<UUID, ResourcePack> getWaiting() {
+		return waiting;
+	}
+
 	@Override
 	public void onEnable() {
 		this.generateLang();
 		this.createConfig();
 		this.registerListeners();
+		this.registerCommands();
 		this.hook(this);
 
 		// Convert legacy config
@@ -50,10 +61,18 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI, L
 			e.printStackTrace();
 		}
 
+		if (!reload()) return;
+
+		new Metrics(this, 13677);
+		PaperLib.suggestPaper(this);
+		this.getLogger().info("[ForcePack] Enabled!");
+	}
+
+	public boolean reload() {
 		final String url = getConfig().getString("Server.ResourcePack.url");
 		final String hash = getConfig().getString("Server.ResourcePack.hash");
 
-		if (getConfig().getBoolean("verify")) {
+		if (getConfig().getBoolean("Server.verify")) {
 			try {
 				HashingUtil.performPackCheck(url, hash, (urlBytes, hashBytes, match) -> {
 					if (!match) {
@@ -69,7 +88,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI, L
 				this.getLogger().severe("Please provide a correct SHA-1 hash/url!");
 				e.printStackTrace();
 				Bukkit.getPluginManager().disablePlugin(this);
-				return;
+				return false;
 			}
 		}
 
@@ -82,15 +101,18 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI, L
 		}
 
 		resourcePack = new SpigotResourcePack(this, url, hash);
-
-		new Metrics(this, 13677);
-		PaperLib.suggestPaper(this);
-		this.getLogger().info("[ForcePack] Enabled!");
+		return true;
 	}
 	
 	private void registerListeners() {
 		PluginManager pm = Bukkit.getPluginManager();
 		pm.registerEvents(new ResourcePackListener(this), this);
+	}
+
+	private void registerCommands() {
+		PaperCommandManager manager = new PaperCommandManager(this);
+		manager.enableUnstableAPI("help");
+		manager.registerCommand(new ForcePackCommand(this));
 	}
 
 	private void generateLang() {

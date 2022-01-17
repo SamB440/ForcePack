@@ -1,9 +1,9 @@
 package com.convallyria.forcepack.spigot.listener;
 
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
+import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.forcepack.spigot.translation.Translations;
-import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.spigot.utils.Scheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -14,25 +14,14 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
-public class ResourcePackListener implements Listener {
-
-	private final Map<UUID, ResourcePack> waiting = new HashMap<>();
-	private final ForcePackSpigot plugin;
-
-	public ResourcePackListener(ForcePackSpigot plugin) {
-		this.plugin = plugin;
-	}
+public record ResourcePackListener(ForcePackSpigot plugin) implements Listener {
 
 	@EventHandler
 	public void onStatus(PlayerResourcePackStatusEvent event) {
 		final Player player = event.getPlayer();
 		boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
 		if (!player.hasPermission("ForcePack.bypass") && !geyser) {
-			waiting.remove(player.getUniqueId());
+			plugin.getWaiting().remove(player.getUniqueId());
 			plugin.log(player.getName() + " sent status: " + event.getStatus());
 
 			final PlayerResourcePackStatusEvent.Status status = event.getStatus();
@@ -66,10 +55,10 @@ public class ResourcePackListener implements Listener {
 		boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
 		if (!player.hasPermission("ForcePack.bypass") && !geyser) {
 			final ResourcePack pack = plugin.getResourcePacks().get(0);
-			waiting.put(player.getUniqueId(), pack);
+			plugin.getWaiting().put(player.getUniqueId(), pack);
 			Scheduler scheduler = new Scheduler();
 			Runnable packTask = () -> {
-				if (waiting.containsKey(player.getUniqueId())) {
+				if (plugin.getWaiting().containsKey(player.getUniqueId())) {
 					pack.setResourcePack(player.getUniqueId());
 				} else {
 					scheduler.cancel();
@@ -88,7 +77,7 @@ public class ResourcePackListener implements Listener {
 	@EventHandler
 	public void onQuit(PlayerQuitEvent pqe) {
 		Player player = pqe.getPlayer();
-		waiting.remove(player.getUniqueId());
+		plugin.getWaiting().remove(player.getUniqueId());
 	}
 
 	private FileConfiguration getConfig() {

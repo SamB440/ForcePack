@@ -25,6 +25,8 @@ Server:
   Update GUI: false
   # Should the plugin verify your URL + hash?
   verify: true
+  # Should we resend the resource pack on reload? Any players that have already accepted will receive the updated one.
+  resend: true
   # Whether to ignore geyser players. Only enable this if you use geyser.
   #  Java clients can spoof this and bypass the ResourcePack!
   geyser: false

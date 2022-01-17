@@ -3,11 +3,15 @@ package com.convallyria.forcepack.velocity;
 import com.convallyria.forcepack.api.ForcePackAPI;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.HashingUtil;
+import com.convallyria.forcepack.velocity.command.ForcePackCommand;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
+import com.convallyria.forcepack.velocity.handler.PackHandler;
 import com.convallyria.forcepack.velocity.listener.ResourcePackListener;
 import com.convallyria.forcepack.velocity.resourcepack.VelocityResourcePack;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
+import com.velocitypowered.api.command.CommandManager;
+import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.event.EventManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -31,7 +35,7 @@ import java.util.Optional;
 @Plugin(
         id = "forcepack",
         name = "ForcePack",
-        version = "1.1.6",
+        version = "1.1.7",
         description = "Force players to use your server resource pack.",
         url = "https://www.convallyria.com",
         authors = {"SamB440"}
@@ -44,24 +48,29 @@ public class ForcePackVelocity implements ForcePackAPI {
     private final Logger logger;
     private final Path dataDirectory;
     private final Metrics.Factory metricsFactory;
+    private final CommandManager commandManager;
 
     @Inject
-    public ForcePackVelocity(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory) {
+    public ForcePackVelocity(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory, CommandManager commandManager) {
         this.server = server;
         this.logger = logger;
         this.dataDirectory = dataDirectory;
         this.metricsFactory = metricsFactory;
+        this.commandManager = commandManager;
     }
 
     private VelocityConfig config;
-    private List<ResourcePack> resourcePacks = new ArrayList<>();
+    private PackHandler packHandler;
+    private final List<ResourcePack> resourcePacks = new ArrayList<>();
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
         getLogger().info("Enabling ForcePack (velocity)...");
         this.createConfig();
+        this.packHandler = new PackHandler(this);
         this.loadResourcePacks();
         this.registerListeners();
+        this.registerCommands();
         metricsFactory.make(this, 13678);
     }
 
@@ -85,7 +94,14 @@ public class ForcePackVelocity implements ForcePackAPI {
         eventManager.register(this, new ResourcePackListener(this));
     }
 
-    private void loadResourcePacks() {
+    private void registerCommands() {
+        CommandMeta meta = commandManager.metaBuilder("forcepackreload").build();
+        commandManager.register(meta, new ForcePackCommand(this));
+    }
+
+    public void loadResourcePacks() {
+        resourcePacks.clear(); // Clear for reloads
+
         final VelocityConfig unloadPack = getConfig().getConfig("unload-pack");
         final boolean enableUnload = unloadPack.getBoolean("enable");
         if (enableUnload) {
@@ -160,6 +176,10 @@ public class ForcePackVelocity implements ForcePackAPI {
             }
         }
         return Optional.empty();
+    }
+
+    public PackHandler getPackHandler() {
+        return packHandler;
     }
 
     private MiniMessage miniMessage;
