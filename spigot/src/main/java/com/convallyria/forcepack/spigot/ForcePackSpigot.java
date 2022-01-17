@@ -152,7 +152,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI, L
 
 	@Override
 	public boolean debug() {
-		return getConfig().getBoolean("debug");
+		return getConfig().getBoolean("Server.debug");
 	}
 
 	public void log(String info) {

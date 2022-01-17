@@ -9,15 +9,15 @@ Server:
     # List of valid actions: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/player/PlayerResourcePackStatusEvent.Status.html
     ACCEPTED:
       kick: false
-      Command:
+      Commands:
         - say [player] accepted the resource pack!
     DECLINED:
       kick: true
-      Command:
+      Commands:
         - say [player] denied the resource pack!
     FAILED_DOWNLOAD:
       kick: true
-      Command:
+      Commands:
         - say [player] failed to download the resource pack!
   # Speed in ticks at which the ResourcePack prompt will be resent to the player (prevents escaping out)
   Update GUI Speed: 20
