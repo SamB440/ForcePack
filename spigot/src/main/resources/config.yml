@@ -23,6 +23,8 @@ Server:
   Update GUI Speed: 20
   # Whether to re-send the GUI. This may cause issues with newer clients, so it is disabled by default.
   Update GUI: false
+  # Should the plugin verify your URL + hash?
+  verify: true
   # Whether to ignore geyser players. Only enable this if you use geyser.
   #  Java clients can spoof this and bypass the ResourcePack!
   geyser: false

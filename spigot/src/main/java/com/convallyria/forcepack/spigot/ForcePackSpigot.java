@@ -53,22 +53,24 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI, L
 		final String url = getConfig().getString("Server.ResourcePack.url");
 		final String hash = getConfig().getString("Server.ResourcePack.hash");
 
-		try {
-			HashingUtil.performPackCheck(url, hash, (urlBytes, hashBytes, match) -> {
-				if (!match) {
-					this.getLogger().severe("-----------------------------------------------");
-					this.getLogger().severe("Your hash does not match the URL file provided!");
-					this.getLogger().severe("The URL hash returned: " + Arrays.toString(urlBytes));
-					this.getLogger().severe("Your config hash returned: " + Arrays.toString(hashBytes));
-					this.getLogger().severe("Please provide a correct SHA-1 hash!");
-					this.getLogger().severe("-----------------------------------------------");
-				}
-			});
-		} catch (Exception e) {
-			this.getLogger().severe("Please provide a correct SHA-1 hash/url!");
-			e.printStackTrace();
-			Bukkit.getPluginManager().disablePlugin(this);
-			return;
+		if (getConfig().getBoolean("verify")) {
+			try {
+				HashingUtil.performPackCheck(url, hash, (urlBytes, hashBytes, match) -> {
+					if (!match) {
+						this.getLogger().severe("-----------------------------------------------");
+						this.getLogger().severe("Your hash does not match the URL file provided!");
+						this.getLogger().severe("The URL hash returned: " + Arrays.toString(urlBytes));
+						this.getLogger().severe("Your config hash returned: " + Arrays.toString(hashBytes));
+						this.getLogger().severe("Please provide a correct SHA-1 hash!");
+						this.getLogger().severe("-----------------------------------------------");
+					}
+				});
+			} catch (Exception e) {
+				this.getLogger().severe("Please provide a correct SHA-1 hash/url!");
+				e.printStackTrace();
+				Bukkit.getPluginManager().disablePlugin(this);
+				return;
+			}
 		}
 
 		final int versionNumber = getVersionNumber();
@@ -76,7 +78,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI, L
 		if (versionNumber >= 18) {
 			getLogger().info("Using recent ResourcePack methods to show prompt text.");
 		} else {
-			getLogger().info("Your server version does not support prompt text.");
+			getLogger().warning("Your server version does not support prompt text.");
 		}
 
 		resourcePack = new SpigotResourcePack(this, url, hash);
