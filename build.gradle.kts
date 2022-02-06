@@ -1,10 +1,10 @@
 plugins {
-    id("com.github.johnrengelman.shadow") version("7.0.0")
+    id("com.github.johnrengelman.shadow") version("7.1.2")
     id("java")
 }
 
 java.sourceCompatibility = JavaVersion.VERSION_11
-java.targetCompatibility = JavaVersion.VERSION_11
+java.targetCompatibility = JavaVersion.VERSION_1_8
 
 dependencies {
     implementation(project(":spigot"))
@@ -13,7 +13,7 @@ dependencies {
 
 allprojects {
     group = "com.convallyria.forcepack"
-    version = "1.1.8"
+    version = "1.1.9"
 
     apply(plugin = "com.github.johnrengelman.shadow")
     apply(plugin = "java")

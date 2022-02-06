@@ -39,7 +39,10 @@ public final class SpigotResourcePack extends ResourcePack {
                     this.hasWarned = true;
                 }
             }
+        } else if (spigotPlugin.getVersionNumber() >= 11) { // 1.11 - 1.17 support
+            player.setResourcePack(url, getHashSum());
+        } else { // <= 1.10 support
+            player.setTexturePack(url);
         }
-        player.setResourcePack(url, getHashSum());
     }
 }
