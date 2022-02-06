@@ -66,7 +66,7 @@ public record ResourcePackListener(ForcePackSpigot plugin) implements Listener {
 				}
 			};
 
-			final boolean viaversion = Bukkit.getPluginManager().getPlugin("ViaVersion") != null;
+			final boolean viaversion = Bukkit.getPluginManager().isPluginEnabled("ViaVersion");
 			final int version = viaversion ? Via.getAPI().getPlayerVersion(player) : 393; // 393 is 1.13 - default to this
 			if (getConfig().getBoolean("Server.Update GUI") && version <= 340) { // 340 is 1.12
 				scheduler.setTask(Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, packTask,
