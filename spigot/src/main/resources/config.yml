@@ -21,8 +21,8 @@ Server:
         - say [player] failed to download the resource pack!
   # Speed in ticks at which the ResourcePack prompt will be resent to the player (prevents escaping out)
   Update GUI Speed: 20
-  # Whether to re-send the GUI. This may cause issues with newer clients, so it is disabled by default.
-  Update GUI: false
+  # Whether to re-send the GUI. This will only update for clients <= 1.12. (requires ViaVersion)
+  Update GUI: true
   # Should the plugin verify your URL + hash?
   verify: true
   # Should we resend the resource pack on reload? Any players that have already accepted will receive the updated one.

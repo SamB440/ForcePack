@@ -5,6 +5,7 @@ import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.forcepack.spigot.translation.Translations;
 import com.convallyria.forcepack.spigot.utils.Scheduler;
+import com.viaversion.viaversion.api.Via;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -65,7 +66,9 @@ public record ResourcePackListener(ForcePackSpigot plugin) implements Listener {
 				}
 			};
 
-			if (getConfig().getBoolean("Update GUI")) {
+			final boolean viaversion = Bukkit.getPluginManager().getPlugin("ViaVersion") != null;
+			final int version = viaversion ? Via.getAPI().getPlayerVersion(player) : 393; // 393 is 1.13 - default to this
+			if (getConfig().getBoolean("Server.Update GUI") && version <= 340) { // 340 is 1.12
 				scheduler.setTask(Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, packTask,
 						0L, getConfig().getInt("Server.Update GUI Speed", 20)));
 			} else {

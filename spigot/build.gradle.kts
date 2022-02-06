@@ -4,9 +4,10 @@ plugins {
 }
 
 repositories {
-    maven { url = uri("https://erethon.de/repo/") }
-    maven { url = uri("https://repo.convallyria.com/snapshots") }
-    maven { url = uri("https://repo.aikar.co/content/groups/aikar/") }
+    maven("https://erethon.de/repo/")
+    maven("https://repo.convallyria.com/snapshots")
+    maven("https://repo.aikar.co/content/groups/aikar/")
+    maven("https://repo.viaversion.com")
     maven {
         name = "codemc-repo"
         url = uri("https://repo.codemc.org/repository/maven-snapshots/")
@@ -21,10 +22,11 @@ dependencies {
     implementation(project(":api"))
 
     compileOnly("org.spigotmc:spigot-api:1.18.1-R0.1-SNAPSHOT")
+    compileOnly("com.viaversion:viaversion-api:4.1.1")
 
     implementation("io.papermc:paperlib:1.0.7")
     implementation("net.islandearth:languagy:2.0.4-SNAPSHOT")
-    implementation("org.bstats:bstats-bukkit:2.2.1")
+    implementation("org.bstats:bstats-bukkit:3.0.0")
     implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")
 }
 

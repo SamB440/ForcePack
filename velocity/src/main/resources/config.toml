@@ -11,6 +11,12 @@ geyser = false
 # May reduce startup time, but makes problems less obvious and can be a security risk.
 verify-resource-packs = true
 
+# If we should continuously update the GUI for players <= 1.12. Prevents escaping out bypass.
+update-gui = true
+
+# The update speed of the GUI in milliseconds
+update-gui-speed = 1000
+
 # Whether to enable debug mode. Prints some extra info.
 debug = false
 
