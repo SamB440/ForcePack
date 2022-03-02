@@ -35,7 +35,8 @@ public record ResourcePackListener(ForcePackVelocity plugin) {
 
         final PlayerResourcePackStatusEvent.Status status = event.getStatus();
         boolean geyser = plugin.getConfig().getBoolean("geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
-        if (!player.hasPermission("ForcePack.bypass") && !geyser) {
+        boolean canBypass = player.hasPermission("ForcePack.bypass") && plugin.getConfig().getBoolean("bypass-permission");
+        if (!canBypass && !geyser) {
             plugin.log(player.getUsername() + " sent status: " + event.getStatus());
 
             final VelocityConfig actions = plugin.getConfig().getConfig("servers").getConfig(serverName).getConfig("actions").getConfig(status.name());
@@ -69,7 +70,8 @@ public record ResourcePackListener(ForcePackVelocity plugin) {
         final ServerInfo serverInfo = currentServer.get().getServerInfo();
 
         boolean geyser = plugin.getConfig().getBoolean("geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
-        if (!player.hasPermission("ForcePack.bypass") && !geyser) {
+        boolean canBypass = player.hasPermission("ForcePack.bypass") && plugin.getConfig().getBoolean("bypass-permission");
+        if (!canBypass && !geyser) {
             plugin.getPackHandler().setPack(player, serverInfo);
         }
     }

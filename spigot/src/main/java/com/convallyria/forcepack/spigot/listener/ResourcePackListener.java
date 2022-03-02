@@ -21,7 +21,8 @@ public record ResourcePackListener(ForcePackSpigot plugin) implements Listener {
 	public void onStatus(PlayerResourcePackStatusEvent event) {
 		final Player player = event.getPlayer();
 		boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
-		if (!player.hasPermission("ForcePack.bypass") && !geyser) {
+		boolean canBypass = player.hasPermission("ForcePack.bypass") && getConfig().getBoolean("Server.bypass-permission");
+		if (!canBypass && !geyser) {
 			plugin.getWaiting().remove(player.getUniqueId());
 			plugin.log(player.getName() + " sent status: " + event.getStatus());
 
@@ -54,7 +55,8 @@ public record ResourcePackListener(ForcePackSpigot plugin) implements Listener {
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		Player player = event.getPlayer();
 		boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
-		if (!player.hasPermission("ForcePack.bypass") && !geyser) {
+		boolean canBypass = player.hasPermission("ForcePack.bypass") && getConfig().getBoolean("Server.bypass-permission");
+		if (!canBypass && !geyser) {
 			final ResourcePack pack = plugin.getResourcePacks().get(0);
 			plugin.getWaiting().put(player.getUniqueId(), pack);
 			Scheduler scheduler = new Scheduler();
