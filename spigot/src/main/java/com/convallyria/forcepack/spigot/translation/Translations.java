@@ -42,13 +42,9 @@ public enum Translations {
 		return this.toString().toLowerCase();
 	}
 
-	public void send(Player player) {
-		String message = ForcePackSpigot.getInstance().getTranslator().getTranslationFor(player, this.getPath());
-		player.sendMessage(message);
-	}
-
 	public void send(Player player, String... values) {
 		String message = ForcePackSpigot.getInstance().getTranslator().getTranslationFor(player, this.getPath());
+		if (message.isEmpty()) return;
 		message = replaceVariables(message, values);
 		player.sendMessage(message);
 	}
@@ -104,7 +100,7 @@ public enum Translations {
 				for (Translations key : values()) {
 					if (config.get(key.toString().toLowerCase()) == null) {
 						plugin.getLogger().warning("No value in translation file for key "
-								+ key.toString() + " was found. Regenerate language files?");
+								+ key + " was found. Regenerate language files?");
 					}
 				}
 			}
