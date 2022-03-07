@@ -19,7 +19,8 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.minimessage.markdown.DiscordFlavor;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
 import org.bstats.velocity.Metrics;
 import org.slf4j.Logger;
 
@@ -187,8 +188,11 @@ public class ForcePackVelocity implements ForcePackAPI {
     public MiniMessage getMiniMessage() {
         if (miniMessage != null) return this.miniMessage;
         return this.miniMessage = MiniMessage.builder()
-                .markdown()
-                .markdownFlavor(DiscordFlavor.get())
+                .tags(TagResolver.builder()
+                        .resolver(StandardTags.color())
+                        .resolver(StandardTags.decorations())
+                        .build()
+                )
                 .build();
     }
 

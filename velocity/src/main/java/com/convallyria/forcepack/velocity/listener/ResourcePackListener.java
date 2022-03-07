@@ -49,7 +49,7 @@ public record ResourcePackListener(ForcePackVelocity plugin) {
             final String text = actions.getString("message");
             if (text == null) return;
 
-            final Component component = plugin.getMiniMessage().parse(text);
+            final Component component = plugin.getMiniMessage().deserialize(text);
             if (kick) {
                 player.disconnect(component);
             } else {

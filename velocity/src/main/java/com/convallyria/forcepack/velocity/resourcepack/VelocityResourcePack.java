@@ -39,7 +39,7 @@ public final class VelocityResourcePack extends ResourcePack {
         final VelocityConfig serverConfig = velocityPlugin.getConfig().getConfig("servers").getConfig(server);
         if (serverConfig != null) {
             final String promptText = serverConfig.getConfig("resourcepack").getString("prompt");
-            final Component promptComponent = velocityPlugin.getMiniMessage().parse(promptText);
+            final Component promptComponent = velocityPlugin.getMiniMessage().deserialize(promptText);
             infoBuilder.setPrompt(promptComponent);
         }
         player.get().sendResourcePackOffer(infoBuilder.build());
