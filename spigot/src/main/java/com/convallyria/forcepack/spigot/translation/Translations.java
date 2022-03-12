@@ -38,7 +38,7 @@ public enum Translations {
     }
 
     public String get(Player player) {
-        return getTranslation(player).getTranslations().get(0);
+        return getTranslation(player).colour().get(0);
     }
 
     public Translation getTranslation(Player player) {
