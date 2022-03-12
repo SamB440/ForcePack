@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
 
 @Plugin(
         id = "forcepack",
@@ -117,7 +118,16 @@ public class ForcePackVelocity implements ForcePackAPI {
             final VelocityConfig serverConfig = servers.getConfig(serverName);
             final VelocityConfig resourcePack = serverConfig.getConfig("resourcepack");
             final String url = resourcePack.getString("url");
-            final String hash = resourcePack.getString("hash");
+            String hash = resourcePack.getString("hash");
+            if (resourcePack.getBoolean("generate-hash", false)) {
+                getLogger().info("Auto-generating ResourcePack hash.");
+                try {
+                    hash = HashingUtil.getHashFromUrl(url);
+                    getLogger().info("Auto-generated ResourcePack hash: " + hash);
+                } catch (Exception e) {
+                    getLogger().error("Unable to auto-generate ResourcePack hash, reverting to config setting", e);
+                }
+            }
             resourcePacks.add(new VelocityResourcePack(this, serverName, url, hash));
         }
 
@@ -128,13 +138,13 @@ public class ForcePackVelocity implements ForcePackAPI {
             final String hash = resourcePack.getHash();
             final String serverName = resourcePack.getServer();
             try {
-                HashingUtil.performPackCheck(url, hash, (urlBytes, hashBytes, match) -> {
+                HashingUtil.performPackCheck(url, hash, (urlHash, configHash, match) -> {
                     if (!match) {
                         this.getLogger().error("-----------------------------------------------");
                         this.getLogger().error("Your hash does not match the URL file provided!");
                         this.getLogger().error("Target server: " + serverName);
-                        this.getLogger().error("The URL hash returned: " + Arrays.toString(urlBytes));
-                        this.getLogger().error("Your config hash returned: " + Arrays.toString(hashBytes));
+                        this.getLogger().error("The URL hash returned: " + urlHash);
+                        this.getLogger().error("Your config hash returned: " + configHash);
                         this.getLogger().error("Please provide a correct SHA-1 hash!");
                         this.getLogger().error("-----------------------------------------------");
                         resourcePacks.remove(resourcePack);

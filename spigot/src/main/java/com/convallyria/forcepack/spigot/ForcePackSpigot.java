@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
 
 public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI, LanguagyPluginHook {
 
@@ -70,16 +71,26 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI, L
 
 	public boolean reload() {
 		final String url = getConfig().getString("Server.ResourcePack.url");
-		final String hash = getConfig().getString("Server.ResourcePack.hash");
+		String hash = getConfig().getString("Server.ResourcePack.hash");
+
+		if (getConfig().getBoolean("Server.ResourcePack.generate-hash")) {
+			getLogger().info("Auto-generating ResourcePack hash.");
+			try {
+				hash = HashingUtil.getHashFromUrl(url);
+				getLogger().info("Auto-generated ResourcePack hash: " + hash);
+			} catch (Exception e) {
+				getLogger().log(Level.SEVERE, "Unable to auto-generate ResourcePack hash, reverting to config setting", e);
+			}
+		}
 
 		if (getConfig().getBoolean("Server.verify")) {
 			try {
-				HashingUtil.performPackCheck(url, hash, (urlBytes, hashBytes, match) -> {
+				HashingUtil.performPackCheck(url, hash, (urlHash, configHash, match) -> {
 					if (!match) {
 						this.getLogger().severe("-----------------------------------------------");
 						this.getLogger().severe("Your hash does not match the URL file provided!");
-						this.getLogger().severe("The URL hash returned: " + Arrays.toString(urlBytes));
-						this.getLogger().severe("Your config hash returned: " + Arrays.toString(hashBytes));
+						this.getLogger().severe("The URL hash returned: " + urlHash);
+						this.getLogger().severe("Your config hash returned: " + configHash);
 						this.getLogger().severe("Please provide a correct SHA-1 hash!");
 						this.getLogger().severe("-----------------------------------------------");
 					}

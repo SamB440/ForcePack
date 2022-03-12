@@ -5,7 +5,6 @@ import jakarta.xml.bind.DatatypeConverter;
 import java.io.InputStream;
 import java.net.URL;
 import java.security.MessageDigest;
-import java.util.Arrays;
 
 public class HashingUtil {
 	
@@ -17,7 +16,7 @@ public class HashingUtil {
 	    return DatatypeConverter.parseHexBinary(s);
 	}
 
-	public static void performPackCheck(String url, String hash, TriConsumer<byte[], byte[], Boolean> consumer) throws Exception {
+	public static String getHashFromUrl(String url) throws Exception {
 		// This is not done async on purpose. We don't want the server to start without having checked this first.
 		MessageDigest digest = MessageDigest.getInstance("SHA-1");
 		InputStream fis = new URL(url).openStream();
@@ -31,7 +30,12 @@ public class HashingUtil {
 		}
 		fis.close();
 		final byte[] urlBytes = digest.digest();
-		final byte[] configBytes = HashingUtil.toByteArray(hash);
-		consumer.accept(urlBytes, configBytes, Arrays.equals(urlBytes, configBytes));
+		return toHexString(urlBytes);
+	}
+
+	public static void performPackCheck(String url, String hash, TriConsumer<String, String, Boolean> consumer) throws Exception {
+		// This is not done async on purpose. We don't want the server to start without having checked this first.
+		final String urlCheckHash = getHashFromUrl(url);
+		consumer.accept(urlCheckHash, hash, urlCheckHash.equalsIgnoreCase(hash));
 	}
 }

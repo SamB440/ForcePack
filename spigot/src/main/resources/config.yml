@@ -1,9 +1,13 @@
 Server:
   ResourcePack:
     # The ResourcePack URL. This must be a direct URL, ending with .zip. For Dropbox URLs, add ?dl=1 to the end.
-    url: https://faithfulpack.com/dl/104/
+    url: https://www.convallyria.com/files/BlankPack.zip
+    # Whether to automatically generate the SHA-1 hash. This is not recommended for security and reliability.
+    # The hash setting will be ignored if this is true, however it will fall back to that if the generation fails.
+    generate-hash: false
     # Use a site such as http://onlinemd5.com/ or the hash provided when uploading to https://mc-packs.net/.
-    hash: BA52452AD77CAAA7530876950C8E2D020699EBDD
+    hash: 118AFFFC54CDCD308702F81BA24E03223F15FE5F
+
   Actions:
     # To disable commands, you can do Command: []
     # List of valid actions: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/player/PlayerResourcePackStatusEvent.Status.html
