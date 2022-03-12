@@ -1,8 +1,3 @@
-plugins {
-    id("com.github.johnrengelman.shadow")
-    id("java")
-}
-
 repositories {
     maven {
         name = "papermc-repo"

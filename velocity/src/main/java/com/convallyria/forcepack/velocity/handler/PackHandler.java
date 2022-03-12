@@ -12,7 +12,13 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-public final record PackHandler(ForcePackVelocity plugin) {
+public final class PackHandler {
+
+    private final ForcePackVelocity plugin;
+
+    public PackHandler(final ForcePackVelocity plugin) {
+        this.plugin = plugin;
+    }
 
     public void setPack(final Player player, final ServerInfo serverInfo) {
         plugin.getPackByServer(serverInfo.getName()).ifPresentOrElse(resourcePack -> {

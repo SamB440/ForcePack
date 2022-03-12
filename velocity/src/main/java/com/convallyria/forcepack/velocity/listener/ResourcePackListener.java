@@ -15,7 +15,13 @@ import net.kyori.adventure.text.Component;
 
 import java.util.Optional;
 
-public record ResourcePackListener(ForcePackVelocity plugin) {
+public class ResourcePackListener {
+
+    private final ForcePackVelocity plugin;
+
+    public ResourcePackListener(final ForcePackVelocity plugin) {
+        this.plugin = plugin;
+    }
 
     @Subscribe(order = PostOrder.EARLY)
     public void onPackStatus(PlayerResourcePackStatusEvent event) {

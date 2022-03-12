@@ -8,7 +8,13 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
-public record ForcePackCommand(ForcePackVelocity plugin) implements SimpleCommand {
+public class ForcePackCommand implements SimpleCommand {
+
+    private final ForcePackVelocity plugin;
+
+    public ForcePackCommand(final ForcePackVelocity plugin) {
+        this.plugin = plugin;
+    }
 
     @Override
     public void execute(final Invocation invocation) {

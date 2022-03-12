@@ -5,7 +5,6 @@ import com.convallyria.forcepack.api.ForcePackAPI;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.HashingUtil;
 import com.convallyria.forcepack.spigot.command.ForcePackCommand;
-import io.papermc.lib.PaperLib;
 import com.convallyria.forcepack.spigot.listener.ResourcePackListener;
 import com.convallyria.forcepack.spigot.resourcepack.SpigotResourcePack;
 import com.convallyria.forcepack.spigot.translation.Translations;
@@ -13,7 +12,7 @@ import net.islandearth.languagy.api.language.Language;
 import net.islandearth.languagy.api.language.LanguagyImplementation;
 import net.islandearth.languagy.api.language.LanguagyPluginHook;
 import net.islandearth.languagy.api.language.Translator;
-import net.islandearth.languagy.metrics.bukkit.Metrics;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
@@ -22,7 +21,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +63,6 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI, L
 		if (!reload()) return;
 
 		new Metrics(this, 13677);
-		PaperLib.suggestPaper(this);
 		this.getLogger().info("[ForcePack] Enabled!");
 	}
 

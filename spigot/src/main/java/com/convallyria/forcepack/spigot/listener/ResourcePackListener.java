@@ -15,7 +15,13 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 
-public record ResourcePackListener(ForcePackSpigot plugin) implements Listener {
+public class ResourcePackListener implements Listener {
+
+	private final ForcePackSpigot plugin;
+
+	public ResourcePackListener(final ForcePackSpigot plugin) {
+		this.plugin = plugin;
+	}
 
 	@EventHandler
 	public void onStatus(PlayerResourcePackStatusEvent event) {
@@ -35,17 +41,20 @@ public record ResourcePackListener(ForcePackSpigot plugin) implements Listener {
 			final boolean kick = getConfig().getBoolean("Server.Actions." + status.name() + ".kick");
 
 			switch (status) {
-				case DECLINED -> {
+				case DECLINED: {
 					if (kick) player.kickPlayer(Translations.DECLINED.get(player));
 					else Translations.DECLINED.send(player);
+					break;
 				}
-				case FAILED_DOWNLOAD -> {
+				case FAILED_DOWNLOAD: {
 					if (kick) player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player));
 					else Translations.DOWNLOAD_FAILED.send(player);
+					break;
 				}
-				case SUCCESSFULLY_LOADED -> {
+				case SUCCESSFULLY_LOADED: {
 					if (kick) player.kickPlayer(Translations.ACCEPTED.get(player));
 					else Translations.ACCEPTED.send(player);
+					break;
 				}
 			}
 		}
