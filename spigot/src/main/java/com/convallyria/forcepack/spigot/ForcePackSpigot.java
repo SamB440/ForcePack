@@ -8,10 +8,7 @@ import com.convallyria.forcepack.spigot.command.ForcePackCommand;
 import com.convallyria.forcepack.spigot.listener.ResourcePackListener;
 import com.convallyria.forcepack.spigot.resourcepack.SpigotResourcePack;
 import com.convallyria.forcepack.spigot.translation.Translations;
-import net.islandearth.languagy.api.language.Language;
-import net.islandearth.languagy.api.language.LanguagyImplementation;
-import net.islandearth.languagy.api.language.LanguagyPluginHook;
-import net.islandearth.languagy.api.language.Translator;
+import com.convallyria.languagy.api.language.Translator;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
@@ -27,156 +24,155 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 
-public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI, LanguagyPluginHook {
+public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
-	@LanguagyImplementation(Language.ENGLISH)
-	private Translator translator;
+    private Translator translator;
+    private ResourcePack resourcePack;
 
-	private ResourcePack resourcePack;
+    @Override
+    public List<ResourcePack> getResourcePacks() {
+        return List.of(resourcePack);
+    }
 
-	@Override
-	public List<ResourcePack> getResourcePacks() {
-		return List.of(resourcePack);
-	}
+    private final Map<UUID, ResourcePack> waiting = new HashMap<>();
 
-	private final Map<UUID, ResourcePack> waiting = new HashMap<>();
+    public Map<UUID, ResourcePack> getWaiting() {
+        return waiting;
+    }
 
-	public Map<UUID, ResourcePack> getWaiting() {
-		return waiting;
-	}
+    @Override
+    public void onEnable() {
+        this.generateLang();
+        this.createConfig();
+        this.registerListeners();
+        this.registerCommands();
+        this.translator = Translator.of(this).debug(debug());
 
-	@Override
-	public void onEnable() {
-		this.generateLang();
-		this.createConfig();
-		this.registerListeners();
-		this.registerCommands();
-		this.hook(this);
+        // Convert legacy config
+        try {
+            this.performLegacyCheck();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-		// Convert legacy config
-		try {
-			this.performLegacyCheck();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+        if (!reload()) return;
 
-		if (!reload()) return;
+        new Metrics(this, 13677);
+        this.getLogger().info("[ForcePack] Enabled!");
+    }
 
-		new Metrics(this, 13677);
-		this.getLogger().info("[ForcePack] Enabled!");
-	}
+    @Override
+    public void onDisable() {
+        translator.close();
+    }
 
-	public boolean reload() {
-		final String url = getConfig().getString("Server.ResourcePack.url");
-		String hash = getConfig().getString("Server.ResourcePack.hash");
+    public boolean reload() {
+        final String url = getConfig().getString("Server.ResourcePack.url");
+        String hash = getConfig().getString("Server.ResourcePack.hash");
 
-		if (getConfig().getBoolean("Server.ResourcePack.generate-hash")) {
-			getLogger().info("Auto-generating ResourcePack hash.");
-			try {
-				hash = HashingUtil.getHashFromUrl(url);
-				getLogger().info("Auto-generated ResourcePack hash: " + hash);
-			} catch (Exception e) {
-				getLogger().log(Level.SEVERE, "Unable to auto-generate ResourcePack hash, reverting to config setting", e);
-			}
-		}
+        if (getConfig().getBoolean("Server.ResourcePack.generate-hash")) {
+            getLogger().info("Auto-generating ResourcePack hash.");
+            try {
+                hash = HashingUtil.getHashFromUrl(url);
+                getLogger().info("Auto-generated ResourcePack hash: " + hash);
+            } catch (Exception e) {
+                getLogger().log(Level.SEVERE, "Unable to auto-generate ResourcePack hash, reverting to config setting", e);
+            }
+        }
 
-		if (getConfig().getBoolean("Server.verify")) {
-			try {
-				HashingUtil.performPackCheck(url, hash, (urlHash, configHash, match) -> {
-					if (!match) {
-						this.getLogger().severe("-----------------------------------------------");
-						this.getLogger().severe("Your hash does not match the URL file provided!");
-						this.getLogger().severe("The URL hash returned: " + urlHash);
-						this.getLogger().severe("Your config hash returned: " + configHash);
-						this.getLogger().severe("Please provide a correct SHA-1 hash!");
-						this.getLogger().severe("-----------------------------------------------");
-					}
-				});
-			} catch (Exception e) {
-				this.getLogger().severe("Please provide a correct SHA-1 hash/url!");
-				e.printStackTrace();
-				Bukkit.getPluginManager().disablePlugin(this);
-				return false;
-			}
-		}
+        if (getConfig().getBoolean("Server.verify")) {
+            try {
+                HashingUtil.performPackCheck(url, hash, (urlHash, configHash, match) -> {
+                    if (!match) {
+                        this.getLogger().severe("-----------------------------------------------");
+                        this.getLogger().severe("Your hash does not match the URL file provided!");
+                        this.getLogger().severe("The URL hash returned: " + urlHash);
+                        this.getLogger().severe("Your config hash returned: " + configHash);
+                        this.getLogger().severe("Please provide a correct SHA-1 hash!");
+                        this.getLogger().severe("-----------------------------------------------");
+                    }
+                });
+            } catch (Exception e) {
+                this.getLogger().severe("Please provide a correct SHA-1 hash/url!");
+                e.printStackTrace();
+                Bukkit.getPluginManager().disablePlugin(this);
+                return false;
+            }
+        }
 
-		final int versionNumber = getVersionNumber();
-		getLogger().info("Detected server version: " + Bukkit.getBukkitVersion() + " (" + getVersionNumber() + ").");
-		if (versionNumber >= 18) {
-			getLogger().info("Using recent ResourcePack methods to show prompt text.");
-		} else {
-			getLogger().warning("Your server version does not support prompt text.");
-		}
+        final int versionNumber = getVersionNumber();
+        getLogger().info("Detected server version: " + Bukkit.getBukkitVersion() + " (" + getVersionNumber() + ").");
+        if (versionNumber >= 18) {
+            getLogger().info("Using recent ResourcePack methods to show prompt text.");
+        } else {
+            getLogger().warning("Your server version does not support prompt text.");
+        }
 
-		resourcePack = new SpigotResourcePack(this, url, hash);
-		return true;
-	}
-	
-	private void registerListeners() {
-		PluginManager pm = Bukkit.getPluginManager();
-		pm.registerEvents(new ResourcePackListener(this), this);
-	}
+        resourcePack = new SpigotResourcePack(this, url, hash);
+        return true;
+    }
 
-	private void registerCommands() {
-		PaperCommandManager manager = new PaperCommandManager(this);
-		manager.enableUnstableAPI("help");
-		manager.registerCommand(new ForcePackCommand(this));
-	}
+    private void registerListeners() {
+        PluginManager pm = Bukkit.getPluginManager();
+        pm.registerEvents(new ResourcePackListener(this), this);
+    }
 
-	private void generateLang() {
-		Translations.generateLang(this);
-	}
+    private void registerCommands() {
+        PaperCommandManager manager = new PaperCommandManager(this);
+        manager.enableUnstableAPI("help");
+        manager.registerCommand(new ForcePackCommand(this));
+    }
 
-	private void createConfig() {
-		saveDefaultConfig();
-	}
+    private void generateLang() {
+        Translations.generateLang(this);
+    }
 
-	private void performLegacyCheck() throws IOException {
-		final Map<String, PlayerResourcePackStatusEvent.Status> sections = Map.of(
-				"Server.Actions.On_Accept", PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED,
-				"Server.Actions.On_Deny", PlayerResourcePackStatusEvent.Status.DECLINED,
-				"Server.Actions.On_Fail", PlayerResourcePackStatusEvent.Status.FAILED_DOWNLOAD);
-		final boolean kick = getConfig().getBoolean("Server.kick");
-		for (String sectionName : sections.keySet()) {
-			final PlayerResourcePackStatusEvent.Status status = sections.get(sectionName);
-			final ConfigurationSection section = getConfig().getConfigurationSection(sectionName);
-			if (section != null) {
-				getLogger().warning("Detected legacy '" + sectionName + "' action, converting your config now (consider regenerating config for comments and new settings!)...");
-				getConfig().set("Server.Actions." + status.name() + ".Commands", section.getStringList("Command"));
-				getConfig().set("Server.Actions." + status.name() + ".kick", status != PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED && kick);
-				getConfig().set(sectionName, null);
-				getConfig().set("Server.kick", null);
-				getConfig().save(new File(getDataFolder() + File.separator + "config.yml"));
-			}
-		}
-	}
+    private void createConfig() {
+        saveDefaultConfig();
+    }
 
-	public Translator getTranslator() {
-		return translator;
-	}
+    private void performLegacyCheck() throws IOException {
+        final Map<String, PlayerResourcePackStatusEvent.Status> sections = Map.of(
+                "Server.Actions.On_Accept", PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED,
+                "Server.Actions.On_Deny", PlayerResourcePackStatusEvent.Status.DECLINED,
+                "Server.Actions.On_Fail", PlayerResourcePackStatusEvent.Status.FAILED_DOWNLOAD);
+        final boolean kick = getConfig().getBoolean("Server.kick");
+        for (String sectionName : sections.keySet()) {
+            final PlayerResourcePackStatusEvent.Status status = sections.get(sectionName);
+            final ConfigurationSection section = getConfig().getConfigurationSection(sectionName);
+            if (section != null) {
+                getLogger().warning("Detected legacy '" + sectionName + "' action, converting your config now (consider regenerating config for comments and new settings!)...");
+                getConfig().set("Server.Actions." + status.name() + ".Commands", section.getStringList("Command"));
+                getConfig().set("Server.Actions." + status.name() + ".kick", status != PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED && kick);
+                getConfig().set(sectionName, null);
+                getConfig().set("Server.kick", null);
+                getConfig().save(new File(getDataFolder() + File.separator + "config.yml"));
+            }
+        }
+    }
 
-	@Override
-	public void onLanguagyHook() { }
+    public Translator getTranslator() {
+        return translator;
+    }
 
-	@Override
-	public boolean debug() {
-		return getConfig().getBoolean("Server.debug");
-	}
+    public boolean debug() {
+        return getConfig().getBoolean("Server.debug");
+    }
 
-	public void log(String info) {
-		if (debug()) getLogger().info(info);
-	}
+    public void log(String info) {
+        if (debug()) getLogger().info(info);
+    }
 
-	public static ForcePackAPI getAPI() {
-		return getInstance();
-	}
+    public static ForcePackAPI getAPI() {
+        return getInstance();
+    }
 
-	public static ForcePackSpigot getInstance() {
-		return getPlugin(ForcePackSpigot.class);
-	}
+    public static ForcePackSpigot getInstance() {
+        return getPlugin(ForcePackSpigot.class);
+    }
 
-	public int getVersionNumber() {
-		String[] split = Bukkit.getBukkitVersion().split("-")[0].split("\\.");
-		return Integer.parseInt(split[1]);
-	}
+    public int getVersionNumber() {
+        String[] split = Bukkit.getBukkitVersion().split("-")[0].split("\\.");
+        return Integer.parseInt(split[1]);
+    }
 }

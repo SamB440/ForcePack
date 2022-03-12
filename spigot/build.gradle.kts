@@ -19,7 +19,9 @@ dependencies {
     compileOnly("org.spigotmc:spigot-api:1.18.1-R0.1-SNAPSHOT")
     compileOnly("com.viaversion:viaversion-api:4.1.1")
 
-    implementation("net.islandearth:languagy:2.0.4-SNAPSHOT")
+    implementation("com.convallyria.languagy:api:3.0.0-SNAPSHOT") {
+        exclude("com.convallyria.languagy.libs")
+    }
     implementation("org.bstats:bstats-bukkit:3.0.0")
     implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")
 }
