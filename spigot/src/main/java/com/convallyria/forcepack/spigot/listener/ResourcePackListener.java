@@ -35,24 +35,24 @@ public class ResourcePackListener implements Listener {
             final PlayerResourcePackStatusEvent.Status status = event.getStatus();
 
             for (String cmd : getConfig().getStringList("Server.Actions." + status.name() + ".Commands")) {
-                Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("[player]", player.getName()));
+                ensureMainThread(() -> Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("[player]", player.getName())));
             }
 
             final boolean kick = getConfig().getBoolean("Server.Actions." + status.name() + ".kick");
 
             switch (status) {
                 case DECLINED: {
-                    if (kick) player.kickPlayer(Translations.DECLINED.get(player));
+                    if (kick) ensureMainThread(() -> player.kickPlayer(Translations.DECLINED.get(player)));
                     else Translations.DECLINED.send(player);
                     break;
                 }
                 case FAILED_DOWNLOAD: {
-                    if (kick) player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player));
+                    if (kick) ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
                     else Translations.DOWNLOAD_FAILED.send(player);
                     break;
                 }
                 case SUCCESSFULLY_LOADED: {
-                    if (kick) player.kickPlayer(Translations.ACCEPTED.get(player));
+                    if (kick) ensureMainThread(() -> player.kickPlayer(Translations.ACCEPTED.get(player)));
                     else Translations.ACCEPTED.send(player);
                     break;
                 }
@@ -92,6 +92,11 @@ public class ResourcePackListener implements Listener {
     public void onQuit(PlayerQuitEvent pqe) {
         Player player = pqe.getPlayer();
         plugin.getWaiting().remove(player.getUniqueId());
+    }
+
+    private void ensureMainThread(Runnable runnable) {
+        if (!Bukkit.isPrimaryThread()) Bukkit.getScheduler().runTask(plugin, runnable);
+        else runnable.run();
     }
 
     private FileConfiguration getConfig() {
