@@ -3,7 +3,6 @@ package com.convallyria.forcepack.spigot.resourcepack;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.forcepack.spigot.translation.Translations;
-import com.viaversion.viaversion.api.Via;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -29,6 +28,7 @@ public final class SpigotResourcePack extends ResourcePack {
         final Player player = Bukkit.getPlayer(uuid);
         if (player == null) return;
 
+        // Find a prompt method that is available to us
         if (spigotPlugin.getVersionNumber() >= 18) {
             try {
                 player.setResourcePack(url, getHashSum(), Translations.PROMPT_TEXT.get(player), true);
@@ -37,6 +37,9 @@ public final class SpigotResourcePack extends ResourcePack {
                     spigotPlugin.getLogger().warning("Your server is not up-to-date: cannot use new ResourcePack methods.");
                     this.hasWarned = true;
                 }
+
+                // Fallback
+                player.setResourcePack(url, getHashSum());
             }
         } else if (spigotPlugin.getVersionNumber() >= 11) { // 1.11 - 1.17 support
             player.setResourcePack(url, getHashSum());
