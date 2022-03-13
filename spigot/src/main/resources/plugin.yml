@@ -2,6 +2,6 @@ name: ForcePack
 main: com.convallyria.forcepack.spigot.ForcePackSpigot
 author: SamB440
 website: https://fortitude.islandearth.net
-softdepend: [Languagy, ViaVersion]
+softdepend: [ViaVersion]
 version: '${version}'
 api-version: 1.13

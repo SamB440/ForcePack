@@ -27,10 +27,6 @@ public enum Translations {
         return key;
     }
 
-    private String getPath() {
-        return this.toString().toLowerCase();
-    }
-
     public void send(Player player, Object... values) {
         Translation message = getTranslation(player);
         message.format(values);

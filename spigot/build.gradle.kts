@@ -1,8 +1,9 @@
 repositories {
     maven("https://erethon.de/repo/")
-    maven("https://repo.convallyria.com/snapshots")
+    maven("https://repo.convallyria.com/releases")
     maven("https://repo.aikar.co/content/groups/aikar/")
     maven("https://repo.viaversion.com")
+    maven("https://repo.dmulloy2.net/repository/public/")
     maven {
         name = "codemc-repo"
         url = uri("https://repo.codemc.org/repository/maven-snapshots/")
@@ -19,7 +20,7 @@ dependencies {
     compileOnly("org.spigotmc:spigot-api:1.18.1-R0.1-SNAPSHOT")
     compileOnly("com.viaversion:viaversion-api:4.1.1")
 
-    implementation("com.convallyria.languagy:api:3.0.0-SNAPSHOT") {
+    implementation("com.convallyria.languagy:api:3.0.0") {
         exclude("com.convallyria.languagy.libs")
     }
     implementation("org.bstats:bstats-bukkit:3.0.0")
