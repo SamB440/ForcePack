@@ -33,7 +33,7 @@ tasks {
         relocate("net.islandearth.languagy", "com.convallyria.forcepack.spigot.libs.languagy")
         relocate("org.bstats", "com.convallyria.forcepack.spigot.libs.bstats")
         relocate("co.aikar.commands", "com.convallyria.forcepack.spigot.libs.acf")
-        relocate("co.aikar.locales", "com.convallyria.forcepack.spigot.libs.acf")
+        relocate("co.aikar.locales", "com.convallyria.forcepack.spigot.libs.acf.locales")
     }
 
     processResources {

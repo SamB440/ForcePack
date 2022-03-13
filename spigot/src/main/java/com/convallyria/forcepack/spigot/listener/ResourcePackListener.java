@@ -28,6 +28,7 @@ public class ResourcePackListener implements Listener {
         final Player player = event.getPlayer();
         boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
         boolean canBypass = player.hasPermission("ForcePack.bypass") && getConfig().getBoolean("Server.bypass-permission");
+        plugin.log(player.getName() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
         if (!canBypass && !geyser) {
             plugin.getWaiting().remove(player.getUniqueId());
             plugin.log(player.getName() + " sent status: " + event.getStatus());
