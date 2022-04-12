@@ -195,13 +195,7 @@ public class ForcePackVelocity implements ForcePackAPI {
 
     public MiniMessage getMiniMessage() {
         if (miniMessage != null) return this.miniMessage;
-        return this.miniMessage = MiniMessage.builder()
-                .tags(TagResolver.builder()
-                        .resolver(StandardTags.color())
-                        .resolver(StandardTags.decorations())
-                        .build()
-                )
-                .build();
+        return this.miniMessage = MiniMessage.miniMessage();
     }
 
     public void log(String info) {
