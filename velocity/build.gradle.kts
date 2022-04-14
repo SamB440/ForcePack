@@ -10,7 +10,7 @@ dependencies {
 
     compileOnly("com.velocitypowered:velocity-api:3.1.2-SNAPSHOT")
     annotationProcessor("com.velocitypowered:velocity-api:3.0.1-SNAPSHOT")
-    compileOnly("com.electronwill.night-config:toml:3.6.4")
+    compileOnly("com.electronwill.night-config:toml:3.6.5")
 
     implementation("org.bstats:bstats-velocity:3.0.0")
 }

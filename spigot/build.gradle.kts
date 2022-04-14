@@ -5,10 +5,6 @@ repositories {
     maven("https://repo.viaversion.com")
     maven("https://repo.dmulloy2.net/repository/public/")
     maven {
-        name = "codemc-repo"
-        url = uri("https://repo.codemc.org/repository/maven-snapshots/")
-    }
-    maven {
         name = "papermc"
         url = uri("https://papermc.io/repo/repository/maven-public/")
     }
@@ -17,7 +13,7 @@ repositories {
 dependencies {
     implementation(project(":api"))
 
-    compileOnly("org.spigotmc:spigot-api:1.18.1-R0.1-SNAPSHOT")
+    compileOnly("org.spigotmc:spigot-api:1.18.2-R0.1-SNAPSHOT")
     compileOnly("com.viaversion:viaversion-api:4.1.1")
 
     implementation("com.convallyria.languagy:api:3.0.0") {
