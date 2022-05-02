@@ -2,7 +2,9 @@ package com.convallyria.forcepack.velocity;
 
 import com.convallyria.forcepack.api.ForcePackAPI;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
+import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.api.utils.HashingUtil;
+import com.convallyria.forcepack.api.verification.ResourcePackURLData;
 import com.convallyria.forcepack.velocity.command.ForcePackCommand;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.convallyria.forcepack.velocity.handler.PackHandler;
@@ -18,9 +20,9 @@ import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
-import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
 import org.bstats.velocity.Metrics;
 import org.slf4j.Logger;
 
@@ -120,7 +122,7 @@ public class ForcePackVelocity implements ForcePackAPI {
             if (resourcePack.getBoolean("generate-hash", false)) {
                 getLogger().info("Auto-generating ResourcePack hash.");
                 try {
-                    hash = HashingUtil.getHashFromUrl(url);
+                    hash = HashingUtil.getHashFromUrl(url, size -> getLogger().info("Downloading " + size + " MB for generation..."));
                     getLogger().info("Auto-generated ResourcePack hash: " + hash);
                 } catch (Exception e) {
                     getLogger().error("Unable to auto-generate ResourcePack hash, reverting to config setting", e);
@@ -130,31 +132,51 @@ public class ForcePackVelocity implements ForcePackAPI {
         }
 
         final boolean verifyPacks = getConfig().getBoolean("verify-resource-packs");
-        if (!verifyPacks) return;
+        if (!verifyPacks) {
+            server.sendMessage(Component.text("Loaded " + resourcePacks.size() + " resource packs without verification.").color(NamedTextColor.GREEN));
+            return;
+        }
+
         for (ResourcePack resourcePack : ImmutableList.copyOf(resourcePacks)) {
             final String url = resourcePack.getURL();
             final String hash = resourcePack.getHash();
             final String serverName = resourcePack.getServer();
             try {
-                HashingUtil.performPackCheck(url, hash, (urlHash, configHash, match) -> {
-                    if (!match) {
-                        this.getLogger().error("-----------------------------------------------");
-                        this.getLogger().error("Your hash does not match the URL file provided!");
-                        this.getLogger().error("Target server: " + serverName);
-                        this.getLogger().error("The URL hash returned: " + urlHash);
-                        this.getLogger().error("Your config hash returned: " + configHash);
-                        this.getLogger().error("Please provide a correct SHA-1 hash!");
-                        this.getLogger().error("-----------------------------------------------");
-                        resourcePacks.remove(resourcePack);
-                    } else {
-                        this.getLogger().info("Loaded ResourcePack for server " + serverName + ".");
+                final ResourcePackURLData data = HashingUtil.performPackCheck(url, hash, size -> {
+                    getLogger().info("Performing version size check...");
+                    for (ClientVersion clientVersion : ClientVersion.values()) {
+                        String sizeStr = clientVersion.getDisplay() + " (" + clientVersion.getMaxSizeMB() + " MB): ";
+                        if (clientVersion.getMaxSizeMB() < size) {
+                            // Paper support - use console sender for colour
+                            server.sendMessage(Component.text(sizeStr + "Unsupported.").color(NamedTextColor.RED));
+                        } else {
+                            // Paper support - use console sender for colour
+                            server.sendMessage(Component.text(sizeStr + "Supported.").color(NamedTextColor.GREEN));
+                        }
                     }
+
+                    getLogger().info("Downloading " + size + " MB for verification...");
                 });
+
+                if (!data.match()) {
+                    this.getLogger().error("-----------------------------------------------");
+                    this.getLogger().error("Your hash does not match the URL file provided!");
+                    this.getLogger().error("Target server: " + serverName);
+                    this.getLogger().error("The URL hash returned: " + data.getUrlHash());
+                    this.getLogger().error("Your config hash returned: " + data.getConfigHash());
+                    this.getLogger().error("Please provide a correct SHA-1 hash!");
+                    this.getLogger().error("-----------------------------------------------");
+                    resourcePacks.remove(resourcePack);
+                } else {
+                    server.sendMessage(Component.text("Hash verification complete for server " + serverName + ".").color(NamedTextColor.GREEN));
+                }
             } catch (Exception e) {
                 this.getLogger().error("Please provide a correct SHA-1 hash/url!");
                 e.printStackTrace();
             }
         }
+
+        server.sendMessage(Component.text("Loaded " + resourcePacks.size() + " verified resource packs.").color(NamedTextColor.GREEN));
     }
 
     public ProxyServer getServer() {

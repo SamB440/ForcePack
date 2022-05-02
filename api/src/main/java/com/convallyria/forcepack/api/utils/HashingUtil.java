@@ -1,10 +1,14 @@
 package com.convallyria.forcepack.api.utils;
 
+import com.convallyria.forcepack.api.verification.ResourcePackURLData;
 import jakarta.xml.bind.DatatypeConverter;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.security.MessageDigest;
+import java.util.function.Consumer;
 
 public class HashingUtil {
 	
@@ -17,9 +21,21 @@ public class HashingUtil {
 	}
 
 	public static String getHashFromUrl(String url) throws Exception {
+		return getHashFromUrl(url, null);
+	}
+
+	public static String getHashFromUrl(String url, @Nullable Consumer<Integer> size) throws Exception {
 		// This is not done async on purpose. We don't want the server to start without having checked this first.
 		MessageDigest digest = MessageDigest.getInstance("SHA-1");
-		InputStream fis = new URL(url).openStream();
+		final URLConnection urlConnection = new URL(url).openConnection();
+
+		// Notify size of file
+		if (size != null) {
+			final int sizeInMB = urlConnection.getContentLength() / 1024 / 1024;
+			size.accept(sizeInMB);
+		}
+
+		final InputStream fis = urlConnection.getInputStream();
 		int n = 0;
 		byte[] buffer = new byte[8192];
 		while (n != -1) {
@@ -33,9 +49,9 @@ public class HashingUtil {
 		return toHexString(urlBytes);
 	}
 
-	public static void performPackCheck(String url, String hash, TriConsumer<String, String, Boolean> consumer) throws Exception {
+	public static ResourcePackURLData performPackCheck(String url, String hash, Consumer<Integer> size) throws Exception {
 		// This is not done async on purpose. We don't want the server to start without having checked this first.
-		final String urlCheckHash = getHashFromUrl(url);
-		consumer.accept(urlCheckHash, hash, urlCheckHash.equalsIgnoreCase(hash));
+		final String urlCheckHash = getHashFromUrl(url, size);
+		return new ResourcePackURLData(urlCheckHash, hash);
 	}
 }

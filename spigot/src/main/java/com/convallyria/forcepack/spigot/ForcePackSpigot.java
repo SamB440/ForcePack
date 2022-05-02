@@ -3,7 +3,9 @@ package com.convallyria.forcepack.spigot;
 import co.aikar.commands.PaperCommandManager;
 import com.convallyria.forcepack.api.ForcePackAPI;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
+import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.api.utils.HashingUtil;
+import com.convallyria.forcepack.api.verification.ResourcePackURLData;
 import com.convallyria.forcepack.spigot.command.ForcePackCommand;
 import com.convallyria.forcepack.spigot.listener.ResourcePackListener;
 import com.convallyria.forcepack.spigot.resourcepack.SpigotResourcePack;
@@ -11,6 +13,7 @@ import com.convallyria.forcepack.spigot.translation.Translations;
 import com.convallyria.languagy.api.language.Translator;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 import org.bukkit.plugin.PluginManager;
@@ -73,7 +76,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         if (getConfig().getBoolean("Server.ResourcePack.generate-hash")) {
             getLogger().info("Auto-generating ResourcePack hash.");
             try {
-                hash = HashingUtil.getHashFromUrl(url);
+                hash = HashingUtil.getHashFromUrl(url, size -> getLogger().info("Downloading " + size + " MB for generation..."));
                 getLogger().info("Auto-generated ResourcePack hash: " + hash);
             } catch (Exception e) {
                 getLogger().log(Level.SEVERE, "Unable to auto-generate ResourcePack hash, reverting to config setting", e);
@@ -82,16 +85,33 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
         if (getConfig().getBoolean("Server.verify")) {
             try {
-                HashingUtil.performPackCheck(url, hash, (urlHash, configHash, match) -> {
-                    if (!match) {
-                        this.getLogger().severe("-----------------------------------------------");
-                        this.getLogger().severe("Your hash does not match the URL file provided!");
-                        this.getLogger().severe("The URL hash returned: " + urlHash);
-                        this.getLogger().severe("Your config hash returned: " + configHash);
-                        this.getLogger().severe("Please provide a correct SHA-1 hash!");
-                        this.getLogger().severe("-----------------------------------------------");
+                final ResourcePackURLData data = HashingUtil.performPackCheck(url, hash, size -> {
+                    getLogger().info("Performing version size check...");
+                    for (ClientVersion clientVersion : ClientVersion.values()) {
+                        String sizeStr = clientVersion.getDisplay() + " (" + clientVersion.getMaxSizeMB() + " MB): ";
+                        if (clientVersion.getMaxSizeMB() < size) {
+                            // Paper support - use console sender for colour
+                            Bukkit.getConsoleSender().sendMessage(ChatColor.RED + sizeStr + "Unsupported.");
+                        } else {
+                            // Paper support - use console sender for colour
+                            Bukkit.getConsoleSender().sendMessage(ChatColor.GREEN + sizeStr + "Supported.");
+                        }
                     }
+
+                    getLogger().info("Downloading " + size + " MB for verification...");
                 });
+
+                if (!data.match()) {
+                    this.getLogger().severe("-----------------------------------------------");
+                    this.getLogger().severe("Your hash does not match the URL file provided!");
+                    this.getLogger().severe("The URL hash returned: " + data.getUrlHash());
+                    this.getLogger().severe("Your config hash returned: " + data.getConfigHash());
+                    this.getLogger().severe("Please provide a correct SHA-1 hash!");
+                    this.getLogger().severe("-----------------------------------------------");
+                } else {
+                    // Paper support - use console sender for colour
+                    Bukkit.getConsoleSender().sendMessage(ChatColor.GREEN + "Hash verification complete.");
+                }
             } catch (Exception e) {
                 this.getLogger().severe("Please provide a correct SHA-1 hash/url!");
                 e.printStackTrace();
