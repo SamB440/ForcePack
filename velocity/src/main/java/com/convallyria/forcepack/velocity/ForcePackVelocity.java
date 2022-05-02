@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -109,6 +110,7 @@ public class ForcePackVelocity implements ForcePackAPI {
         if (enableUnload) {
             final String url = unloadPack.getString("url");
             final String hash = unloadPack.getString("hash");
+
             final VelocityResourcePack resourcePack = new VelocityResourcePack(this, EMPTY_SERVER_NAME, url, hash);
             resourcePacks.add(resourcePack);
         }
@@ -119,6 +121,22 @@ public class ForcePackVelocity implements ForcePackAPI {
             final VelocityConfig resourcePack = serverConfig.getConfig("resourcepack");
             final String url = resourcePack.getString("url");
             String hash = resourcePack.getString("hash");
+
+            List<String> validUrlEndings = Arrays.asList(".zip", ".zip?dl=1");
+            boolean hasEnding = false;
+            for (String validUrlEnding : validUrlEndings) {
+                if (url.endsWith(validUrlEnding)) {
+                    hasEnding = true;
+                    break;
+                }
+            }
+
+            if (!hasEnding) {
+                getLogger().error("Your URL has an invalid or unknown format. " +
+                        "URLs must have no redirects and use the .zip extension. If you are using Dropbox, change ?dl=0 to ?dl=1.");
+                getLogger().error("ForcePack will still load in the event this check is incorrect. Please make an issue or pull request if this is so.");
+            }
+
             if (resourcePack.getBoolean("generate-hash", false)) {
                 getLogger().info("Auto-generating ResourcePack hash.");
                 try {
@@ -133,7 +151,7 @@ public class ForcePackVelocity implements ForcePackAPI {
 
         final boolean verifyPacks = getConfig().getBoolean("verify-resource-packs");
         if (!verifyPacks) {
-            server.sendMessage(Component.text("Loaded " + resourcePacks.size() + " resource packs without verification.").color(NamedTextColor.GREEN));
+            logger.info("Loaded " + resourcePacks.size() + " resource packs without verification.");
             return;
         }
 
@@ -147,11 +165,9 @@ public class ForcePackVelocity implements ForcePackAPI {
                     for (ClientVersion clientVersion : ClientVersion.values()) {
                         String sizeStr = clientVersion.getDisplay() + " (" + clientVersion.getMaxSizeMB() + " MB): ";
                         if (clientVersion.getMaxSizeMB() < size) {
-                            // Paper support - use console sender for colour
-                            server.sendMessage(Component.text(sizeStr + "Unsupported.").color(NamedTextColor.RED));
+                            logger.info(sizeStr + "Unsupported.");
                         } else {
-                            // Paper support - use console sender for colour
-                            server.sendMessage(Component.text(sizeStr + "Supported.").color(NamedTextColor.GREEN));
+                            logger.info(sizeStr + "Supported.");
                         }
                     }
 

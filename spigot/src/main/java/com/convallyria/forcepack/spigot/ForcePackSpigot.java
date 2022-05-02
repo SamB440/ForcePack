@@ -21,6 +21,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,8 +71,23 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
     }
 
     public boolean reload() {
-        final String url = getConfig().getString("Server.ResourcePack.url");
+        final String url = getConfig().getString("Server.ResourcePack.url", "");
         String hash = getConfig().getString("Server.ResourcePack.hash");
+
+        List<String> validUrlEndings = Arrays.asList(".zip", ".zip?dl=1");
+        boolean hasEnding = false;
+        for (String validUrlEnding : validUrlEndings) {
+            if (url.endsWith(validUrlEnding)) {
+                hasEnding = true;
+                break;
+            }
+        }
+
+        if (!hasEnding) {
+            getLogger().severe("Your URL has an invalid or unknown format. " +
+                    "URLs must have no redirects and use the .zip extension. If you are using Dropbox, change ?dl=0 to ?dl=1.");
+            getLogger().severe("ForcePack will still load in the event this check is incorrect. Please make an issue or pull request if this is so.");
+        }
 
         if (getConfig().getBoolean("Server.ResourcePack.generate-hash")) {
             getLogger().info("Auto-generating ResourcePack hash.");
