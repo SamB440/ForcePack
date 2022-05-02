@@ -39,6 +39,7 @@ public class ForcePackCommand extends BaseCommand {
     @CommandPermission("forcepack.reload")
     public void onReload(CommandSender sender) {
         sender.sendMessage(ChatColor.GREEN + "Reloading...");
+        plugin.reloadConfig();
         plugin.reload();
         for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
             if (plugin.getWaiting().containsKey(onlinePlayer.getUniqueId())) continue;
