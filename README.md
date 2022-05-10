@@ -43,7 +43,8 @@ You can find the Spigot resource at: https://www.spigotmc.org/resources/forcepac
 - RGB support, also via MiniMessage on Velocity
 - Prevent failed downloads from bypassing the resource pack
 - Geyser support to ignore bedrock players
-- SHA-1 pack verification
+- Per-client version maximum size verification
+- SHA-1 and URL pack verification
 - SHA-1 Auto-generation
 - Per-server support on Velocity
 - Live reloading with resource pack updating
