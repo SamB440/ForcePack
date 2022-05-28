@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
@@ -73,6 +74,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
     public boolean reload() {
         final String url = getConfig().getString("Server.ResourcePack.url", "");
         String hash = getConfig().getString("Server.ResourcePack.hash");
+        AtomicInteger sizeMB = new AtomicInteger();
 
         List<String> validUrlEndings = Arrays.asList(".zip", ".zip?dl=1");
         boolean hasEnding = false;
@@ -92,7 +94,10 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         if (getConfig().getBoolean("Server.ResourcePack.generate-hash")) {
             getLogger().info("Auto-generating ResourcePack hash.");
             try {
-                hash = HashingUtil.getHashFromUrl(url, size -> getLogger().info("Downloading " + size + " MB for generation..."));
+                hash = HashingUtil.getHashFromUrl(url, size -> {
+                    getLogger().info("Downloading " + size + " MB for generation...");
+                    sizeMB.set(size);
+                });
                 getLogger().info("Auto-generated ResourcePack hash: " + hash);
             } catch (Exception e) {
                 getLogger().log(Level.SEVERE, "Unable to auto-generate ResourcePack hash, reverting to config setting", e);
@@ -114,6 +119,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
                         }
                     }
 
+                    sizeMB.set(size);
                     getLogger().info("Downloading " + size + " MB for verification...");
                 });
 
@@ -144,7 +150,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
             getLogger().warning("Your server version does not support prompt text.");
         }
 
-        resourcePack = new SpigotResourcePack(this, url, hash);
+        resourcePack = new SpigotResourcePack(this, url, hash, sizeMB.get());
         return true;
     }
 

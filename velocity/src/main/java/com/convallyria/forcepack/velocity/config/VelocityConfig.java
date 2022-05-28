@@ -4,6 +4,7 @@ import com.convallyria.forcepack.velocity.ForcePackVelocity;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.toml.TomlFormat;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,6 +34,7 @@ public class VelocityConfig {
         this.file = file;
     }
 
+    @Nullable
     public Object get(String path) {
         Object obj = config.get(path);
         if (obj instanceof CommentedConfig) {
@@ -63,6 +65,7 @@ public class VelocityConfig {
         config.remove(path);
     }
 
+    @Nullable
     public String getString(String path) {
         return config.get(path);
     }

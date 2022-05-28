@@ -15,8 +15,8 @@ public final class VelocityResourcePack extends ResourcePack {
     private final ForcePackVelocity velocityPlugin;
     private final String server;
 
-    public VelocityResourcePack(final ForcePackVelocity plugin, final String server, String url, String hash) {
-        super(plugin, url, hash);
+    public VelocityResourcePack(final ForcePackVelocity plugin, final String server, String url, String hash, int size) {
+        super(plugin, url, hash, size);
         this.velocityPlugin = plugin;
         this.server = server;
     }

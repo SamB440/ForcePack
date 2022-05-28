@@ -13,8 +13,8 @@ public final class SpigotResourcePack extends ResourcePack {
     private final ForcePackSpigot spigotPlugin;
     private boolean hasWarned;
 
-    public SpigotResourcePack(final ForcePackSpigot plugin, String url, String hash) {
-        super(plugin, url, hash);
+    public SpigotResourcePack(final ForcePackSpigot plugin, String url, String hash, int size) {
+        super(plugin, url, hash, size);
         this.spigotPlugin = plugin;
     }
 

@@ -1,5 +1,6 @@
 package com.convallyria.forcepack.velocity.handler;
 
+import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.velocitypowered.api.proxy.Player;
@@ -22,6 +23,14 @@ public final class PackHandler {
 
     public void setPack(final Player player, final ServerInfo serverInfo) {
         plugin.getPackByServer(serverInfo.getName()).ifPresentOrElse(resourcePack -> {
+            final int protocol = player.getProtocolVersion().getProtocol();
+            final int maxSize = ClientVersion.getMaxSizeForVersion(protocol);
+            final boolean forceSend = plugin.getConfig().getBoolean("force-invalid-size", false);
+            if (!forceSend && resourcePack.getSize() > maxSize) {
+                plugin.log(String.format("Not sending pack to %s because of excessive size for version %d (%dMB, %dMB).", player.getUsername(), protocol, resourcePack.getSize(), maxSize));
+                return;
+            }
+
             // Check if they already have this ResourcePack applied.
             final ResourcePackInfo appliedResourcePack = player.getAppliedResourcePack();
             if (appliedResourcePack != null) {
@@ -33,7 +42,6 @@ public final class PackHandler {
 
             // There is a bug in velocity when connecting to another server, where the prompt screen
             // will be forcefully closed by the server if we don't delay it for a second.
-            final int protocol = player.getProtocolVersion().getProtocol();
             final boolean update = plugin.getConfig().getBoolean("update-gui", true);
             AtomicReference<ScheduledTask> task = new AtomicReference<>();
             final Scheduler.TaskBuilder builder = plugin.getServer().getScheduler().buildTask(plugin, () -> {

@@ -31,6 +31,8 @@ Server:
   verify: true
   # Should we resend the resource pack on reload? Any players that have already accepted will receive the updated one.
   resend: true
+  # Should we forcefully send a resource pack that has an invalid size for the player's client version? (requires ViaVersion)
+  force-invalid-size: false
   # Whether to ignore geyser players. Only enable this if you use geyser.
   #  Java clients can spoof this and bypass the ResourcePack!
   geyser: false

@@ -1,6 +1,7 @@
 package com.convallyria.forcepack.spigot.listener;
 
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
+import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.forcepack.spigot.translation.Translations;
@@ -80,6 +81,13 @@ public class ResourcePackListener implements Listener {
 
             final boolean viaversion = Bukkit.getPluginManager().isPluginEnabled("ViaVersion");
             final int version = viaversion ? Via.getAPI().getPlayerVersion(player) : 393; // 393 is 1.13 - default to this
+            final int maxSize = ClientVersion.getMaxSizeForVersion(version);
+            final boolean forceSend = getConfig().getBoolean("Server.force-invalid-size");
+            if (!forceSend && pack.getSize() > maxSize) {
+                if (plugin.debug()) plugin.getLogger().info(String.format("Not sending pack to %s because of excessive size for version %d (%dMB, %dMB).", player.getName(), version, pack.getSize(), maxSize));
+                return;
+            }
+
             if (getConfig().getBoolean("Server.Update GUI") && version <= 340) { // 340 is 1.12
                 scheduler.setTask(Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, packTask,
                         0L, getConfig().getInt("Server.Update GUI Speed", 20)));

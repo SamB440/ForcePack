@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Plugin(
         id = "forcepack",
@@ -111,9 +112,11 @@ public class ForcePackVelocity implements ForcePackAPI {
             final String url = unloadPack.getString("url");
             final String hash = unloadPack.getString("hash");
 
-            final VelocityResourcePack resourcePack = new VelocityResourcePack(this, EMPTY_SERVER_NAME, url, hash);
+            final VelocityResourcePack resourcePack = new VelocityResourcePack(this, EMPTY_SERVER_NAME, url, hash, 0);
             resourcePacks.add(resourcePack);
         }
+
+        final boolean verifyPacks = getConfig().getBoolean("verify-resource-packs");
 
         final VelocityConfig servers = getConfig().getConfig("servers");
         for (String serverName : servers.getKeys()) {
@@ -121,6 +124,7 @@ public class ForcePackVelocity implements ForcePackAPI {
             final VelocityConfig resourcePack = serverConfig.getConfig("resourcepack");
             final String url = resourcePack.getString("url");
             String hash = resourcePack.getString("hash");
+            AtomicInteger sizeInMB = new AtomicInteger();
 
             List<String> validUrlEndings = Arrays.asList(".zip", ".zip?dl=1");
             boolean hasEnding = false;
@@ -140,56 +144,57 @@ public class ForcePackVelocity implements ForcePackAPI {
             if (resourcePack.getBoolean("generate-hash", false)) {
                 getLogger().info("Auto-generating ResourcePack hash.");
                 try {
-                    hash = HashingUtil.getHashFromUrl(url, size -> getLogger().info("Downloading " + size + " MB for generation..."));
+                    hash = HashingUtil.getHashFromUrl(url, size -> {
+                        getLogger().info("Downloading " + size + " MB for generation...");
+                        sizeInMB.set(size);
+                    });
                     getLogger().info("Auto-generated ResourcePack hash: " + hash);
                 } catch (Exception e) {
                     getLogger().error("Unable to auto-generate ResourcePack hash, reverting to config setting", e);
                 }
             }
-            resourcePacks.add(new VelocityResourcePack(this, serverName, url, hash));
+
+            if (verifyPacks) {
+                try {
+                    final ResourcePackURLData data = HashingUtil.performPackCheck(url, hash, size -> {
+                        getLogger().info("Performing version size check...");
+                        for (ClientVersion clientVersion : ClientVersion.values()) {
+                            String sizeStr = clientVersion.getDisplay() + " (" + clientVersion.getMaxSizeMB() + " MB): ";
+                            if (clientVersion.getMaxSizeMB() < size) {
+                                logger.info(sizeStr + "Unsupported.");
+                            } else {
+                                logger.info(sizeStr + "Supported.");
+                            }
+                        }
+
+                        sizeInMB.set(size);
+                        getLogger().info("Downloading " + size + " MB for verification...");
+                    });
+
+                    if (!data.match()) {
+                        this.getLogger().error("-----------------------------------------------");
+                        this.getLogger().error("Your hash does not match the URL file provided!");
+                        this.getLogger().error("Target server: " + serverName);
+                        this.getLogger().error("The URL hash returned: " + data.getUrlHash());
+                        this.getLogger().error("Your config hash returned: " + data.getConfigHash());
+                        this.getLogger().error("Please provide a correct SHA-1 hash!");
+                        this.getLogger().error("-----------------------------------------------");
+                        return;
+                    } else {
+                        server.sendMessage(Component.text("Hash verification complete for server " + serverName + ".").color(NamedTextColor.GREEN));
+                    }
+                } catch (Exception e) {
+                    this.getLogger().error("Please provide a correct SHA-1 hash/url!");
+                    e.printStackTrace();
+                }
+            }
+
+            resourcePacks.add(new VelocityResourcePack(this, serverName, url, hash, sizeInMB.get()));
         }
 
-        final boolean verifyPacks = getConfig().getBoolean("verify-resource-packs");
         if (!verifyPacks) {
             logger.info("Loaded " + resourcePacks.size() + " resource packs without verification.");
             return;
-        }
-
-        for (ResourcePack resourcePack : ImmutableList.copyOf(resourcePacks)) {
-            final String url = resourcePack.getURL();
-            final String hash = resourcePack.getHash();
-            final String serverName = resourcePack.getServer();
-            try {
-                final ResourcePackURLData data = HashingUtil.performPackCheck(url, hash, size -> {
-                    getLogger().info("Performing version size check...");
-                    for (ClientVersion clientVersion : ClientVersion.values()) {
-                        String sizeStr = clientVersion.getDisplay() + " (" + clientVersion.getMaxSizeMB() + " MB): ";
-                        if (clientVersion.getMaxSizeMB() < size) {
-                            logger.info(sizeStr + "Unsupported.");
-                        } else {
-                            logger.info(sizeStr + "Supported.");
-                        }
-                    }
-
-                    getLogger().info("Downloading " + size + " MB for verification...");
-                });
-
-                if (!data.match()) {
-                    this.getLogger().error("-----------------------------------------------");
-                    this.getLogger().error("Your hash does not match the URL file provided!");
-                    this.getLogger().error("Target server: " + serverName);
-                    this.getLogger().error("The URL hash returned: " + data.getUrlHash());
-                    this.getLogger().error("Your config hash returned: " + data.getConfigHash());
-                    this.getLogger().error("Please provide a correct SHA-1 hash!");
-                    this.getLogger().error("-----------------------------------------------");
-                    resourcePacks.remove(resourcePack);
-                } else {
-                    server.sendMessage(Component.text("Hash verification complete for server " + serverName + ".").color(NamedTextColor.GREEN));
-                }
-            } catch (Exception e) {
-                this.getLogger().error("Please provide a correct SHA-1 hash/url!");
-                e.printStackTrace();
-            }
         }
 
         server.sendMessage(Component.text("Loaded " + resourcePacks.size() + " verified resource packs.").color(NamedTextColor.GREEN));

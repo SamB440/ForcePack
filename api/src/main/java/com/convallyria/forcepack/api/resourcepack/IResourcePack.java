@@ -30,6 +30,12 @@ public interface IResourcePack {
     public byte[] getHashSum();
 
     /**
+     * Gets the size, in megabytes, of this ResourcePack.
+     * @return size in megabytes of this ResourcePack
+     */
+    public int getSize();
+
+    /**
      * Attempts to apply the ResourcePack to the specified player.
      * This will use the appropriate method for the current platform and version.
      * @param player player's UUID

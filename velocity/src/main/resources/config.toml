@@ -17,6 +17,9 @@ update-gui = true
 # The update speed of the GUI in milliseconds
 update-gui-speed = 1000
 
+# Should we forcefully send a resource pack that has an invalid size for the player's client version?
+force-invalid-size = false
+
 # Whether to enable the bypass permission. If you disable this, all OPs will no longer be able to bypass.
 # But you should really fix your permissions instead.
 bypass-permission = true
