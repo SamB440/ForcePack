@@ -36,7 +36,13 @@ public final class VelocityResourcePack extends ResourcePack {
                 .setHash(getHashSum())
                 .setShouldForce(true);
 
-        final VelocityConfig serverConfig = velocityPlugin.getConfig().getConfig("servers").getConfig(server);
+        final VelocityConfig serverConfig;
+        if (server.equals(ForcePackVelocity.GLOBAL_SERVER_NAME)) {
+            serverConfig = velocityPlugin.getConfig().getConfig("global-pack");
+        } else {
+            serverConfig = velocityPlugin.getConfig().getConfig("servers").getConfig(server);
+        }
+
         if (serverConfig != null) {
             final String promptText = serverConfig.getConfig("resourcepack").getString("prompt");
             final Component promptComponent = velocityPlugin.getMiniMessage().deserialize(promptText);

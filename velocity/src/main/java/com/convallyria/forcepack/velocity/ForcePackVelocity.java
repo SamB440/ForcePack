@@ -10,7 +10,6 @@ import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.convallyria.forcepack.velocity.handler.PackHandler;
 import com.convallyria.forcepack.velocity.listener.ResourcePackListener;
 import com.convallyria.forcepack.velocity.resourcepack.VelocityResourcePack;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.command.CommandMeta;
@@ -24,6 +23,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bstats.velocity.Metrics;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Plugin(
         id = "forcepack",
         name = "ForcePack",
-        version = "1.1.9",
+        version = "1.2.1",
         description = "Force players to use your server resource pack.",
         url = "https://www.convallyria.com",
         authors = {"SamB440"}
@@ -47,6 +47,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ForcePackVelocity implements ForcePackAPI {
 
     public static final String EMPTY_SERVER_NAME = "ForcePack-Empty-Server";
+    public static final String GLOBAL_SERVER_NAME = "ForcePack-Global-Server";
 
     private final ProxyServer server;
     private final Logger logger;
@@ -65,6 +66,7 @@ public class ForcePackVelocity implements ForcePackAPI {
 
     private VelocityConfig config;
     private PackHandler packHandler;
+    private @Nullable ResourcePack globalResourcePack;
     private final List<ResourcePack> resourcePacks = new ArrayList<>();
 
     @Subscribe
@@ -114,6 +116,19 @@ public class ForcePackVelocity implements ForcePackAPI {
 
             final VelocityResourcePack resourcePack = new VelocityResourcePack(this, EMPTY_SERVER_NAME, url, hash, 0);
             resourcePacks.add(resourcePack);
+        }
+
+        final VelocityConfig globalPack = getConfig().getConfig("global-pack");
+        if (globalPack != null) {
+            final boolean enableGlobal = globalPack.getBoolean("enable");
+            if (enableGlobal) {
+                final String url = globalPack.getString("url");
+                final String hash = globalPack.getString("hash");
+
+                final VelocityResourcePack resourcePack = new VelocityResourcePack(this, GLOBAL_SERVER_NAME, url, hash, 0);
+                resourcePacks.add(resourcePack);
+                globalResourcePack = resourcePack;
+            }
         }
 
         final boolean verifyPacks = getConfig().getBoolean("verify-resource-packs");
@@ -227,6 +242,11 @@ public class ForcePackVelocity implements ForcePackAPI {
                 return Optional.of(resourcePack);
             }
         }
+
+        if (globalResourcePack != null) {
+            return Optional.of(globalResourcePack);
+        }
+
         return Optional.empty();
     }
 

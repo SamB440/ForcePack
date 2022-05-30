@@ -1,5 +1,6 @@
 package com.convallyria.forcepack.velocity.listener;
 
+import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
@@ -35,7 +36,8 @@ public class ResourcePackListener {
 
         // Check if the server they're on has a resource pack
         final String serverName = currentServer.get().getServerInfo().getName();
-        if (plugin.getPackByServer(serverName).isEmpty()) {
+        final Optional<ResourcePack> packByServer = plugin.getPackByServer(serverName);
+        if (packByServer.isEmpty()) {
             plugin.log(serverName + " does not have a ResourcePack, ignoring.");
             return;
         }
@@ -46,7 +48,14 @@ public class ResourcePackListener {
         if (!canBypass && !geyser) {
             plugin.log(player.getUsername() + " sent status: " + event.getStatus());
 
-            final VelocityConfig actions = plugin.getConfig().getConfig("servers").getConfig(serverName).getConfig("actions").getConfig(status.name());
+            final VelocityConfig root;
+            if (packByServer.get().getServer().equals(ForcePackVelocity.GLOBAL_SERVER_NAME)) {
+                root = plugin.getConfig().getConfig("global-pack");
+            } else {
+                root = plugin.getConfig().getConfig("servers").getConfig(serverName);
+            }
+
+            final VelocityConfig actions = root.getConfig("actions").getConfig(status.name());
             for (String cmd : actions.getStringList("commands")) {
                 final CommandSource console = plugin.getServer().getConsoleCommandSource();
                 plugin.getServer().getCommandManager().executeAsync(console, cmd);
