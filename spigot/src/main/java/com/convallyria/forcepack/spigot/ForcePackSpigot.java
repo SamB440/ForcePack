@@ -8,6 +8,7 @@ import com.convallyria.forcepack.api.utils.HashingUtil;
 import com.convallyria.forcepack.api.verification.ResourcePackURLData;
 import com.convallyria.forcepack.spigot.command.ForcePackCommand;
 import com.convallyria.forcepack.spigot.listener.ResourcePackListener;
+import com.convallyria.forcepack.spigot.listener.VelocityMessageListener;
 import com.convallyria.forcepack.spigot.resourcepack.SpigotResourcePack;
 import com.convallyria.forcepack.spigot.translation.Translations;
 import com.convallyria.languagy.api.language.Translator;
@@ -33,6 +34,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
     private Translator translator;
     private ResourcePack resourcePack;
+    public boolean velocityMode;
 
     @Override
     public List<ResourcePack> getResourcePacks() {
@@ -49,6 +51,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
     public void onEnable() {
         this.generateLang();
         this.createConfig();
+        this.velocityMode = getConfig().getBoolean("velocity-mode");
         this.registerListeners();
         this.registerCommands();
         this.translator = Translator.of(this).debug(debug());
@@ -72,6 +75,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
     }
 
     public boolean reload() {
+        if (velocityMode) return true;
         final String url = getConfig().getString("Server.ResourcePack.url", "");
         String hash = getConfig().getString("Server.ResourcePack.hash");
         AtomicInteger sizeMB = new AtomicInteger();
@@ -156,6 +160,11 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
     private void registerListeners() {
         PluginManager pm = Bukkit.getPluginManager();
+        if (velocityMode) {
+            getLogger().info("Enabled velocity listener");
+            this.getServer().getMessenger().registerIncomingPluginChannel(this, "forcepack:status", new VelocityMessageListener(this));
+        }
+
         pm.registerEvents(new ResourcePackListener(this), this);
     }
 

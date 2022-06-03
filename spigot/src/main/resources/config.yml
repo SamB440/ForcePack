@@ -1,3 +1,11 @@
+# If this is enabled, the plugin will be used purely for further compatibility with your Velocity proxy.
+# This is required for the prevent-movement feature.
+# Actions (excluding kicks) will still take place. Bypass permissions will also still be enabled.
+velocity-mode: false
+
+# If this is true, movement will be prevented until the resource pack is loaded.
+prevent-movement: true
+
 Server:
   ResourcePack:
     # The ResourcePack URL. This must be a direct URL, ending with .zip. For Dropbox URLs, add ?dl=1 to the end.

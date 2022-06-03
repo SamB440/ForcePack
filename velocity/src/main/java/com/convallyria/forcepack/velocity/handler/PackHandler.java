@@ -9,16 +9,25 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 import com.velocitypowered.api.scheduler.ScheduledTask;
 import com.velocitypowered.api.scheduler.Scheduler;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class PackHandler {
 
     private final ForcePackVelocity plugin;
+    private final List<UUID> applying;
 
     public PackHandler(final ForcePackVelocity plugin) {
         this.plugin = plugin;
+        this.applying = new ArrayList<>();
+    }
+
+    public List<UUID> getApplying() {
+        return applying;
     }
 
     public void setPack(final Player player, final ServerInfo serverInfo) {
@@ -47,6 +56,7 @@ public final class PackHandler {
             AtomicReference<ScheduledTask> task = new AtomicReference<>();
             final Scheduler.TaskBuilder builder = plugin.getServer().getScheduler().buildTask(plugin, () -> {
                 if (player.getAppliedResourcePack() != null) {
+                    // Check the pack they have applied now is the one we're looking for.
                     if (Arrays.equals(player.getAppliedResourcePack().getHash(), resourcePack.getHashSum())) {
                        if (task.get() != null) task.get().cancel();
                     }
@@ -58,6 +68,7 @@ public final class PackHandler {
                 final long speed = plugin.getConfig().getLong("update-gui-speed", 1000);
                 builder.repeat(speed, TimeUnit.MILLISECONDS);
             }
+            applying.add(player.getUniqueId());
             task.set(builder.schedule());
         }, () -> {
             // This server doesn't have a pack set - send unload pack if enabled and if they already have one

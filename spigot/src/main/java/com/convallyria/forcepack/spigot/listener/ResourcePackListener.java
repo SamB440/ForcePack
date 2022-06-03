@@ -13,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 
@@ -40,6 +41,9 @@ public class ResourcePackListener implements Listener {
                 ensureMainThread(() -> Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("[player]", player.getName())));
             }
 
+            // Don't execute kicks - handled by proxy
+            if (plugin.velocityMode) return;
+
             final boolean kick = getConfig().getBoolean("Server.Actions." + status.name() + ".kick");
 
             switch (status) {
@@ -62,12 +66,28 @@ public class ResourcePackListener implements Listener {
         }
     }
 
+    @EventHandler(ignoreCancelled = true)
+    public void onMove(PlayerMoveEvent event) {
+        if (!plugin.getConfig().getBoolean("prevent-movement")) return;
+
+        final Player player = event.getPlayer();
+        if (plugin.getWaiting().containsKey(player.getUniqueId())) {
+            event.setCancelled(true);
+            plugin.log("Cancelled movement for player '" + player.getName() + "' due to resource pack not applied.");
+        }
+    }
+
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
         boolean canBypass = player.hasPermission("ForcePack.bypass") && getConfig().getBoolean("Server.bypass-permission");
         if (!canBypass && !geyser) {
+            if (plugin.velocityMode) {
+                plugin.getWaiting().put(player.getUniqueId(), null);
+                return;
+            }
+
             final ResourcePack pack = plugin.getResourcePacks().get(0);
             plugin.getWaiting().put(player.getUniqueId(), pack);
             Scheduler scheduler = new Scheduler();

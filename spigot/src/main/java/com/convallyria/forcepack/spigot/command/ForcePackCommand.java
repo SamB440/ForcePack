@@ -41,11 +41,14 @@ public class ForcePackCommand extends BaseCommand {
         sender.sendMessage(ChatColor.GREEN + "Reloading...");
         plugin.reloadConfig();
         plugin.reload();
-        for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-            if (plugin.getWaiting().containsKey(onlinePlayer.getUniqueId())) continue;
-            Translations.RELOADING.send(onlinePlayer);
-            plugin.getResourcePacks().get(0).setResourcePack(onlinePlayer.getUniqueId());
+        if (!plugin.velocityMode) {
+            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                if (plugin.getWaiting().containsKey(onlinePlayer.getUniqueId())) continue;
+                Translations.RELOADING.send(onlinePlayer);
+                plugin.getResourcePacks().get(0).setResourcePack(onlinePlayer.getUniqueId());
+            }
         }
+
         sender.sendMessage(ChatColor.GREEN + "Done!");
     }
 }

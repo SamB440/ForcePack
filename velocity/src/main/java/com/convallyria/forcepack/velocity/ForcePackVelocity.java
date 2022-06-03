@@ -15,9 +15,12 @@ import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.event.EventManager;
 import com.velocitypowered.api.event.Subscribe;
+import com.velocitypowered.api.event.command.CommandExecuteEvent;
+import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -98,6 +101,19 @@ public class ForcePackVelocity implements ForcePackAPI {
     private void registerListeners() {
         final EventManager eventManager = server.getEventManager();
         eventManager.register(this, new ResourcePackListener(this));
+
+        if (!getConfig().getBoolean("disable-commands-until-loaded", false)) return;
+        eventManager.register(this, CommandExecuteEvent.class, event -> {
+            if (event.getCommandSource() instanceof Player) {
+                Player player = (Player) event.getCommandSource();
+                final String command = event.getCommand();
+                if (getConfig().getStringList("exclude-commands").contains(command)) return;
+                if (packHandler.getApplying().contains(player.getUniqueId())) {
+                    log("Stopping command '%s' because player has not loaded the resource pack yet.", command);
+                    event.setResult(CommandExecuteEvent.CommandResult.denied());
+                }
+            }
+        });
     }
 
     private void registerCommands() {
@@ -261,7 +277,7 @@ public class ForcePackVelocity implements ForcePackAPI {
         return this.miniMessage = MiniMessage.miniMessage();
     }
 
-    public void log(String info) {
-        if (this.getConfig().getBoolean("debug")) this.getLogger().info(info);
+    public void log(String info, Object... format) {
+        if (this.getConfig().getBoolean("debug")) this.getLogger().info(String.format(info, format));
     }
 }

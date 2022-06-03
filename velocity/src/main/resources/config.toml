@@ -23,6 +23,15 @@ force-invalid-size = false
 # If this is true, resource packs will always be sent to the player even if they already seem to have the same resource pack.
 force-constant-download = false
 
+# If this is true, a player will not be able to execute any commands until the resource pack is loaded.
+disable-commands-until-loaded = false
+
+# A list of commands that can be executed anyway if disable-commands-until-loaded is true.
+exclude-commands = [
+   "exampleone",
+   "exampletwo",
+]
+
 # Whether to enable the bypass permission. If you disable this, all OPs will no longer be able to bypass.
 # But you should really fix your permissions instead.
 bypass-permission = true
