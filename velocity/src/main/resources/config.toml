@@ -20,6 +20,9 @@ update-gui-speed = 1000
 # Should we forcefully send a resource pack that has an invalid size for the player's client version?
 force-invalid-size = false
 
+# If this is true, resource packs will always be sent to the player even if they already seem to have the same resource pack.
+force-constant-download = false
+
 # Whether to enable the bypass permission. If you disable this, all OPs will no longer be able to bypass.
 # But you should really fix your permissions instead.
 bypass-permission = true
