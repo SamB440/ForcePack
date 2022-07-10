@@ -76,6 +76,10 @@ public final class PackHandler {
             final VelocityConfig unloadPack = plugin.getConfig().getConfig("unload-pack");
             final boolean enableUnload = unloadPack.getBoolean("enable");
             if (!enableUnload) return;
+
+            final List<String> excluded = unloadPack.getStringList("exclude");
+            if (excluded.contains(serverInfo.getName())) return;
+
             plugin.getPackByServer(ForcePackVelocity.EMPTY_SERVER_NAME).ifPresent(empty -> empty.setResourcePack(player.getUniqueId()));
         });
     }
