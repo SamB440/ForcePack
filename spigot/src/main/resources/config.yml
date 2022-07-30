@@ -6,6 +6,9 @@ velocity-mode: false
 # If this is true, movement will be prevented until the resource pack is loaded.
 prevent-movement: true
 
+# If this is true, damage will be prevented to players currently loading the resource pack.
+prevent-damage: true
+
 Server:
   ResourcePack:
     # The ResourcePack URL. This must be a direct URL, ending with .zip. For Dropbox URLs, add ?dl=1 to the end.

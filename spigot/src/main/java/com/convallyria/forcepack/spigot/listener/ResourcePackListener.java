@@ -66,17 +66,6 @@ public class ResourcePackListener implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
-    public void onMove(PlayerMoveEvent event) {
-        if (!plugin.getConfig().getBoolean("prevent-movement")) return;
-
-        final Player player = event.getPlayer();
-        if (plugin.getWaiting().containsKey(player.getUniqueId())) {
-            event.setCancelled(true);
-            plugin.log("Cancelled movement for player '" + player.getName() + "' due to resource pack not applied.");
-        }
-    }
-
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();

@@ -7,6 +7,7 @@ import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.api.utils.HashingUtil;
 import com.convallyria.forcepack.api.verification.ResourcePackURLData;
 import com.convallyria.forcepack.spigot.command.ForcePackCommand;
+import com.convallyria.forcepack.spigot.listener.ExemptionListener;
 import com.convallyria.forcepack.spigot.listener.ResourcePackListener;
 import com.convallyria.forcepack.spigot.listener.VelocityMessageListener;
 import com.convallyria.forcepack.spigot.resourcepack.SpigotResourcePack;
@@ -166,6 +167,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         }
 
         pm.registerEvents(new ResourcePackListener(this), this);
+        pm.registerEvents(new ExemptionListener(this), this);
     }
 
     private void registerCommands() {
