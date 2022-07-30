@@ -18,6 +18,6 @@ public class ResourcePackURLData {
     }
 
     public boolean match() {
-        return urlHash.equals(configHash);
+        return urlHash.equalsIgnoreCase(configHash);
     }
 }
