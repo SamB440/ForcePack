@@ -16,7 +16,7 @@ dependencies {
     compileOnly("org.spigotmc:spigot-api:1.18.2-R0.1-SNAPSHOT")
     compileOnly("com.viaversion:viaversion-api:4.1.1")
 
-    implementation("com.convallyria.languagy:api:3.0.0") {
+    implementation("com.convallyria.languagy:api:3.0.1") {
         exclude("com.convallyria.languagy.libs")
     }
     implementation("org.bstats:bstats-bukkit:3.0.0")

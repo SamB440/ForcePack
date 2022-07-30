@@ -12,6 +12,7 @@ import com.convallyria.forcepack.spigot.listener.ResourcePackListener;
 import com.convallyria.forcepack.spigot.listener.VelocityMessageListener;
 import com.convallyria.forcepack.spigot.resourcepack.SpigotResourcePack;
 import com.convallyria.forcepack.spigot.translation.Translations;
+import com.convallyria.languagy.api.language.Language;
 import com.convallyria.languagy.api.language.Translator;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
@@ -55,7 +56,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         this.velocityMode = getConfig().getBoolean("velocity-mode");
         this.registerListeners();
         this.registerCommands();
-        this.translator = Translator.of(this).debug(debug());
+        this.translator = Translator.of(this, "lang", Language.ENGLISH, debug());
 
         // Convert legacy config
         try {
