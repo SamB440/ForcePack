@@ -43,6 +43,10 @@ public class VelocityConfig {
         return obj;
     }
 
+    public CommentedConfig getConfig() {
+        return config;
+    }
+
     public VelocityConfig getConfig(String path) {
         return config.get(path) == null ? null : new VelocityConfig(config.get(path), file);
     }
@@ -92,10 +96,6 @@ public class VelocityConfig {
 
     public Collection<? extends String> getKeys() {
         return new HashSet<>(config.valueMap().keySet());
-    }
-
-    public CommentedConfig getConfig() {
-        return config;
     }
 
     public void save() throws IOException {

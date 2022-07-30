@@ -124,31 +124,10 @@ public class ForcePackVelocity implements ForcePackAPI {
     public void loadResourcePacks() {
         resourcePacks.clear(); // Clear for reloads
 
-        final VelocityConfig unloadPack = getConfig().getConfig("unload-pack");
-        final boolean enableUnload = unloadPack.getBoolean("enable");
-        if (enableUnload) {
-            final String url = unloadPack.getString("url");
-            final String hash = unloadPack.getString("hash");
-
-            final VelocityResourcePack resourcePack = new VelocityResourcePack(this, EMPTY_SERVER_NAME, url, hash, 0);
-            resourcePacks.add(resourcePack);
-        }
-
-        final VelocityConfig globalPack = getConfig().getConfig("global-pack");
-        if (globalPack != null) {
-            final boolean enableGlobal = globalPack.getBoolean("enable");
-            if (enableGlobal) {
-                final String url = globalPack.getString("url");
-                final String hash = globalPack.getString("hash");
-
-                final VelocityResourcePack resourcePack = new VelocityResourcePack(this, GLOBAL_SERVER_NAME, url, hash, 0);
-                resourcePacks.add(resourcePack);
-                globalResourcePack = resourcePack;
-            }
-        }
+        this.checkUnload();
+        this.checkGlobal();
 
         final boolean verifyPacks = getConfig().getBoolean("verify-resource-packs");
-
         final VelocityConfig servers = getConfig().getConfig("servers");
         for (String serverName : servers.getKeys()) {
             final VelocityConfig serverConfig = servers.getConfig(serverName);
@@ -157,33 +136,8 @@ public class ForcePackVelocity implements ForcePackAPI {
             String hash = resourcePack.getString("hash");
             AtomicInteger sizeInMB = new AtomicInteger();
 
-            List<String> validUrlEndings = Arrays.asList(".zip", ".zip?dl=1");
-            boolean hasEnding = false;
-            for (String validUrlEnding : validUrlEndings) {
-                if (url.endsWith(validUrlEnding)) {
-                    hasEnding = true;
-                    break;
-                }
-            }
-
-            if (!hasEnding) {
-                getLogger().error("Your URL has an invalid or unknown format. " +
-                        "URLs must have no redirects and use the .zip extension. If you are using Dropbox, change ?dl=0 to ?dl=1.");
-                getLogger().error("ForcePack will still load in the event this check is incorrect. Please make an issue or pull request if this is so.");
-            }
-
-            if (resourcePack.getBoolean("generate-hash", false)) {
-                getLogger().info("Auto-generating ResourcePack hash.");
-                try {
-                    hash = HashingUtil.getHashFromUrl(url, size -> {
-                        getLogger().info("Downloading " + size + " MB for generation...");
-                        sizeInMB.set(size);
-                    });
-                    getLogger().info("Auto-generated ResourcePack hash: " + hash);
-                } catch (Exception e) {
-                    getLogger().error("Unable to auto-generate ResourcePack hash, reverting to config setting", e);
-                }
-            }
+            this.checkValidEnding(url);
+            hash = this.tryGenerateHash(resourcePack, url, hash, sizeInMB);
 
             if (verifyPacks) {
                 try {
@@ -229,6 +183,67 @@ public class ForcePackVelocity implements ForcePackAPI {
         }
 
         server.sendMessage(Component.text("Loaded " + resourcePacks.size() + " verified resource packs.").color(NamedTextColor.GREEN));
+    }
+
+    private void checkUnload() {
+        final VelocityConfig unloadPack = getConfig().getConfig("unload-pack");
+        final boolean enableUnload = unloadPack.getBoolean("enable");
+        if (enableUnload) {
+            final String url = unloadPack.getString("url");
+            final String hash = unloadPack.getString("hash");
+
+            final VelocityResourcePack resourcePack = new VelocityResourcePack(this, EMPTY_SERVER_NAME, url, hash, 0);
+            resourcePacks.add(resourcePack);
+        }
+    }
+
+    private void checkGlobal() {
+        final VelocityConfig globalPack = getConfig().getConfig("global-pack");
+        if (globalPack != null) {
+            final boolean enableGlobal = globalPack.getBoolean("enable");
+            if (enableGlobal) {
+                final String url = globalPack.getString("url");
+                final String hash = globalPack.getString("hash");
+
+                final VelocityResourcePack resourcePack = new VelocityResourcePack(this, GLOBAL_SERVER_NAME, url, hash, 0);
+                resourcePacks.add(resourcePack);
+                globalResourcePack = resourcePack;
+            }
+        }
+    }
+
+    private void checkValidEnding(String url) {
+        List<String> validUrlEndings = Arrays.asList(".zip", ".zip?dl=1");
+        boolean hasEnding = false;
+        for (String validUrlEnding : validUrlEndings) {
+            if (url.endsWith(validUrlEnding)) {
+                hasEnding = true;
+                break;
+            }
+        }
+
+        if (!hasEnding) {
+            getLogger().error("Your URL has an invalid or unknown format. " +
+                    "URLs must have no redirects and use the .zip extension. If you are using Dropbox, change ?dl=0 to ?dl=1.");
+            getLogger().error("ForcePack will still load in the event this check is incorrect. Please make an issue or pull request if this is so.");
+        }
+    }
+
+    private String tryGenerateHash(VelocityConfig resourcePack, String url, String hash, AtomicInteger sizeInMB) {
+        if (resourcePack.getBoolean("generate-hash", false)) {
+            getLogger().info("Auto-generating ResourcePack hash.");
+            try {
+                hash = HashingUtil.getHashFromUrl(url, size -> {
+                    getLogger().info("Downloading " + size + " MB for generation...");
+                    sizeInMB.set(size);
+                });
+                getLogger().info("Auto-generated ResourcePack hash: " + hash);
+                return hash;
+            } catch (Exception e) {
+                getLogger().error("Unable to auto-generate ResourcePack hash, reverting to config setting", e);
+            }
+        }
+        return hash;
     }
 
     public ProxyServer getServer() {
