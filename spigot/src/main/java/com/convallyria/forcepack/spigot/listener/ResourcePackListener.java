@@ -7,7 +7,10 @@ import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.forcepack.spigot.translation.Translations;
 import com.convallyria.forcepack.spigot.utils.Scheduler;
 import com.viaversion.viaversion.api.Via;
+import com.viaversion.viaversion.libs.kyori.adventure.text.Component;
+import com.viaversion.viaversion.libs.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -17,12 +20,19 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public class ResourcePackListener implements Listener {
 
     private final ForcePackSpigot plugin;
 
+    private final Map<UUID, Long> lastStatus;
+
     public ResourcePackListener(final ForcePackSpigot plugin) {
         this.plugin = plugin;
+        this.lastStatus = new HashMap<>();
     }
 
     @EventHandler
@@ -31,6 +41,15 @@ public class ResourcePackListener implements Listener {
         boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
         boolean canBypass = player.hasPermission("ForcePack.bypass") && getConfig().getBoolean("Server.bypass-permission");
         plugin.log(player.getName() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
+
+        final long diff = System.currentTimeMillis() - lastStatus.getOrDefault(player.getUniqueId(), 0L);
+        this.lastStatus.put(player.getUniqueId(), System.currentTimeMillis());
+
+        if (diff < 300) {
+            player.kickPlayer(ChatColor.RED + "Sending resource pack statuses too fast");
+            return;
+        }
+
         if (!canBypass && !geyser) {
             plugin.getWaiting().remove(player.getUniqueId());
             plugin.log(player.getName() + " sent status: " + event.getStatus());
@@ -59,7 +78,22 @@ public class ResourcePackListener implements Listener {
                 }
                 case SUCCESSFULLY_LOADED: {
                     if (kick) ensureMainThread(() -> player.kickPlayer(Translations.ACCEPTED.get(player)));
-                    else Translations.ACCEPTED.send(player);
+                    else {
+                        if (getConfig().getBoolean("enable-mc-252082-fix-bug-fix")) {
+                            // 1.19.1+ fixes MC-252082 but this introduces another bug:
+                            // If you change just the hash of an updated resource pack file, the client will tell the server
+                            // it accepted and successfully loaded (very fast) even though it fails to apply the pack
+                            // for some reason. Sending again means the pack applies correctly?
+                            if (Bukkit.getPluginManager().getPlugin("ViaVersion") != null) {
+                                if (Via.getAPI().getPlayerVersion(player) >= 760 && diff < 1000) {
+                                    onPlayerJoin(new PlayerJoinEvent(player, null));
+                                    return;
+                                }
+                            }
+                        }
+
+                        Translations.ACCEPTED.send(player);
+                    }
                     break;
                 }
             }
@@ -110,6 +144,7 @@ public class ResourcePackListener implements Listener {
     public void onQuit(PlayerQuitEvent pqe) {
         Player player = pqe.getPlayer();
         plugin.getWaiting().remove(player.getUniqueId());
+        lastStatus.remove(player.getUniqueId());
     }
 
     private void ensureMainThread(Runnable runnable) {

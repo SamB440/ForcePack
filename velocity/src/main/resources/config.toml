@@ -36,6 +36,12 @@ exclude-commands = [
 # But you should really fix your permissions instead.
 bypass-permission = true
 
+# 1.19.1+ fixes MC-252082 but this introduces another bug:
+# If you change just the hash of an updated resource pack file, the client will tell the server
+# it accepted and successfully loaded (very fast) even though it fails to apply the pack
+# for some reason. Sending again means the pack applies correctly?
+enable-mc-252082-fix-bug-fix: false
+
 # Whether to enable debug mode. Prints some extra info.
 debug = false
 
