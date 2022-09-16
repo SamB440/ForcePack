@@ -40,7 +40,7 @@ bypass-permission = true
 # If you change just the hash of an updated resource pack file, the client will tell the server
 # it accepted and successfully loaded (very fast) even though it fails to apply the pack
 # for some reason. Sending again means the pack applies correctly?
-enable-mc-252082-fix-bug-fix: false
+enable-mc-252082-fix-bug-fix = false
 
 # Whether to enable debug mode. Prints some extra info.
 debug = false
