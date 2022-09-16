@@ -4,6 +4,7 @@ repositories {
     maven("https://repo.aikar.co/content/groups/aikar/")
     maven("https://repo.viaversion.com")
     maven("https://repo.dmulloy2.net/repository/public/")
+    maven("https://jitpack.io")
     maven {
         name = "papermc"
         url = uri("https://papermc.io/repo/repository/maven-public/")
@@ -15,6 +16,7 @@ dependencies {
 
     compileOnly("org.spigotmc:spigot-api:1.18.2-R0.1-SNAPSHOT")
     compileOnly("com.viaversion:viaversion-api:4.1.1")
+    compileOnly("com.github.LoneDev6:api-itemsadder:3.0.0")
 
     implementation("com.convallyria.languagy:api:3.0.1") {
         exclude("com.convallyria.languagy.libs")

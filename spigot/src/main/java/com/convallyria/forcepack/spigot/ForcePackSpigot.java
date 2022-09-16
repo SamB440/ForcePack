@@ -7,6 +7,7 @@ import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.api.utils.HashingUtil;
 import com.convallyria.forcepack.api.verification.ResourcePackURLData;
 import com.convallyria.forcepack.spigot.command.ForcePackCommand;
+import com.convallyria.forcepack.spigot.integration.ItemsAdderIntegration;
 import com.convallyria.forcepack.spigot.listener.ExemptionListener;
 import com.convallyria.forcepack.spigot.listener.ResourcePackListener;
 import com.convallyria.forcepack.spigot.listener.VelocityMessageListener;
@@ -65,10 +66,27 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
             e.printStackTrace();
         }
 
-        if (!reload()) return;
 
-        new Metrics(this, 13677);
-        this.getLogger().info("[ForcePack] Enabled!");
+        Runnable run = () -> {
+            if (!reload()) {
+                getLogger().severe("Unable to load ForcePack correctly.");
+                return;
+            }
+
+            new Metrics(this, 13677);
+            this.getLogger().info("[ForcePack] Enabled!");
+        };
+
+        if (getConfig().getBoolean("await-items-adder-host")) {
+            new ItemsAdderIntegration(this, run);
+            return;
+        }
+
+        if (getConfig().getBoolean("load-last")) {
+            Bukkit.getScheduler().runTaskLater(this, run, 1L);
+        } else {
+            run.run();
+        }
     }
 
     @Override
