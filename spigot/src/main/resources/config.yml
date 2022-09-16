@@ -9,13 +9,8 @@ prevent-movement: true
 # If this is true, damage will be prevented to players currently loading the resource pack.
 prevent-damage: true
 
-# 1.19.1+ fixes MC-252082 but this introduces another bug:
-# If you change just the hash of an updated resource pack file, the client will tell the server
-# it accepted and successfully loaded (very fast) even though it fails to apply the pack for some reason.
-# Sending again means the pack applies correctly?
-# The best fix for you here is to just change the URL along with the hash when updating the pack.
-# Requires ViaVersion!
-enable-mc-252082-fix-bug-fix: false
+# Appends the hash to your URL to fix this bug.
+enable-mc-164316-fix: true
 
 # Should ForcePack load on the first tick after the server has started?
 # Ensures we load after any plugin you may be hosting a resource pack on

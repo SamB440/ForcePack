@@ -29,11 +29,9 @@ import java.util.UUID;
 public class ResourcePackListener {
 
     private final ForcePackVelocity plugin;
-    private final Map<UUID, Long> lastStatus;
 
     public ResourcePackListener(final ForcePackVelocity plugin) {
         this.plugin = plugin;
-        this.lastStatus = new HashMap<>();
     }
 
     @Subscribe(order = PostOrder.EARLY)
@@ -53,31 +51,11 @@ public class ResourcePackListener {
             return;
         }
 
-        final long diff = System.currentTimeMillis() - lastStatus.getOrDefault(player.getUniqueId(), 0L);
-        this.lastStatus.put(player.getUniqueId(), System.currentTimeMillis());
-
-        if (diff < 300) {
-            player.disconnect(Component.text("Sending resource pack statuses too fast", NamedTextColor.RED));
-            return;
-        }
-
         final PlayerResourcePackStatusEvent.Status status = event.getStatus();
         boolean geyser = plugin.getConfig().getBoolean("geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
         boolean canBypass = player.hasPermission("ForcePack.bypass") && plugin.getConfig().getBoolean("bypass-permission");
         if (!canBypass && !geyser) {
             if (event.getStatus() == PlayerResourcePackStatusEvent.Status.SUCCESSFUL) {
-                if (plugin.getConfig().getBoolean("enable-mc-252082-fix-bug-fix", false)) {
-                    // 1.19.1+ fixes MC-252082 but this introduces another bug:
-                    // If you change just the hash of an updated resource pack file, the client will tell the server
-                    // it accepted and successfully loaded (very fast) even though it fails to apply the pack
-                    // for some reason. Sending again means the pack applies correctly?
-                    if (player.getProtocolVersion().getProtocol() >= 760 && diff < 1000) {
-                        currentServer.get().sendPluginMessage(MinecraftChannelIdentifier.create("forcepack", "status"), "FAILED_DOWNLOAD".getBytes(StandardCharsets.UTF_8));
-                        onJoin(new ServerPostConnectEvent(player, null));
-                        return;
-                    }
-                }
-
                 // No longer applying, remove them from the list
                 currentServer.get().sendPluginMessage(MinecraftChannelIdentifier.create("forcepack", "status"), "SUCCESSFULLY_LOADED".getBytes(StandardCharsets.UTF_8));
                 plugin.getPackHandler().getApplying().remove(player.getUniqueId());
@@ -126,11 +104,5 @@ public class ResourcePackListener {
         if (!canBypass && !geyser) {
             plugin.getPackHandler().setPack(player, serverInfo);
         }
-    }
-
-    @Subscribe
-    public void onLeave(DisconnectEvent event) {
-        final Player player = event.getPlayer();
-        lastStatus.remove(player.getUniqueId());
     }
 }

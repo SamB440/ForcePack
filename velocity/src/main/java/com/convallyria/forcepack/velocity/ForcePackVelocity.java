@@ -132,12 +132,16 @@ public class ForcePackVelocity implements ForcePackAPI {
         for (String serverName : servers.getKeys()) {
             final VelocityConfig serverConfig = servers.getConfig(serverName);
             final VelocityConfig resourcePack = serverConfig.getConfig("resourcepack");
-            final String url = resourcePack.getString("url");
+            String url = resourcePack.getString("url");
             String hash = resourcePack.getString("hash");
             AtomicInteger sizeInMB = new AtomicInteger();
 
             this.checkValidEnding(url);
             hash = this.tryGenerateHash(resourcePack, url, hash, sizeInMB);
+
+            if (getConfig().getBoolean("enable-mc-164316-fix", false)) {
+                url = url + "#" + hash;
+            }
 
             if (verifyPacks) {
                 try {

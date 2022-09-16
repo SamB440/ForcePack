@@ -96,7 +96,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
     public boolean reload() {
         if (velocityMode) return true;
-        final String url = getConfig().getString("Server.ResourcePack.url", "");
+        String url = getConfig().getString("Server.ResourcePack.url", "");
         String hash = getConfig().getString("Server.ResourcePack.hash");
         AtomicInteger sizeMB = new AtomicInteger();
 
@@ -126,6 +126,10 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
             } catch (Exception e) {
                 getLogger().log(Level.SEVERE, "Unable to auto-generate ResourcePack hash, reverting to config setting", e);
             }
+        }
+
+        if (getConfig().getBoolean("enable-mc-164316-fix")) {
+            url = url + "#" + hash;
         }
 
         if (getConfig().getBoolean("Server.verify")) {
