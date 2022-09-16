@@ -34,7 +34,7 @@ public final class VelocityResourcePack extends ResourcePack {
         final ResourcePackInfo.Builder infoBuilder = velocityPlugin.getServer()
                 .createResourcePackBuilder(getURL())
                 .setHash(getHashSum())
-                .setShouldForce(true);
+                .setShouldForce(velocityPlugin.getConfig().getBoolean("use-new-force-pack-screen", true));
 
         final VelocityConfig serverConfig;
         if (server.equals(ForcePackVelocity.GLOBAL_SERVER_NAME)) {

@@ -25,6 +25,11 @@ load-last: false
 # Should we wait for items adder to load resource pack?
 await-items-adder-host: true
 
+# Should we use the 1.17+ force resource pack screen, or the old one?
+# You can still define a custom message that will show even if this is false for 1.17+ clients
+# Note that with this true, the custom disconnect message will not work because the client forcefully kicks itself
+use-new-force-pack-screen: true
+
 Server:
   ResourcePack:
     # The ResourcePack URL. This must be a direct URL, ending with .zip. For Dropbox URLs, add ?dl=1 to the end.

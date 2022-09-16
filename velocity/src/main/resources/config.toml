@@ -42,6 +42,11 @@ bypass-permission = true
 # for some reason. Sending again means the pack applies correctly?
 enable-mc-252082-fix-bug-fix = false
 
+# Should we use the 1.17+ force resource pack screen, or the old one?
+# You can still define a custom message that will show even if this is false for 1.17+ clients
+# Note that with this true, the custom disconnect message will not work because the client forcefully kicks itself
+use-new-force-pack-screen = true
+
 # Whether to enable debug mode. Prints some extra info.
 debug = false
 

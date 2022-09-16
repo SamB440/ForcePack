@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Plugin(
         id = "forcepack",
         name = "ForcePack",
-        version = "1.2.2",
+        version = "1.2.3",
         description = "Force players to use your server resource pack.",
         url = "https://www.convallyria.com",
         authors = {"SamB440"}
