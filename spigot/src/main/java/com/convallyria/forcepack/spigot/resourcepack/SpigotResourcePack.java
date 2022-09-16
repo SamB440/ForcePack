@@ -30,6 +30,7 @@ public final class SpigotResourcePack extends ResourcePack {
 
         // Find a prompt method that is available to us
         if (spigotPlugin.getVersionNumber() >= 18) {
+            spigotPlugin.log("Using 1.18 method");
             try {
                 player.setResourcePack(url, getHashSum(), Translations.PROMPT_TEXT.get(player), true);
             } catch (NoSuchMethodError ignored) { // Server is not up-to-date
@@ -38,12 +39,15 @@ public final class SpigotResourcePack extends ResourcePack {
                     this.hasWarned = true;
                 }
 
+                spigotPlugin.log("Had to fallback");
                 // Fallback
                 player.setResourcePack(url, getHashSum());
             }
         } else if (spigotPlugin.getVersionNumber() >= 11) { // 1.11 - 1.17 support
+            spigotPlugin.log("Using 1.11-1.17 method");
             player.setResourcePack(url, getHashSum());
         } else { // <= 1.10 support
+            spigotPlugin.log("Using <= 1.10 method");
             player.setTexturePack(url);
         }
     }

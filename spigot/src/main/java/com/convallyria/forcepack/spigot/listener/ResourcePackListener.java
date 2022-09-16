@@ -7,8 +7,6 @@ import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.forcepack.spigot.translation.Translations;
 import com.convallyria.forcepack.spigot.utils.Scheduler;
 import com.viaversion.viaversion.api.Via;
-import com.viaversion.viaversion.libs.kyori.adventure.text.Component;
-import com.viaversion.viaversion.libs.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -16,7 +14,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 
@@ -105,8 +102,11 @@ public class ResourcePackListener implements Listener {
         Player player = event.getPlayer();
         boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
         boolean canBypass = player.hasPermission("ForcePack.bypass") && getConfig().getBoolean("Server.bypass-permission");
+        plugin.log(player.getName() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
+
         if (!canBypass && !geyser) {
             if (plugin.velocityMode) {
+                plugin.log("Velocity mode is enabled");
                 plugin.getWaiting().put(player.getUniqueId(), null);
                 return;
             }
@@ -116,6 +116,7 @@ public class ResourcePackListener implements Listener {
             Scheduler scheduler = new Scheduler();
             Runnable packTask = () -> {
                 if (plugin.getWaiting().containsKey(player.getUniqueId())) {
+                    plugin.log("Sent resource pack to player");
                     pack.setResourcePack(player.getUniqueId());
                 } else {
                     scheduler.cancel();
