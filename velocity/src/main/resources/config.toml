@@ -37,7 +37,7 @@ exclude-commands = [
 bypass-permission = true
 
 # Appends the hash to your URL to fix this bug.
-enable-mc-164316-fix: true
+enable-mc-164316-fix = true
 
 # Should we use the 1.17+ force resource pack screen, or the old one?
 # You can still define a custom message that will show even if this is false for 1.17+ clients
