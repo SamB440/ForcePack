@@ -66,19 +66,20 @@ public class ResourcePackListener {
         boolean canBypass = player.hasPermission("ForcePack.bypass") && plugin.getConfig().getBoolean("bypass-permission");
         if (!canBypass && !geyser) {
             if (event.getStatus() == PlayerResourcePackStatusEvent.Status.SUCCESSFUL) {
-                if (plugin.getConfig().getBoolean("enable-mc-252082-fix-bug-fix")) {
+                if (plugin.getConfig().getBoolean("enable-mc-252082-fix-bug-fix", false)) {
                     // 1.19.1+ fixes MC-252082 but this introduces another bug:
                     // If you change just the hash of an updated resource pack file, the client will tell the server
                     // it accepted and successfully loaded (very fast) even though it fails to apply the pack
                     // for some reason. Sending again means the pack applies correctly?
                     if (player.getProtocolVersion().getProtocol() >= 760 && diff < 1000) {
+                        currentServer.get().sendPluginMessage(MinecraftChannelIdentifier.create("forcepack", "status"), "FAILED_DOWNLOAD".getBytes(StandardCharsets.UTF_8));
                         onJoin(new ServerPostConnectEvent(player, null));
                         return;
                     }
                 }
 
                 // No longer applying, remove them from the list
-                currentServer.get().sendPluginMessage(MinecraftChannelIdentifier.create("forcepack", "status"), "SUCCESSFUL".getBytes(StandardCharsets.UTF_8));
+                currentServer.get().sendPluginMessage(MinecraftChannelIdentifier.create("forcepack", "status"), "SUCCESSFULLY_LOADED".getBytes(StandardCharsets.UTF_8));
                 plugin.getPackHandler().getApplying().remove(player.getUniqueId());
             }
             plugin.log(player.getUsername() + " sent status: " + event.getStatus());

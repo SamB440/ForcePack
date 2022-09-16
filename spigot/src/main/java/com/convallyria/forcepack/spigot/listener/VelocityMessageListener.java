@@ -24,12 +24,7 @@ public class VelocityMessageListener implements PluginMessageListener {
         }
 
         final String data = new String(message);
-        if (!data.equals("SUCCESSFUL")) {
-            plugin.log("Data was not 'successful'. Ignoring.");
-            return;
-        }
-
         plugin.log("Posted event");
-        Bukkit.getPluginManager().callEvent(new PlayerResourcePackStatusEvent(player, PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED));
+        Bukkit.getPluginManager().callEvent(new PlayerResourcePackStatusEvent(player, PlayerResourcePackStatusEvent.Status.valueOf(data)));
     }
 }
