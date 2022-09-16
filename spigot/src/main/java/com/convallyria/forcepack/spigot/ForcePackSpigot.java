@@ -77,7 +77,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
             this.getLogger().info("[ForcePack] Enabled!");
         };
 
-        if (getConfig().getBoolean("await-items-adder-host")) {
+        if (getConfig().getBoolean("await-items-adder-host") && Bukkit.getPluginManager().getPlugin("ItemsAdder") != null) {
             new ItemsAdderIntegration(this, run);
             return;
         }
