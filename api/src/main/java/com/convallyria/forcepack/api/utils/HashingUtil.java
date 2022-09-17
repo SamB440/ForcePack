@@ -21,19 +21,16 @@ public class HashingUtil {
 	}
 
 	public static String getHashFromUrl(String url) throws Exception {
-		return getHashFromUrl(url, null);
+		return getDataFromUrl(url).getFirst();
 	}
 
-	public static String getHashFromUrl(String url, @Nullable Consumer<Integer> size) throws Exception {
+	public static Pair<String, Integer> getDataFromUrl(String url) throws Exception {
 		// This is not done async on purpose. We don't want the server to start without having checked this first.
 		MessageDigest digest = MessageDigest.getInstance("SHA-1");
 		final URLConnection urlConnection = new URL(url).openConnection();
 
 		// Notify size of file
-		if (size != null) {
-			final int sizeInMB = urlConnection.getContentLength() / 1024 / 1024;
-			size.accept(sizeInMB);
-		}
+		final int sizeInMB = urlConnection.getContentLength() / 1024 / 1024;
 
 		final InputStream fis = urlConnection.getInputStream();
 		int n = 0;
@@ -46,12 +43,12 @@ public class HashingUtil {
 		}
 		fis.close();
 		final byte[] urlBytes = digest.digest();
-		return toHexString(urlBytes);
+		return Pair.of(toHexString(urlBytes), sizeInMB);
 	}
 
-	public static ResourcePackURLData performPackCheck(String url, String hash, Consumer<Integer> size) throws Exception {
+	public static ResourcePackURLData performPackCheck(String url, String configHash) throws Exception {
 		// This is not done async on purpose. We don't want the server to start without having checked this first.
-		final String urlCheckHash = getHashFromUrl(url, size);
-		return new ResourcePackURLData(urlCheckHash, hash);
+		final Pair<String, Integer> data = getDataFromUrl(url);
+		return new ResourcePackURLData(data.getFirst(), configHash, data.getSecond());
 	}
 }

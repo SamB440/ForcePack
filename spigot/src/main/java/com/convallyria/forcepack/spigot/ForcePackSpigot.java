@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
 public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
@@ -115,13 +116,14 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
             getLogger().severe("ForcePack will still load in the event this check is incorrect. Please make an issue or pull request if this is so.");
         }
 
+        ResourcePackURLData data = null;
         if (getConfig().getBoolean("Server.ResourcePack.generate-hash")) {
             getLogger().info("Auto-generating ResourcePack hash.");
             try {
-                hash = HashingUtil.getHashFromUrl(url, size -> {
-                    getLogger().info("Downloading " + size + " MB for generation...");
-                    sizeMB.set(size);
-                });
+                data = HashingUtil.performPackCheck(url, hash);
+                sizeMB.set(data.getSize());
+                hash = data.getUrlHash();
+                getLogger().info("Size of ResourcePack: " + sizeMB.get() + " MB");
                 getLogger().info("Auto-generated ResourcePack hash: " + hash);
             } catch (Exception e) {
                 getLogger().log(Level.SEVERE, "Unable to auto-generate ResourcePack hash, reverting to config setting", e);
@@ -134,7 +136,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
         if (getConfig().getBoolean("Server.verify")) {
             try {
-                final ResourcePackURLData data = HashingUtil.performPackCheck(url, hash, size -> {
+                Consumer<Integer> consumer = (size) -> {
                     getLogger().info("Performing version size check...");
                     for (ClientVersion clientVersion : ClientVersion.values()) {
                         String sizeStr = clientVersion.getDisplay() + " (" + clientVersion.getMaxSizeMB() + " MB): ";
@@ -148,8 +150,13 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
                     }
 
                     sizeMB.set(size);
-                    getLogger().info("Downloading " + size + " MB for verification...");
-                });
+                };
+
+                if (data == null) {
+                    data = HashingUtil.performPackCheck(url, hash);
+                }
+
+                consumer.accept(data.getSize());
 
                 if (!data.match()) {
                     this.getLogger().severe("-----------------------------------------------");

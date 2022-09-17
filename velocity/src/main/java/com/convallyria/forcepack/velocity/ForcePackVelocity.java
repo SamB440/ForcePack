@@ -38,11 +38,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 @Plugin(
         id = "forcepack",
         name = "ForcePack",
-        version = "1.2.3",
+        version = "1.2.4",
         description = "Force players to use your server resource pack.",
         url = "https://www.convallyria.com",
         authors = {"SamB440"}
@@ -137,7 +138,9 @@ public class ForcePackVelocity implements ForcePackAPI {
             AtomicInteger sizeInMB = new AtomicInteger();
 
             this.checkValidEnding(url);
-            hash = this.tryGenerateHash(resourcePack, url, hash, sizeInMB);
+
+            ResourcePackURLData data = this.tryGenerateHash(resourcePack, url, hash, sizeInMB);
+            if (data != null) hash = data.getUrlHash();
 
             if (getConfig().getBoolean("enable-mc-164316-fix", false)) {
                 url = url + "#" + hash;
@@ -145,7 +148,7 @@ public class ForcePackVelocity implements ForcePackAPI {
 
             if (verifyPacks) {
                 try {
-                    final ResourcePackURLData data = HashingUtil.performPackCheck(url, hash, size -> {
+                    Consumer<Integer> consumer = (size) -> {
                         getLogger().info("Performing version size check...");
                         for (ClientVersion clientVersion : ClientVersion.values()) {
                             String sizeStr = clientVersion.getDisplay() + " (" + clientVersion.getMaxSizeMB() + " MB): ";
@@ -157,8 +160,13 @@ public class ForcePackVelocity implements ForcePackAPI {
                         }
 
                         sizeInMB.set(size);
-                        getLogger().info("Downloading " + size + " MB for verification...");
-                    });
+                    };
+
+                    if (data == null) {
+                        data = HashingUtil.performPackCheck(url, hash);
+                    }
+
+                    consumer.accept(data.getSize());
 
                     if (!data.match()) {
                         this.getLogger().error("-----------------------------------------------");
@@ -233,21 +241,22 @@ public class ForcePackVelocity implements ForcePackAPI {
         }
     }
 
-    private String tryGenerateHash(VelocityConfig resourcePack, String url, String hash, AtomicInteger sizeInMB) {
+    @Nullable
+    private ResourcePackURLData tryGenerateHash(VelocityConfig resourcePack, String url, String hash, AtomicInteger sizeInMB) {
         if (resourcePack.getBoolean("generate-hash", false)) {
             getLogger().info("Auto-generating ResourcePack hash.");
+            getLogger().info("Downloading ResourcePack for hash generation...");
             try {
-                hash = HashingUtil.getHashFromUrl(url, size -> {
-                    getLogger().info("Downloading " + size + " MB for generation...");
-                    sizeInMB.set(size);
-                });
+                ResourcePackURLData data = HashingUtil.performPackCheck(url, hash);
+                getLogger().info("Size of ResourcePack: " + data.getSize() + " MB");
+                sizeInMB.set(data.getSize());
                 getLogger().info("Auto-generated ResourcePack hash: " + hash);
-                return hash;
+                return data;
             } catch (Exception e) {
                 getLogger().error("Unable to auto-generate ResourcePack hash, reverting to config setting", e);
             }
         }
-        return hash;
+        return null;
     }
 
     public ProxyServer getServer() {
