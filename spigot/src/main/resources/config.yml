@@ -27,14 +27,27 @@ use-new-force-pack-screen: true
 
 Server:
   ResourcePack:
-    # The ResourcePack URL. This must be a direct URL, ending with .zip. For Dropbox URLs, add ?dl=1 to the end.
-    url: https://www.convallyria.com/files/BlankPack.zip
-    # Whether to automatically generate the SHA-1 hash. This is not recommended for security and reliability.
-    # The hash setting will be ignored if this is true, however it will fall back to that if the generation fails.
-    generate-hash: false
-    # Use a site such as http://onlinemd5.com/ or the hash provided when uploading to https://mc-packs.net/.
-    # Also see resource page for Linux/Windows commands.
-    hash: 118AFFFC54CDCD308702F81BA24E03223F15FE5F
+    # _ is simply used to define this as the "global pack"
+    _:
+      # If you wanted to define another pack for format 8, you would copy this section, changing the format setting to 8 and this section name to 1
+      0:
+        # The ResourcePack URL. This must be a direct URL, ending with .zip. For Dropbox URLs, add ?dl=1 to the end.
+        url: https://www.convallyria.com/files/BlankPack.zip
+        # The pack formats of this resource pack. https://minecraft.fandom.com/wiki/Pack_format
+        format: ["9", "8", "7", "6", "5", "4", "3", "2", "1"]
+        # Whether to automatically generate the SHA-1 hash. This is not recommended for security and reliability.
+        # The hash setting will be ignored if this is true, however it will fall back to that if the generation fails.
+        generate-hash: false
+        # Use a site such as http://onlinemd5.com/ or the hash provided when uploading to https://mc-packs.net/.
+        # Also see resource page for Linux/Windows commands.
+        hash: 118AFFFC54CDCD308702F81BA24E03223F15FE5F
+    # Defines a resource pack in the nether, you will likely want to delete this section if you want a single pack
+    world_nether:
+      0:
+        url: https://www.convallyria.com/files/BlankPack.zip
+        format: ["9", "8", "7", "6", "5", "4", "3", "2", "1"]
+        generate-hash: false
+        hash: 118AFFFC54CDCD308702F81BA24E03223F15FE5F
 
   Actions:
     # To disable commands, you can do Command: []
