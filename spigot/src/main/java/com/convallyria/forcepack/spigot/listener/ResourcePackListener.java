@@ -82,11 +82,13 @@ public class ResourcePackListener implements Listener {
                 case DECLINED: {
                     if (kick) ensureMainThread(() -> player.kickPlayer(Translations.DECLINED.get(player)));
                     else Translations.DECLINED.send(player);
+                    sentAccept.remove(player.getUniqueId());
                     break;
                 }
                 case FAILED_DOWNLOAD: {
                     if (kick) ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
                     else Translations.DOWNLOAD_FAILED.send(player);
+                    sentAccept.remove(player.getUniqueId());
                     break;
                 }
                 case SUCCESSFULLY_LOADED: {
@@ -146,6 +148,7 @@ public class ResourcePackListener implements Listener {
     public void onQuit(PlayerQuitEvent pqe) {
         Player player = pqe.getPlayer();
         plugin.getWaiting().remove(player.getUniqueId());
+        sentAccept.remove(player.getUniqueId());
     }
 
     private void ensureMainThread(Runnable runnable) {
