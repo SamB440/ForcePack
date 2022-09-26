@@ -16,9 +16,15 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public class ResourcePackListener implements Listener {
 
     private final ForcePackSpigot plugin;
+
+    private final Map<UUID, Long> sentAccept = new HashMap<>();
 
     public ResourcePackListener(final ForcePackSpigot plugin) {
         this.plugin = plugin;
@@ -26,6 +32,7 @@ public class ResourcePackListener implements Listener {
 
     @EventHandler
     public void onStatus(PlayerResourcePackStatusEvent event) {
+        final long now = System.currentTimeMillis();
         final Player player = event.getPlayer();
         boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
         boolean canBypass = player.hasPermission("ForcePack.bypass") && getConfig().getBoolean("Server.bypass-permission");
@@ -45,6 +52,31 @@ public class ResourcePackListener implements Listener {
             if (plugin.velocityMode) return;
 
             final boolean kick = getConfig().getBoolean("Server.Actions." + status.name() + ".kick");
+
+            final boolean tryPrevent = getConfig().getBoolean("try-to-stop-fake-accept-hacks", true);
+            if (tryPrevent) {
+                if (status == PlayerResourcePackStatusEvent.Status.ACCEPTED) {
+                    if (sentAccept.containsKey(player.getUniqueId())) {
+                        plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (accepted sent twice).");
+                        ensureMainThread(() -> player.kickPlayer(Translations.DECLINED.get(player)));
+                        return;
+                    }
+                    sentAccept.put(player.getUniqueId(), now);
+                } else if (status == PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED) {
+                    if (!sentAccept.containsKey(player.getUniqueId())) {
+                        plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (order not maintained).");
+                        ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
+                        return;
+                    }
+
+                    long time = now - sentAccept.remove(player.getUniqueId());
+                    if (time <= 10) {
+                        plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (sent too fast).");
+                        ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
+                        return;
+                    }
+                }
+            }
 
             switch (status) {
                 case DECLINED: {
