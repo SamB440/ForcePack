@@ -53,30 +53,7 @@ public class ResourcePackListener implements Listener {
 
             final boolean kick = getConfig().getBoolean("Server.Actions." + status.name() + ".kick");
 
-            final boolean tryPrevent = getConfig().getBoolean("try-to-stop-fake-accept-hacks", true);
-            if (tryPrevent) {
-                if (status == PlayerResourcePackStatusEvent.Status.ACCEPTED) {
-                    if (sentAccept.containsKey(player.getUniqueId())) {
-                        plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (accepted sent twice).");
-                        ensureMainThread(() -> player.kickPlayer(Translations.DECLINED.get(player)));
-                        return;
-                    }
-                    sentAccept.put(player.getUniqueId(), now);
-                } else if (status == PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED) {
-                    if (!sentAccept.containsKey(player.getUniqueId())) {
-                        plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (order not maintained).");
-                        ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
-                        return;
-                    }
-
-                    long time = now - sentAccept.remove(player.getUniqueId());
-                    if (time <= 10) {
-                        plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (sent too fast).");
-                        ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
-                        return;
-                    }
-                }
-            }
+            if (tryValidateHacks(player, status, now)) return;
 
             switch (status) {
                 case DECLINED: {
@@ -98,6 +75,34 @@ public class ResourcePackListener implements Listener {
                 }
             }
         }
+    }
+
+    private boolean tryValidateHacks(Player player, PlayerResourcePackStatusEvent.Status status, long now) {
+        final boolean tryPrevent = getConfig().getBoolean("try-to-stop-fake-accept-hacks", true);
+        if (tryPrevent) {
+            if (status == PlayerResourcePackStatusEvent.Status.ACCEPTED) {
+                if (sentAccept.containsKey(player.getUniqueId())) {
+                    plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (accepted sent twice).");
+                    ensureMainThread(() -> player.kickPlayer(Translations.DECLINED.get(player)));
+                    return true;
+                }
+                sentAccept.put(player.getUniqueId(), now);
+            } else if (status == PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED) {
+                if (!sentAccept.containsKey(player.getUniqueId())) {
+                    plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (order not maintained).");
+                    ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
+                    return true;
+                }
+
+                long time = now - sentAccept.remove(player.getUniqueId());
+                if (time <= 10) {
+                    plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (sent too fast).");
+                    ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @EventHandler
