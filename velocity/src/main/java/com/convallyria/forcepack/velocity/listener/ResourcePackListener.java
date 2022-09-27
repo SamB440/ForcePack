@@ -29,6 +29,7 @@ import java.util.UUID;
 public class ResourcePackListener {
 
     private final ForcePackVelocity plugin;
+    private final Map<UUID, Long> sentAccept = new HashMap<>();
 
     public ResourcePackListener(final ForcePackVelocity plugin) {
         this.plugin = plugin;
@@ -36,6 +37,7 @@ public class ResourcePackListener {
 
     @Subscribe(order = PostOrder.EARLY)
     public void onPackStatus(PlayerResourcePackStatusEvent event) {
+        final long now = System.currentTimeMillis();
         final Player player = event.getPlayer();
         final Optional<ServerConnection> currentServer = player.getCurrentServer();
         if (currentServer.isEmpty()) {
@@ -69,6 +71,9 @@ public class ResourcePackListener {
                 root = plugin.getConfig().getConfig("servers").getConfig(serverName);
             }
 
+            if (tryValidateHacks(player, status, root, now)) return;
+            sentAccept.remove(player.getUniqueId());
+
             final VelocityConfig actions = root.getConfig("actions").getConfig(status.name());
             for (String cmd : actions.getStringList("commands")) {
                 final CommandSource console = plugin.getServer().getConsoleCommandSource();
@@ -88,6 +93,49 @@ public class ResourcePackListener {
         } else {
             plugin.log("Ignoring player " + player.getUsername() + " as they do not have permissions or are a geyser player.");
         }
+    }
+
+    private boolean tryValidateHacks(Player player, PlayerResourcePackStatusEvent.Status status, VelocityConfig root, long now) {
+        final boolean tryPrevent = plugin.getConfig().getBoolean("try-to-stop-fake-accept-hacks", true);
+        if (tryPrevent) {
+            if (status == PlayerResourcePackStatusEvent.Status.ACCEPTED) {
+                if (sentAccept.containsKey(player.getUniqueId())) {
+                    plugin.log("Kicked player " + player.getUsername() + " because they are sending fake resource pack statuses (accepted sent twice).");
+                    final VelocityConfig actions = root.getConfig("actions").getConfig("DECLINED");
+                    final String text = actions.getString("message");
+                    if (text == null) return true;
+                    player.disconnect(plugin.getMiniMessage().deserialize(text));
+                    return true;
+                }
+                sentAccept.put(player.getUniqueId(), now);
+            } else if (status == PlayerResourcePackStatusEvent.Status.SUCCESSFUL) {
+                if (!sentAccept.containsKey(player.getUniqueId())) {
+                    plugin.log("Kicked player " + player.getUsername() + " because they are sending fake resource pack statuses (order not maintained).");
+                    final VelocityConfig actions = root.getConfig("actions").getConfig("FAILED_DOWNLOAD");
+                    final String text = actions.getString("message");
+                    if (text == null) return true;
+                    player.disconnect(plugin.getMiniMessage().deserialize(text));
+                    return true;
+                }
+
+                long time = now - sentAccept.remove(player.getUniqueId());
+                if (time <= 10) {
+                    plugin.log("Kicked player " + player.getUsername() + " because they are sending fake resource pack statuses (sent too fast).");
+                    final VelocityConfig actions = root.getConfig("actions").getConfig("FAILED_DOWNLOAD");
+                    final String text = actions.getString("message");
+                    if (text == null) return true;
+                    player.disconnect(plugin.getMiniMessage().deserialize(text));
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Subscribe
+    public void onQuit(DisconnectEvent event) {
+        final Player player = event.getPlayer();
+        sentAccept.remove(player.getUniqueId());
     }
 
     @Subscribe(order = PostOrder.EARLY)
