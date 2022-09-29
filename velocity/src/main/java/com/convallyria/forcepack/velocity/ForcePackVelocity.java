@@ -134,7 +134,7 @@ public class ForcePackVelocity implements ForcePackAPI {
             final VelocityConfig serverConfig = servers.getConfig(serverName);
             final VelocityConfig resourcePack = serverConfig.getConfig("resourcepack");
             String url = resourcePack.getString("url");
-            String hash = resourcePack.getString("hash");
+            String hash = resourcePack.getString("hash", "");
             AtomicInteger sizeInMB = new AtomicInteger();
 
             this.checkValidEnding(url);
@@ -168,7 +168,7 @@ public class ForcePackVelocity implements ForcePackAPI {
 
                     consumer.accept(data.getSize());
 
-                    if (!data.match()) {
+                    if (!hash.equals(data.getUrlHash())) {
                         this.getLogger().error("-----------------------------------------------");
                         this.getLogger().error("Your hash does not match the URL file provided!");
                         this.getLogger().error("Target server: " + serverName);

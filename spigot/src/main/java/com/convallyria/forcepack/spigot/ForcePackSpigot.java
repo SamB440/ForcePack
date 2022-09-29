@@ -98,7 +98,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
     public boolean reload() {
         if (velocityMode) return true;
         String url = getConfig().getString("Server.ResourcePack.url", "");
-        String hash = getConfig().getString("Server.ResourcePack.hash");
+        String hash = getConfig().getString("Server.ResourcePack.hash", "");
         AtomicInteger sizeMB = new AtomicInteger();
 
         List<String> validUrlEndings = Arrays.asList(".zip", ".zip?dl=1");
@@ -158,7 +158,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
                 consumer.accept(data.getSize());
 
-                if (!data.match()) {
+                if (!hash.equals(data.getUrlHash())) {
                     this.getLogger().severe("-----------------------------------------------");
                     this.getLogger().severe("Your hash does not match the URL file provided!");
                     this.getLogger().severe("The URL hash returned: " + data.getUrlHash());

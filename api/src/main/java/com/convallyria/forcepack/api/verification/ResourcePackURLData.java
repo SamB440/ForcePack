@@ -22,8 +22,4 @@ public class ResourcePackURLData {
     public int getSize() {
         return size;
     }
-
-    public boolean match() {
-        return urlHash.equalsIgnoreCase(configHash);
-    }
 }

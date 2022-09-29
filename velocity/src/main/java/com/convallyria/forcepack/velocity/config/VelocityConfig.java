@@ -74,6 +74,10 @@ public class VelocityConfig {
         return config.get(path);
     }
 
+    public String getString(String path, String def) {
+        return config.getOrElse(path, def);
+    }
+
     public boolean getBoolean(String path) {
         return config.get(path);
     }
