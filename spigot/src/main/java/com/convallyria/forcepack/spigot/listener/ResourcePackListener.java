@@ -70,7 +70,11 @@ public class ResourcePackListener implements Listener {
                 }
                 case SUCCESSFULLY_LOADED: {
                     if (kick) ensureMainThread(() -> player.kickPlayer(Translations.ACCEPTED.get(player)));
-                    else Translations.ACCEPTED.send(player);
+                    else {
+                        Translations.ACCEPTED.send(player);
+                        boolean sendTitle = plugin.getConfig().getBoolean("send-loading-title");
+                        if (sendTitle) player.sendTitle(null, null, 0, 0, 0); // resetTitle doesn't clear subtitle
+                    }
                     break;
                 }
             }
@@ -79,27 +83,25 @@ public class ResourcePackListener implements Listener {
 
     private boolean tryValidateHacks(Player player, PlayerResourcePackStatusEvent.Status status, long now) {
         final boolean tryPrevent = getConfig().getBoolean("try-to-stop-fake-accept-hacks", true);
-        if (tryPrevent) {
-            if (status == PlayerResourcePackStatusEvent.Status.ACCEPTED) {
-                if (sentAccept.containsKey(player.getUniqueId())) {
-                    plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (accepted sent twice).");
-                    ensureMainThread(() -> player.kickPlayer(Translations.DECLINED.get(player)));
-                    return true;
-                }
-                sentAccept.put(player.getUniqueId(), now);
-            } else if (status == PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED) {
-                if (!sentAccept.containsKey(player.getUniqueId())) {
-                    plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (order not maintained).");
-                    ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
-                    return true;
-                }
+        if (status == PlayerResourcePackStatusEvent.Status.ACCEPTED) {
+            if (tryPrevent && sentAccept.containsKey(player.getUniqueId())) {
+                plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (accepted sent twice).");
+                ensureMainThread(() -> player.kickPlayer(Translations.DECLINED.get(player)));
+                return true;
+            }
+            sentAccept.put(player.getUniqueId(), now);
+        } else if (status == PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED) {
+            if (tryPrevent && !sentAccept.containsKey(player.getUniqueId())) {
+                plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (order not maintained).");
+                ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
+                return true;
+            }
 
-                long time = now - sentAccept.remove(player.getUniqueId());
-                if (time <= 10) {
-                    plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (sent too fast).");
-                    ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
-                    return true;
-                }
+            long time = now - sentAccept.remove(player.getUniqueId());
+            if (tryPrevent && time <= 10) {
+                plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (sent too fast).");
+                ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
+                return true;
             }
         }
         return false;
@@ -126,7 +128,14 @@ public class ResourcePackListener implements Listener {
                 if (plugin.getWaiting().containsKey(player.getUniqueId())) {
                     plugin.log("Sent resource pack to player");
                     pack.setResourcePack(player.getUniqueId());
-                } else {
+                }
+
+                boolean sendTitle = plugin.getConfig().getBoolean("send-loading-title");
+                if (sendTitle && sentAccept.containsKey(player.getUniqueId())) {
+                    player.sendTitle(Translations.DOWNLOAD_START_TITLE.get(player), Translations.DOWNLOAD_START_SUBTITLE.get(player), 0, 30, 10);
+                }
+
+                if (!plugin.getWaiting().containsKey(player.getUniqueId()) && !sentAccept.containsKey(player.getUniqueId())) {
                     scheduler.cancel();
                 }
             };
