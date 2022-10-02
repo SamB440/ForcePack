@@ -13,6 +13,8 @@ import java.io.File;
 public enum Translations {
     DECLINED(TranslationKey.of("declined")),
     ACCEPTED(TranslationKey.of("accepted")),
+    DOWNLOAD_START_TITLE(TranslationKey.of("download_start_title")),
+    DOWNLOAD_START_SUBTITLE(TranslationKey.of("download_start_subtitle")),
     DOWNLOAD_FAILED(TranslationKey.of("download_failed")),
     PROMPT_TEXT(TranslationKey.of("prompt_text")),
     RELOADING(TranslationKey.of("reloading"));
