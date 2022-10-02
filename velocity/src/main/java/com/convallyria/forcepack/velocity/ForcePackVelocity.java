@@ -138,6 +138,7 @@ public class ForcePackVelocity implements ForcePackAPI {
             AtomicInteger sizeInMB = new AtomicInteger();
 
             this.checkValidEnding(url);
+            this.checkForRehost(url, serverName);
 
             ResourcePackURLData data = this.tryGenerateHash(resourcePack, url, hash, sizeInMB);
             if (data != null) hash = data.getUrlHash();
@@ -204,6 +205,8 @@ public class ForcePackVelocity implements ForcePackAPI {
             final String url = unloadPack.getString("url");
             final String hash = unloadPack.getString("hash");
 
+            this.checkForRehost(url, "unload-pack");
+
             final VelocityResourcePack resourcePack = new VelocityResourcePack(this, EMPTY_SERVER_NAME, url, hash, 0);
             resourcePacks.add(resourcePack);
         }
@@ -216,6 +219,8 @@ public class ForcePackVelocity implements ForcePackAPI {
             if (enableGlobal) {
                 final String url = globalPack.getString("url");
                 final String hash = globalPack.getString("hash");
+
+                this.checkForRehost(url, "global-pack");
 
                 final VelocityResourcePack resourcePack = new VelocityResourcePack(this, GLOBAL_SERVER_NAME, url, hash, 0);
                 resourcePacks.add(resourcePack);
@@ -238,6 +243,24 @@ public class ForcePackVelocity implements ForcePackAPI {
             getLogger().error("Your URL has an invalid or unknown format. " +
                     "URLs must have no redirects and use the .zip extension. If you are using Dropbox, change ?dl=0 to ?dl=1.");
             getLogger().error("ForcePack will still load in the event this check is incorrect. Please make an issue or pull request if this is so.");
+        }
+    }
+
+    private void checkForRehost(String url, String section) {
+        List<String> warnForHost = Arrays.asList("convallyria.com");
+        boolean rehosted = true;
+        for (String host : warnForHost) {
+            if (url.contains(host)) {
+                rehosted = false;
+                break;
+            }
+        }
+
+        if (!rehosted) {
+            getLogger().warn(String.format("[%s] You are using a default resource pack provided by the plugin.", section) +
+                    "It's highly recommended you re-host this pack on a CDN such as https://mc-packs.net for faster load times. " +
+                    "Leaving this as default potentially sends a lot of requests to my personal web server, which isn't ideal!");
+            getLogger().warn("ForcePack will still load and function like normally.");
         }
     }
 

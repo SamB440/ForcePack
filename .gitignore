@@ -1,3 +1,6 @@
 /.gradle/
 /.idea/
 /build/
+api/build/
+spigot/build/
+velocity/build/
