@@ -169,7 +169,7 @@ public class ForcePackVelocity implements ForcePackAPI {
 
                     consumer.accept(data.getSize());
 
-                    if (!hash.equals(data.getUrlHash())) {
+                    if (!hash.equalsIgnoreCase(data.getUrlHash())) {
                         this.getLogger().error("-----------------------------------------------");
                         this.getLogger().error("Your hash does not match the URL file provided!");
                         this.getLogger().error("Target server: " + serverName);

@@ -158,7 +158,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
                 consumer.accept(data.getSize());
 
-                if (!hash.equals(data.getUrlHash())) {
+                if (!hash.equalsIgnoreCase(data.getUrlHash())) {
                     this.getLogger().severe("-----------------------------------------------");
                     this.getLogger().severe("Your hash does not match the URL file provided!");
                     this.getLogger().severe("The URL hash returned: " + data.getUrlHash());
