@@ -57,7 +57,7 @@ public class ResourcePackListener {
         boolean geyser = plugin.getConfig().getBoolean("geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
         boolean canBypass = player.hasPermission("ForcePack.bypass") && plugin.getConfig().getBoolean("bypass-permission");
         if (!canBypass && !geyser) {
-            if (event.getStatus() == PlayerResourcePackStatusEvent.Status.SUCCESSFUL) {
+            if (status == PlayerResourcePackStatusEvent.Status.SUCCESSFUL) {
                 // No longer applying, remove them from the list
                 currentServer.get().sendPluginMessage(MinecraftChannelIdentifier.create("forcepack", "status"), "SUCCESSFULLY_LOADED".getBytes(StandardCharsets.UTF_8));
                 plugin.getPackHandler().getApplying().remove(player.getUniqueId());
@@ -72,7 +72,7 @@ public class ResourcePackListener {
             }
 
             if (tryValidateHacks(player, status, root, now)) return;
-            sentAccept.remove(player.getUniqueId());
+            if (status != PlayerResourcePackStatusEvent.Status.ACCEPTED) sentAccept.remove(player.getUniqueId());
 
             final VelocityConfig actions = root.getConfig("actions").getConfig(status.name());
             for (String cmd : actions.getStringList("commands")) {
