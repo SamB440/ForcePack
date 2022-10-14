@@ -257,8 +257,8 @@ public class ForcePackVelocity implements ForcePackAPI {
         }
 
         if (!rehosted) {
-            getLogger().warn(String.format("[%s] You are using a default resource pack provided by the plugin.", section) +
-                    "It's highly recommended you re-host this pack on a CDN such as https://mc-packs.net for faster load times. " +
+            getLogger().warn(String.format("[%s] You are using a default resource pack provided by the plugin. ", section) +
+                    " It's highly recommended you re-host this pack on a CDN such as https://mc-packs.net for faster load times. " +
                     "Leaving this as default potentially sends a lot of requests to my personal web server, which isn't ideal!");
             getLogger().warn("ForcePack will still load and function like normally.");
         }
