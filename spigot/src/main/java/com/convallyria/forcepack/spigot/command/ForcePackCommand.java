@@ -8,6 +8,8 @@ import co.aikar.commands.annotation.Default;
 import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.HelpCommand;
 import co.aikar.commands.annotation.Subcommand;
+import com.convallyria.forcepack.api.resourcepack.ResourcePack;
+import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.forcepack.spigot.translation.Translations;
 import org.bukkit.Bukkit;
@@ -42,10 +44,16 @@ public class ForcePackCommand extends BaseCommand {
         plugin.reloadConfig();
         plugin.reload();
         if (!plugin.velocityMode) {
-            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-                if (plugin.getWaiting().containsKey(onlinePlayer.getUniqueId())) continue;
-                Translations.RELOADING.send(onlinePlayer);
-                plugin.getResourcePacks().get(0).setResourcePack(onlinePlayer.getUniqueId());
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                if (plugin.getWaiting().containsKey(player.getUniqueId())) continue;
+                boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
+                boolean canBypass = player.hasPermission("ForcePack.bypass") && plugin.getConfig().getBoolean("Server.bypass-permission");
+                plugin.log(player.getName() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
+                if (geyser || canBypass) continue;
+
+                Translations.RELOADING.send(player);
+                final ResourcePack resourcePack = plugin.getResourcePacks().get(0);
+                plugin.getWaiting().put(player.getUniqueId(), resourcePack);
             }
         }
 
