@@ -54,6 +54,7 @@ public class ForcePackCommand extends BaseCommand {
                 Translations.RELOADING.send(player);
                 final ResourcePack resourcePack = plugin.getResourcePacks().get(0);
                 plugin.getWaiting().put(player.getUniqueId(), resourcePack);
+                resourcePack.setResourcePack(player.getUniqueId());
             }
         }
 
