@@ -97,7 +97,10 @@ public class ResourcePackListener implements Listener {
                 return true;
             }
 
-            long time = now - sentAccept.remove(player.getUniqueId());
+            // If a player is cheating and sends multiple status packets and tryPrevent is false, sentAccept may not contain the player
+            // See issue https://github.com/SamB440/ForcePack/issues/9
+            // Always set time to 11 if tryPrevent false to stop NullPointerException
+            long time = !tryPrevent ? 11 : now - sentAccept.remove(player.getUniqueId());
             if (tryPrevent && time <= 10) {
                 plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (sent too fast).");
                 ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
