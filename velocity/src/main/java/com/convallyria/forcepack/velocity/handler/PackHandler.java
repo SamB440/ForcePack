@@ -71,8 +71,10 @@ public final class PackHandler {
             applying.add(player.getUniqueId());
             task.set(builder.schedule());
         }, () -> {
+            final ResourcePackInfo appliedResourcePack = player.getAppliedResourcePack();
             // This server doesn't have a pack set - send unload pack if enabled and if they already have one
-            if (player.getAppliedResourcePack() == null) return;
+            if (appliedResourcePack == null) return;
+
             final VelocityConfig unloadPack = plugin.getConfig().getConfig("unload-pack");
             final boolean enableUnload = unloadPack.getBoolean("enable");
             if (!enableUnload) return;
@@ -80,7 +82,13 @@ public final class PackHandler {
             final List<String> excluded = unloadPack.getStringList("exclude");
             if (excluded.contains(serverInfo.getName())) return;
 
-            plugin.getPackByServer(ForcePackVelocity.EMPTY_SERVER_NAME).ifPresent(empty -> empty.setResourcePack(player.getUniqueId()));
+            plugin.getPackByServer(ForcePackVelocity.EMPTY_SERVER_NAME).ifPresent(empty -> {
+                // If their current applied resource pack is the unloaded one, don't send it again
+                // Checking URL rather than hash should be fine... it's simpler and should be unique.
+                if (appliedResourcePack.getUrl().equals(empty.getURL())) return;
+
+                empty.setResourcePack(player.getUniqueId());
+            });
         });
     }
 }
