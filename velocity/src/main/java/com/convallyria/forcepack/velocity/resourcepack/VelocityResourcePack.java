@@ -5,10 +5,12 @@ import com.convallyria.forcepack.velocity.ForcePackVelocity;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.player.ResourcePackInfo;
+import com.velocitypowered.api.scheduler.Scheduler;
 import net.kyori.adventure.text.Component;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public final class VelocityResourcePack extends ResourcePack {
 
@@ -28,6 +30,17 @@ public final class VelocityResourcePack extends ResourcePack {
 
     @Override
     public void setResourcePack(UUID uuid) {
+        final int delay = velocityPlugin.getConfig().getInt("delay-pack-sending-by");
+        if (delay > 0) {
+            velocityPlugin.getServer().getScheduler().buildTask(plugin, () -> {
+                runSetResourcePack(uuid);
+            }).delay(50L * delay, TimeUnit.MILLISECONDS);
+        } else {
+            runSetResourcePack(uuid);
+        }
+    }
+
+    private void runSetResourcePack(UUID uuid) {
         final Optional<Player> player = velocityPlugin.getServer().getPlayer(uuid);
         if (player.isEmpty()) return;
 

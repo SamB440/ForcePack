@@ -25,6 +25,15 @@ public final class SpigotResourcePack extends ResourcePack {
 
     @Override
     public void setResourcePack(UUID uuid) {
+        final int delay = spigotPlugin.getConfig().getInt("delay-pack-sending-by", 0);
+        if (delay > 0) {
+            Bukkit.getScheduler().runTaskLater(spigotPlugin, () -> runSetResourcePack(uuid), delay);
+        } else {
+            runSetResourcePack(uuid);
+        }
+    }
+
+    private void runSetResourcePack(UUID uuid) {
         final Player player = Bukkit.getPlayer(uuid);
         if (player == null) return;
 

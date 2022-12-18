@@ -33,6 +33,10 @@ try-to-stop-fake-accept-hacks: true
 # Option to send a title asking them to wait patiently
 send-loading-title: true
 
+# How many ticks to delay sending a resource pack by
+# Use this if you have a plugin teleporting someone after joining which closes the resource pack screen
+delay-pack-sending-by: 0
+
 Server:
   ResourcePack:
     # The ResourcePack URL. This must be a direct URL, ending with .zip. For Dropbox URLs, add ?dl=1 to the end.

@@ -48,6 +48,10 @@ use-new-force-pack-screen = true
 # Still bypassable, but some are stupid and we are able to detect them.
 try-to-stop-fake-accept-hacks = true
 
+# How many ticks to delay sending a resource pack by
+# Use this if you have a plugin teleporting someone after joining which closes the resource pack screen
+delay-pack-sending-by = 0
+
 # Whether to enable debug mode. Prints some extra info.
 debug = false
 
