@@ -1,0 +1,8 @@
+# ForcePack使用Languagy。语言文件将自动更新。了解更多信息：https://fortitude.islandearth.net/en/languagy
+declined: "&c你必须接受资源包才能在我们的服务器上玩。不知道怎么做？请查看&ehttps://samb440.gitlab.io/resourcepack.html"
+accepted: "&a感谢你接受我们的资源包! 现在你可以玩了。"
+download_start_title: "&6正在下载资源包…"
+download_start_subtitle: "&6这可能需要一点时间…"
+download_failed: "&c资源包下载失败，请重新连接并重试。"
+prompt_text: "&e请接受我们的资源包以改善你的服务器体验！" # 仅用于1.18及以上版本（1.17及以下的版本没有API）。
+reloading: "&a因为更新，正在重新应用你的资源包！"
