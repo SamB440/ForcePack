@@ -9,6 +9,8 @@ import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+import java.util.UUID;
+
 public class ForcePackCommand implements SimpleCommand {
 
     private final ForcePackVelocity plugin;
@@ -20,10 +22,12 @@ public class ForcePackCommand implements SimpleCommand {
     @Override
     public void execute(final Invocation invocation) {
         final CommandSource source = plugin.getServer().getConsoleCommandSource();
-        final Player sender = plugin.getServer().getPlayer(invocation.source().pointers().getOrDefault(Identity.UUID, null)).orElse(null);
+        final UUID possibleUUID = invocation.source().pointers().getOrDefault(Identity.UUID, null);
+        final Player sender = possibleUUID == null ? null : plugin.getServer().getPlayer(possibleUUID).orElse(null);
         Component reloadMsg = Component.text("Reloading...").color(NamedTextColor.GREEN);
         source.sendMessage(reloadMsg);
         if (sender != null) sender.sendMessage(reloadMsg);
+        plugin.reloadConfig();
         plugin.loadResourcePacks(sender);
 
         for (Player player : plugin.getServer().getAllPlayers()) {

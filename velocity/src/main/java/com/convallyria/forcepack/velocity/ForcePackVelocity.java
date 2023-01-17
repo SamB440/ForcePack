@@ -76,7 +76,7 @@ public class ForcePackVelocity implements ForcePackAPI {
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
         getLogger().info("Enabling ForcePack (velocity)...");
-        this.createConfig();
+        this.reloadConfig();
         this.packHandler = new PackHandler(this);
         this.loadResourcePacks(null);
         this.registerListeners();
@@ -96,6 +96,10 @@ public class ForcePackVelocity implements ForcePackAPI {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void reloadConfig() {
+        this.createConfig();
         this.config = new VelocityConfig(this);
     }
 
