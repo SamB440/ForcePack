@@ -2,13 +2,11 @@ package com.convallyria.forcepack.api.utils;
 
 import com.convallyria.forcepack.api.verification.ResourcePackURLData;
 import jakarta.xml.bind.DatatypeConverter;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.MessageDigest;
-import java.util.function.Consumer;
 
 public class HashingUtil {
 	

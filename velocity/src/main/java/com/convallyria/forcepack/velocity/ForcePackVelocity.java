@@ -1,6 +1,7 @@
 package com.convallyria.forcepack.velocity;
 
 import com.convallyria.forcepack.api.ForcePackAPI;
+import com.convallyria.forcepack.api.ForcePackImpl;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.api.utils.HashingUtil;
@@ -50,6 +51,12 @@ import java.util.function.Consumer;
 )
 public class ForcePackVelocity implements ForcePackAPI {
 
+    private static final class APIProvider extends ForcePackImpl {
+        APIProvider(ForcePackVelocity implementation) {
+            Instance.setImplementation(implementation);
+        }
+    }
+
     public static final String EMPTY_SERVER_NAME = "ForcePack-Empty-Server";
     public static final String GLOBAL_SERVER_NAME = "ForcePack-Global-Server";
 
@@ -76,6 +83,7 @@ public class ForcePackVelocity implements ForcePackAPI {
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
         getLogger().info("Enabling ForcePack (velocity)...");
+        new APIProvider(this);
         this.reloadConfig();
         this.packHandler = new PackHandler(this);
         this.loadResourcePacks(null);

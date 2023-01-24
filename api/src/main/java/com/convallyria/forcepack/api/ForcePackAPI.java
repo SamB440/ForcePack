@@ -13,4 +13,12 @@ public interface ForcePackAPI {
      * @return the loaded ResourcePacks
      */
     List<ResourcePack> getResourcePacks();
+
+    /**
+     * Gets the ForcePack API.
+     * @return the forcepack API implementation
+     */
+    static ForcePackAPI getInstance() {
+        return ForcePackImpl.Instance.getImplementation();
+    }
 }

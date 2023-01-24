@@ -2,6 +2,7 @@ package com.convallyria.forcepack.spigot;
 
 import co.aikar.commands.PaperCommandManager;
 import com.convallyria.forcepack.api.ForcePackAPI;
+import com.convallyria.forcepack.api.ForcePackImpl;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.api.utils.HashingUtil;
@@ -36,6 +37,12 @@ import java.util.logging.Level;
 
 public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
+    private static final class APIProvider extends ForcePackImpl {
+        APIProvider(ForcePackSpigot implementation) {
+            Instance.setImplementation(implementation);
+        }
+    }
+
     private Translator translator;
     private ResourcePack resourcePack;
     public boolean velocityMode;
@@ -53,6 +60,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
     @Override
     public void onEnable() {
+        new APIProvider(this);
         this.generateLang();
         this.createConfig();
         this.velocityMode = getConfig().getBoolean("velocity-mode");
