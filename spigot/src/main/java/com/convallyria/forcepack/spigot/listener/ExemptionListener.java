@@ -26,6 +26,14 @@ public class ExemptionListener implements Listener {
                 plugin.log("Cancelled damage for player '" + player.getName() + "' due to resource pack not applied.");
             }
         }
+
+        if (event.getDamager() instanceof Player) {
+            Player damager = (Player) event.getDamager();
+            if (plugin.getWaiting().containsKey(damager.getUniqueId())) {
+                event.setCancelled(true);
+                plugin.log("Cancelled damage for damager '" + damager.getName() + "' due to resource pack not applied.");
+            }
+        }
     }
 
     @EventHandler(ignoreCancelled = true)
