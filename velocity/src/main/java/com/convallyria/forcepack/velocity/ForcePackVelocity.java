@@ -43,7 +43,7 @@ import java.util.function.Consumer;
 @Plugin(
         id = "forcepack",
         name = "ForcePack",
-        version = "1.2.7",
+        version = "1.2.8",
         description = "Force players to use your server resource pack.",
         url = "https://www.convallyria.com",
         authors = {"SamB440"}

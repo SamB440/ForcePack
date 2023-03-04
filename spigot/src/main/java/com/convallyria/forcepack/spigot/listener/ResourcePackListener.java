@@ -39,10 +39,14 @@ public class ResourcePackListener implements Listener {
         plugin.log(player.getName() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
 
         if (!canBypass && !geyser) {
-            plugin.getWaiting().remove(player.getUniqueId());
-            plugin.log(player.getName() + " sent status: " + event.getStatus());
-
             final PlayerResourcePackStatusEvent.Status status = event.getStatus();
+            plugin.log(player.getName() + " sent status: " + status);
+
+            // Only remove from waiting if they actually loaded the resource pack, rather than any status
+            // Declined/failed is valid and should be allowed, server owner decides whether they get kicked
+            if (status != PlayerResourcePackStatusEvent.Status.ACCEPTED) {
+                plugin.getWaiting().remove(player.getUniqueId());
+            }
 
             for (String cmd : getConfig().getStringList("Server.Actions." + status.name() + ".Commands")) {
                 ensureMainThread(() -> Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("[player]", player.getName())));
@@ -89,7 +93,7 @@ public class ResourcePackListener implements Listener {
                 ensureMainThread(() -> player.kickPlayer(Translations.DECLINED.get(player)));
                 return true;
             }
-            sentAccept.put(player.getUniqueId(), now);
+            if (tryPrevent) sentAccept.put(player.getUniqueId(), now);
         } else if (status == PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED) {
             if (tryPrevent && !sentAccept.containsKey(player.getUniqueId())) {
                 plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (order not maintained).");
