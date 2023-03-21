@@ -10,7 +10,7 @@ dependencies {
 
 allprojects {
     group = "com.convallyria.forcepack"
-    version = "1.2.8"
+    version = "1.2.9"
 
     apply(plugin = "com.github.johnrengelman.shadow")
     apply(plugin = "java")

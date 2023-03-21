@@ -64,6 +64,9 @@ debug = false
     url = "https://www.convallyria.com/files/BlankPack.zip"
     # The SHA-1 hash of the unload pack file
     hash = "118AFFFC54CDCD308702F81BA24E03223F15FE5F"
+    # Whether to automatically generate the SHA-1 hash. This is not recommended for security and reliability.
+    # The hash setting will be ignored if this is true, however it will fall back to that if the generation fails.
+    generate-hash = false
     # What servers should we exclude from unloading?
     exclude = [
         "exampleserver"
@@ -76,6 +79,9 @@ debug = false
     url = "https://www.convallyria.com/files/BlankPack.zip"
     # The SHA-1 hash of the global pack file
     hash = "118AFFFC54CDCD308702F81BA24E03223F15FE5F"
+    # Whether to automatically generate the SHA-1 hash. This is not recommended for security and reliability.
+    # The hash setting will be ignored if this is true, however it will fall back to that if the generation fails.
+    generate-hash = false
     # The prompt message for clients on 1.17+.
     resourcepack.prompt = "<yellow>Please accept our resource pack to improve your experience."
 

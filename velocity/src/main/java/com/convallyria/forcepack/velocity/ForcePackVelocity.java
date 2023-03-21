@@ -43,7 +43,7 @@ import java.util.function.Consumer;
 @Plugin(
         id = "forcepack",
         name = "ForcePack",
-        version = "1.2.8",
+        version = "1.2.9",
         description = "Force players to use your server resource pack.",
         url = "https://www.convallyria.com",
         authors = {"SamB440"}
@@ -212,9 +212,14 @@ public class ForcePackVelocity implements ForcePackAPI {
         final boolean enableUnload = unloadPack.getBoolean("enable");
         if (enableUnload) {
             final String url = unloadPack.getString("url");
-            final String hash = unloadPack.getString("hash");
 
+            this.checkValidEnding(url);
             this.checkForRehost(url, "unload-pack");
+
+            String hash = unloadPack.getString("hash");
+
+            ResourcePackURLData data = this.tryGenerateHash(unloadPack, url, hash, new AtomicInteger(0));
+            if (data != null) hash = data.getUrlHash();
 
             final VelocityResourcePack resourcePack = new VelocityResourcePack(this, EMPTY_SERVER_NAME, url, hash, 0);
             resourcePacks.add(resourcePack);
@@ -227,9 +232,14 @@ public class ForcePackVelocity implements ForcePackAPI {
             final boolean enableGlobal = globalPack.getBoolean("enable");
             if (enableGlobal) {
                 final String url = globalPack.getString("url");
-                final String hash = globalPack.getString("hash");
 
+                this.checkValidEnding(url);
                 this.checkForRehost(url, "global-pack");
+
+                String hash = globalPack.getString("hash");
+
+                ResourcePackURLData data = this.tryGenerateHash(globalPack, url, hash, new AtomicInteger(0));
+                if (data != null) hash = data.getUrlHash();
 
                 final VelocityResourcePack resourcePack = new VelocityResourcePack(this, GLOBAL_SERVER_NAME, url, hash, 0);
                 resourcePacks.add(resourcePack);
