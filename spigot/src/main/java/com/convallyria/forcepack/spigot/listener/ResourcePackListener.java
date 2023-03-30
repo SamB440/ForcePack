@@ -1,11 +1,11 @@
 package com.convallyria.forcepack.spigot.listener;
 
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
+import com.convallyria.forcepack.api.schedule.PlatformScheduler;
 import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.forcepack.spigot.translation.Translations;
-import com.convallyria.forcepack.spigot.utils.Scheduler;
 import com.viaversion.viaversion.api.Via;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -19,6 +19,7 @@ import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ResourcePackListener implements Listener {
 
@@ -130,7 +131,17 @@ public class ResourcePackListener implements Listener {
 
             final ResourcePack pack = plugin.getResourcePacks().get(0);
             plugin.getWaiting().put(player.getUniqueId(), pack);
-            Scheduler scheduler = new Scheduler();
+
+            final boolean viaversion = Bukkit.getPluginManager().isPluginEnabled("ViaVersion");
+            final int version = viaversion ? Via.getAPI().getPlayerVersion(player) : 393; // 393 is 1.13 - default to this
+            final int maxSize = ClientVersion.getMaxSizeForVersion(version);
+            final boolean forceSend = getConfig().getBoolean("Server.force-invalid-size");
+            if (!forceSend && pack.getSize() > maxSize) {
+                if (plugin.debug()) plugin.getLogger().info(String.format("Not sending pack to %s because of excessive size for version %d (%dMB, %dMB).", player.getName(), version, pack.getSize(), maxSize));
+                return;
+            }
+
+            AtomicReference<PlatformScheduler.ForcePackTask> task = new AtomicReference<>();
             Runnable packTask = () -> {
                 if (plugin.getWaiting().containsKey(player.getUniqueId())) {
                     plugin.log("Sent resource pack to player");
@@ -142,23 +153,14 @@ public class ResourcePackListener implements Listener {
                     player.sendTitle(Translations.DOWNLOAD_START_TITLE.get(player), Translations.DOWNLOAD_START_SUBTITLE.get(player), 0, 30, 10);
                 }
 
-                if (!plugin.getWaiting().containsKey(player.getUniqueId()) && !sentAccept.containsKey(player.getUniqueId())) {
-                    scheduler.cancel();
+                final PlatformScheduler.ForcePackTask acquired = task.get();
+                if (acquired != null && !plugin.getWaiting().containsKey(player.getUniqueId()) && !sentAccept.containsKey(player.getUniqueId())) {
+                    acquired.cancel();
                 }
             };
 
-            final boolean viaversion = Bukkit.getPluginManager().isPluginEnabled("ViaVersion");
-            final int version = viaversion ? Via.getAPI().getPlayerVersion(player) : 393; // 393 is 1.13 - default to this
-            final int maxSize = ClientVersion.getMaxSizeForVersion(version);
-            final boolean forceSend = getConfig().getBoolean("Server.force-invalid-size");
-            if (!forceSend && pack.getSize() > maxSize) {
-                if (plugin.debug()) plugin.getLogger().info(String.format("Not sending pack to %s because of excessive size for version %d (%dMB, %dMB).", player.getName(), version, pack.getSize(), maxSize));
-                return;
-            }
-
             if (getConfig().getBoolean("Server.Update GUI") && version <= 340) { // 340 is 1.12
-                scheduler.setTask(Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, packTask,
-                        0L, getConfig().getInt("Server.Update GUI Speed", 20)));
+                task.set(plugin.getScheduler().executeRepeating(packTask, 0L, getConfig().getInt("Server.Update GUI Speed", 20)));
             } else {
                 packTask.run();
             }
@@ -173,8 +175,7 @@ public class ResourcePackListener implements Listener {
     }
 
     private void ensureMainThread(Runnable runnable) {
-        if (!Bukkit.isPrimaryThread()) Bukkit.getScheduler().runTask(plugin, runnable);
-        else runnable.run();
+        plugin.getScheduler().executeOnMain(runnable);
     }
 
     private FileConfiguration getConfig() {

@@ -2,14 +2,17 @@ package com.convallyria.forcepack.velocity;
 
 import com.convallyria.forcepack.api.ForcePackAPI;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
+import com.convallyria.forcepack.api.schedule.PlatformScheduler;
 import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.api.utils.HashingUtil;
 import com.convallyria.forcepack.api.verification.ResourcePackURLData;
+import com.convallyria.forcepack.velocity.command.Commands;
 import com.convallyria.forcepack.velocity.command.ForcePackCommand;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.convallyria.forcepack.velocity.handler.PackHandler;
 import com.convallyria.forcepack.velocity.listener.ResourcePackListener;
 import com.convallyria.forcepack.velocity.resourcepack.VelocityResourcePack;
+import com.convallyria.forcepack.velocity.schedule.VelocityScheduler;
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.command.CommandMeta;
@@ -18,6 +21,7 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.command.CommandExecuteEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
+import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
@@ -55,17 +59,21 @@ public class ForcePackVelocity implements ForcePackAPI {
 
     private final ProxyServer server;
     private final Logger logger;
+    private final Commands commands;
     private final Path dataDirectory;
     private final Metrics.Factory metricsFactory;
     private final CommandManager commandManager;
+    private final VelocityScheduler scheduler;
 
     @Inject
-    public ForcePackVelocity(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory, CommandManager commandManager) {
+    public ForcePackVelocity(PluginContainer container, ProxyServer server, Logger logger, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory, CommandManager commandManager) {
         this.server = server;
         this.logger = logger;
+        this.commands = new Commands(this, container);
         this.dataDirectory = dataDirectory;
         this.metricsFactory = metricsFactory;
         this.commandManager = commandManager;
+        this.scheduler = new VelocityScheduler(this);
     }
 
     private VelocityConfig config;
@@ -80,7 +88,6 @@ public class ForcePackVelocity implements ForcePackAPI {
         this.packHandler = new PackHandler(this);
         this.loadResourcePacks(null);
         this.registerListeners();
-        this.registerCommands();
         metricsFactory.make(this, 13678);
     }
 
@@ -119,11 +126,6 @@ public class ForcePackVelocity implements ForcePackAPI {
                 }
             }
         });
-    }
-
-    private void registerCommands() {
-        CommandMeta meta = commandManager.metaBuilder("forcepackreload").build();
-        commandManager.register(meta, new ForcePackCommand(this));
     }
 
     public void loadResourcePacks(@Nullable Player player) {
@@ -320,6 +322,11 @@ public class ForcePackVelocity implements ForcePackAPI {
     @Override
     public List<ResourcePack> getResourcePacks() {
         return resourcePacks;
+    }
+
+    @Override
+    public PlatformScheduler getScheduler() {
+        return scheduler;
     }
 
     public Optional<ResourcePack> getPackByServer(final String server) {

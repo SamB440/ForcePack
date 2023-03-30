@@ -1,5 +1,10 @@
 package com.convallyria.forcepack.velocity.command;
 
+import cloud.commandframework.annotations.CommandDescription;
+import cloud.commandframework.annotations.CommandMethod;
+import cloud.commandframework.annotations.CommandPermission;
+import com.convallyria.forcepack.api.resourcepack.ResourcePack;
+import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
@@ -11,7 +16,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.util.UUID;
 
-public class ForcePackCommand implements SimpleCommand {
+public class ForcePackCommand {
 
     private final ForcePackVelocity plugin;
 
@@ -19,10 +24,18 @@ public class ForcePackCommand implements SimpleCommand {
         this.plugin = plugin;
     }
 
-    @Override
-    public void execute(final Invocation invocation) {
+    @CommandDescription("Default ForcePack command")
+    @CommandMethod("vforcepack|velocityforcepack")
+    public void onDefault(CommandSource sender) {
+        sender.sendMessage(Component.text("ForcePack by SamB440. Type /vforcepack help for help.", NamedTextColor.GREEN));
+    }
+
+    @CommandDescription("Reloads the plugin config along with the resource pack")
+    @CommandPermission("forcepack.reload")
+    @CommandMethod("vforcepack|velocityforcepack reload")
+    public void onReload(CommandSource commandSource) {
         final CommandSource source = plugin.getServer().getConsoleCommandSource();
-        final UUID possibleUUID = invocation.source().pointers().getOrDefault(Identity.UUID, null);
+        final UUID possibleUUID = commandSource.pointers().getOrDefault(Identity.UUID, null);
         final Player sender = possibleUUID == null ? null : plugin.getServer().getPlayer(possibleUUID).orElse(null);
         Component reloadMsg = Component.text("Reloading...").color(NamedTextColor.GREEN);
         source.sendMessage(reloadMsg);
@@ -40,10 +53,5 @@ public class ForcePackCommand implements SimpleCommand {
         Component doneMsg = Component.text("Done!").color(NamedTextColor.GREEN);
         source.sendMessage(doneMsg);
         if (sender != null) sender.sendMessage(doneMsg);
-    }
-
-    @Override
-    public boolean hasPermission(final Invocation invocation) {
-        return invocation.source().hasPermission("forcepack.reload");
     }
 }

@@ -27,7 +27,7 @@ public final class SpigotResourcePack extends ResourcePack {
     public void setResourcePack(UUID uuid) {
         final int delay = spigotPlugin.getConfig().getInt("delay-pack-sending-by", 0);
         if (delay > 0) {
-            Bukkit.getScheduler().runTaskLater(spigotPlugin, () -> runSetResourcePack(uuid), delay);
+            plugin.getScheduler().executeDelayed(() -> runSetResourcePack(uuid), delay);
         } else {
             runSetResourcePack(uuid);
         }
