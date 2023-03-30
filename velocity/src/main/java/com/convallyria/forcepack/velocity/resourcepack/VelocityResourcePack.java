@@ -31,9 +31,7 @@ public final class VelocityResourcePack extends ResourcePack {
     public void setResourcePack(UUID uuid) {
         final int delay = velocityPlugin.getConfig().getInt("delay-pack-sending-by");
         if (delay > 0) {
-            velocityPlugin.getServer().getScheduler().buildTask(plugin, () -> {
-                runSetResourcePack(uuid);
-            }).delay(50L * delay, TimeUnit.MILLISECONDS);
+            velocityPlugin.getScheduler().executeDelayed(() -> runSetResourcePack(uuid), delay);
         } else {
             runSetResourcePack(uuid);
         }

@@ -1,13 +1,8 @@
 package com.convallyria.forcepack.spigot.command;
 
-import co.aikar.commands.BaseCommand;
-import co.aikar.commands.CommandHelp;
-import co.aikar.commands.annotation.CommandAlias;
-import co.aikar.commands.annotation.CommandPermission;
-import co.aikar.commands.annotation.Default;
-import co.aikar.commands.annotation.Description;
-import co.aikar.commands.annotation.HelpCommand;
-import co.aikar.commands.annotation.Subcommand;
+import cloud.commandframework.annotations.CommandDescription;
+import cloud.commandframework.annotations.CommandMethod;
+import cloud.commandframework.annotations.CommandPermission;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
@@ -17,8 +12,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-@CommandAlias("forcepack")
-public class ForcePackCommand extends BaseCommand {
+public class ForcePackCommand {
 
     private final ForcePackSpigot plugin;
 
@@ -26,19 +20,15 @@ public class ForcePackCommand extends BaseCommand {
         this.plugin = plugin;
     }
 
-    @Default
+    @CommandDescription("Default ForcePack command")
+    @CommandMethod("forcepack")
     public void onDefault(CommandSender sender) {
         sender.sendMessage(ChatColor.GREEN + "ForcePack by SamB440. Type /forcepack help for help.");
     }
 
-    @HelpCommand
-    public static void onHelp(CommandSender sender, CommandHelp help) {
-        help.showHelp();
-    }
-
-    @Subcommand("reload")
-    @Description("Reloads the plugin config along with the resource pack")
+    @CommandDescription("Reloads the plugin config along with the resource pack")
     @CommandPermission("forcepack.reload")
+    @CommandMethod("forcepack reload")
     public void onReload(CommandSender sender) {
         sender.sendMessage(ChatColor.GREEN + "Reloading...");
         plugin.reloadConfig();

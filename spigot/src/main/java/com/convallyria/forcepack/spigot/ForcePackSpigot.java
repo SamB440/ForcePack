@@ -1,17 +1,19 @@
 package com.convallyria.forcepack.spigot;
 
-import co.aikar.commands.PaperCommandManager;
 import com.convallyria.forcepack.api.ForcePackAPI;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
+import com.convallyria.forcepack.api.schedule.PlatformScheduler;
 import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.api.utils.HashingUtil;
 import com.convallyria.forcepack.api.verification.ResourcePackURLData;
-import com.convallyria.forcepack.spigot.command.ForcePackCommand;
+import com.convallyria.forcepack.folia.schedule.FoliaScheduler;
+import com.convallyria.forcepack.spigot.command.Commands;
 import com.convallyria.forcepack.spigot.integration.ItemsAdderIntegration;
 import com.convallyria.forcepack.spigot.listener.ExemptionListener;
 import com.convallyria.forcepack.spigot.listener.ResourcePackListener;
 import com.convallyria.forcepack.spigot.listener.VelocityMessageListener;
 import com.convallyria.forcepack.spigot.resourcepack.SpigotResourcePack;
+import com.convallyria.forcepack.spigot.schedule.BukkitScheduler;
 import com.convallyria.forcepack.spigot.translation.Translations;
 import com.convallyria.languagy.api.language.Language;
 import com.convallyria.languagy.api.language.Translator;
@@ -37,12 +39,18 @@ import java.util.logging.Level;
 public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
     private Translator translator;
+    private PlatformScheduler scheduler;
     private ResourcePack resourcePack;
     public boolean velocityMode;
 
     @Override
     public List<ResourcePack> getResourcePacks() {
         return List.of(resourcePack);
+    }
+
+    @Override
+    public PlatformScheduler getScheduler() {
+        return scheduler;
     }
 
     private final Map<UUID, ResourcePack> waiting = new HashMap<>();
@@ -56,9 +64,10 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         this.generateLang();
         this.createConfig();
         this.velocityMode = getConfig().getBoolean("velocity-mode");
+        this.scheduler = FoliaScheduler.RUNNING_FOLIA ? new FoliaScheduler(this) : new BukkitScheduler(this);
         this.registerListeners();
         this.registerCommands();
-        this.translator = Translator.of(this, "lang", Language.ENGLISH, debug());
+        this.translator = Translator.of(this, "lang", Language.BRITISH_ENGLISH, debug());
 
         // Convert legacy config
         try {
@@ -66,7 +75,6 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
 
         Runnable run = () -> {
             if (!reload()) {
@@ -84,7 +92,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         }
 
         if (getConfig().getBoolean("load-last")) {
-            Bukkit.getScheduler().runTaskLater(this, run, 1L);
+            scheduler.registerInitTask(run);
         } else {
             run.run();
         }
@@ -201,9 +209,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
     }
 
     private void registerCommands() {
-        PaperCommandManager manager = new PaperCommandManager(this);
-        manager.enableUnstableAPI("help");
-        manager.registerCommand(new ForcePackCommand(this));
+        new Commands(this);
     }
 
     private void generateLang() {
