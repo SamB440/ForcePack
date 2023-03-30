@@ -35,7 +35,6 @@ allprojects {
         mavenCentral()
         maven("https://erethon.de/repo/")
         maven("https://repo.convallyria.com/snapshots")
-        maven("https://repo.aikar.co/content/groups/aikar/")
         maven("https://repo.viaversion.com")
         maven {
             name = "codemc-repo"

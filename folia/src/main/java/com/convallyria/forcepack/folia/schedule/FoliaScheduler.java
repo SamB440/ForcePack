@@ -27,7 +27,7 @@ public class FoliaScheduler extends PlatformScheduler<ForcePackAPI> implements L
         RUNNING_FOLIA = found;
     }
 
-    protected List<Runnable> initTasks = new ArrayList<>();
+    private List<Runnable> initTasks = new ArrayList<>();
 
     public FoliaScheduler(ForcePackAPI api) {
         super(api);
