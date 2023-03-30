@@ -5,7 +5,6 @@ import com.convallyria.forcepack.velocity.ForcePackVelocity;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.player.ResourcePackInfo;
-import com.velocitypowered.api.scheduler.Scheduler;
 import net.kyori.adventure.text.Component;
 
 import java.util.Optional;

@@ -21,7 +21,7 @@ dependencies {
     implementation("com.convallyria.languagy:api:3.0.1") {
         exclude("com.convallyria.languagy.libs")
     }
-    implementation("org.bstats:bstats-bukkit:3.0.0")
+    implementation("org.bstats:bstats-bukkit:3.0.1")
     implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")
 }
 
