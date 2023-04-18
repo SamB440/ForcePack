@@ -24,6 +24,7 @@ public class VelocityConfig {
         final File file = new File(plugin.getDataDirectory() + File.separator + "config.toml");
         CommentedFileConfig conf = CommentedFileConfig.of(file, TomlFormat.instance());
         conf.load();
+        conf.close();
 
         this.config = conf;
         this.file = file;
@@ -100,13 +101,5 @@ public class VelocityConfig {
 
     public Collection<? extends String> getKeys() {
         return new HashSet<>(config.valueMap().keySet());
-    }
-
-    public void save() throws IOException {
-        if (config instanceof CommentedFileConfig) {
-            ((CommentedFileConfig) config).save();
-        } else {
-            throw new IOException("Config is not an instance of CommentedFileConfig!");
-        }
     }
 }
