@@ -44,10 +44,8 @@ public class ForcePackCommand {
         plugin.loadResourcePacks(sender);
 
         for (Player player : plugin.getServer().getAllPlayers()) {
-            player.getCurrentServer().ifPresent(serverConnection -> {
-                final ServerInfo serverInfo = serverConnection.getServerInfo();
-                plugin.getPackHandler().setPack(player, serverInfo);
-            });
+            player.getCurrentServer().ifPresent(serverConnection ->
+                    plugin.getPackHandler().setPack(player, serverConnection));
         }
 
         Component doneMsg = Component.text("Done!").color(NamedTextColor.GREEN);

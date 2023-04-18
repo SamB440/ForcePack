@@ -4,11 +4,14 @@ import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ServerConnection;
+import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import com.velocitypowered.api.proxy.player.ResourcePackInfo;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import com.velocitypowered.api.scheduler.ScheduledTask;
 import com.velocitypowered.api.scheduler.Scheduler;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,7 +33,9 @@ public final class PackHandler {
         return applying;
     }
 
-    public void setPack(final Player player, final ServerInfo serverInfo) {
+    public void setPack(final Player player, final ServerConnection server) {
+        // Find whether the config contains this server
+        final ServerInfo serverInfo = server.getServerInfo();
         plugin.getPackByServer(serverInfo.getName()).ifPresentOrElse(resourcePack -> {
             final int protocol = player.getProtocolVersion().getProtocol();
             final int maxSize = ClientVersion.getMaxSizeForVersion(protocol);
@@ -46,6 +51,7 @@ public final class PackHandler {
             if (appliedResourcePack != null && !forceApply) {
                 if (Arrays.equals(appliedResourcePack.getHash(), resourcePack.getHashSum())) {
                     plugin.log("Not applying already applied pack to player " + player.getUsername() + ".");
+                    server.sendPluginMessage(MinecraftChannelIdentifier.create("forcepack", "status"), "SUCCESSFULLY_LOADED".getBytes(StandardCharsets.UTF_8));
                     return;
                 }
             }
@@ -73,11 +79,17 @@ public final class PackHandler {
         }, () -> {
             final ResourcePackInfo appliedResourcePack = player.getAppliedResourcePack();
             // This server doesn't have a pack set - send unload pack if enabled and if they already have one
-            if (appliedResourcePack == null) return;
+            if (appliedResourcePack == null) {
+                plugin.log("%s doesn't have a resource pack applied, not sending unload.", player.getUsername());
+                return;
+            }
 
             final VelocityConfig unloadPack = plugin.getConfig().getConfig("unload-pack");
             final boolean enableUnload = unloadPack.getBoolean("enable");
-            if (!enableUnload) return;
+            if (!enableUnload) {
+                plugin.log("Unload pack is disabled, not sending for server %s, user %s.", serverInfo.getName(), player.getUsername());
+                return;
+            }
 
             final List<String> excluded = unloadPack.getStringList("exclude");
             if (excluded.contains(serverInfo.getName())) return;
