@@ -34,7 +34,7 @@ public class Commands {
         }
 
         // Register Brigadier mappings
-        if (manager.hasCapability(CloudBukkitCapabilities.BRIGADIER)) {
+        if (manager.hasCapability(CloudBukkitCapabilities.NATIVE_BRIGADIER)) {
             manager.registerBrigadier();
         }
 
