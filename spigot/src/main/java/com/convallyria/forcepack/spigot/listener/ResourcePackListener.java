@@ -62,21 +62,27 @@ public class ResourcePackListener implements Listener {
 
             switch (status) {
                 case DECLINED: {
-                    if (kick) ensureMainThread(() -> player.kickPlayer(Translations.DECLINED.get(player)));
-                    else Translations.DECLINED.send(player);
+                    ensureMainThread(() -> {
+                        if (kick) player.kickPlayer(Translations.DECLINED.get(player));
+                        else Translations.DECLINED.send(player);
+                    });
+
                     sentAccept.remove(player.getUniqueId());
                     break;
                 }
                 case FAILED_DOWNLOAD: {
-                    if (kick) ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
-                    else Translations.DOWNLOAD_FAILED.send(player);
+                    ensureMainThread(() -> {
+                        if (kick) player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player));
+                        else Translations.DOWNLOAD_FAILED.send(player);
+                    });
+
                     sentAccept.remove(player.getUniqueId());
                     break;
                 }
                 case SUCCESSFULLY_LOADED: {
                     if (kick) ensureMainThread(() -> player.kickPlayer(Translations.ACCEPTED.get(player)));
                     else {
-                        Translations.ACCEPTED.send(player);
+                        ensureMainThread(() -> Translations.ACCEPTED.send(player));
                         boolean sendTitle = plugin.getConfig().getBoolean("send-loading-title");
                         if (sendTitle) player.sendTitle(null, null, 0, 0, 0); // resetTitle doesn't clear subtitle
                     }
