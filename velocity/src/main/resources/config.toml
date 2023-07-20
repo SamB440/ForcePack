@@ -84,6 +84,10 @@ debug = false
     generate-hash = false
     # The prompt message for clients on 1.17+.
     resourcepack.prompt = "<yellow>Please accept our resource pack to improve your experience."
+    # What servers should we exclude from unloading?
+    exclude = [
+        "exampleserver"
+    ]
 
     [global-pack.actions]
         # List of valid actions: https://jd.velocitypowered.com/3.0.0/com/velocitypowered/api/event/player/PlayerResourcePackStatusEvent.Status.html

@@ -4,9 +4,12 @@ import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.player.ResourcePackInfo;
 import net.kyori.adventure.text.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -49,6 +52,13 @@ public final class VelocityResourcePack extends ResourcePack {
         final VelocityConfig serverConfig;
         if (server.equals(ForcePackVelocity.GLOBAL_SERVER_NAME)) {
             serverConfig = velocityPlugin.getConfig().getConfig("global-pack");
+            final List<String> excluded = serverConfig.getStringList("exclude");
+            final Optional<ServerConnection> currentServer = player.get().getCurrentServer();
+            if (currentServer.isPresent()) {
+                if (excluded.contains(currentServer.get().getServerInfo().getName())) return;
+            } else {
+                ((ForcePackVelocity) plugin).log("Unable to check global resource pack exclusion list as player is not in a server!?");
+            }
         } else {
             serverConfig = velocityPlugin.getConfig().getConfig("servers").getConfig(server);
         }
