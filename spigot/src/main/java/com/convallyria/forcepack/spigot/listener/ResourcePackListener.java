@@ -131,7 +131,7 @@ public class ResourcePackListener implements Listener {
         if (!canBypass && !geyser) {
             if (plugin.velocityMode) {
                 plugin.log("Velocity mode is enabled");
-                plugin.getWaiting().put(player.getUniqueId(), null);
+                plugin.getWaiting().remove(player.getUniqueId());
                 return;
             }
 
