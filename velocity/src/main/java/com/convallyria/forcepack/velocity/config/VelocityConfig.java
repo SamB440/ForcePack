@@ -7,7 +7,6 @@ import com.electronwill.nightconfig.toml.TomlFormat;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;

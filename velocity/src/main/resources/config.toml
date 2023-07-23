@@ -106,6 +106,42 @@ debug = false
             kick = false
             commands = []
 
+# Defines groups of servers, rather than singular individual ones
+[groups]
+    [groups.example-group]
+        # If exact-match is true, only servers exactly equal to the name will be checked
+        # If false, they must only contain the keywords
+        exact-match = true
+        servers = [
+            "example-server",
+            "example-server-2"
+        ]
+        # The ResourcePack URL. This must be a direct URL, ending with .zip. For Dropbox URLs, add ?dl=1 to the end.
+        resourcepack.url = "https://www.convallyria.com/files/BlankPack.zip"
+        # Whether to automatically generate the SHA-1 hash. This is not recommended for security and reliability.
+        # The hash setting will be ignored if this is true, however it will fall back to that if the generation fails.
+        resourcepack.generate-hash = false
+        # Use a site such as http://onlinemd5.com/ or the hash provided when uploading to https://mc-packs.net/.
+        resourcepack.hash = "118AFFFC54CDCD308702F81BA24E03223F15FE5F"
+        # The prompt message for clients on 1.17+.
+        resourcepack.prompt = "<yellow>Please accept our resource pack to improve your experience."
+        [groups.example-group.actions]
+            # List of valid actions: https://jd.velocitypowered.com/3.0.0/com/velocitypowered/api/event/player/PlayerResourcePackStatusEvent.Status.html
+            [groups.example-group.actions.ACCEPTED]
+                kick = false
+                commands = []
+            [groups.example-group.actions.DECLINED]
+                kick = true
+                message = "<color:#FF5555>Please accept our ResourcePack to play on the server!"
+                commands = []
+            [groups.example-group.actions.FAILED_DOWNLOAD]
+                kick = true
+                message = "<color:#FF5555>The ResourcePack download failed. Please try rejoining."
+                commands = []
+            [groups.example-group.actions.SUCCESSFUL]
+                kick = false
+                commands = []
+
 [servers]
     # You can specify any server name here that is configured in velocity.
     [servers.example-server]

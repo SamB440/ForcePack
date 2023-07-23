@@ -7,6 +7,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.player.ResourcePackInfo;
 import net.kyori.adventure.text.Component;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,16 +19,22 @@ public final class VelocityResourcePack extends ResourcePack {
 
     private final ForcePackVelocity velocityPlugin;
     private final String server;
+    private final @Nullable String group;
 
-    public VelocityResourcePack(final ForcePackVelocity plugin, final String server, String url, String hash, int size) {
+    public VelocityResourcePack(final ForcePackVelocity plugin, final String server, String url, String hash, int size, String group) {
         super(plugin, url, hash, size);
         this.velocityPlugin = plugin;
         this.server = server;
+        this.group = group;
     }
 
     @Override
     public String getServer() {
         return server;
+    }
+
+    public @Nullable String getGroup() {
+        return group;
     }
 
     @Override

@@ -26,6 +26,7 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -135,17 +136,39 @@ public class ForcePackVelocity implements ForcePackAPI {
         this.checkGlobal();
 
         final boolean verifyPacks = getConfig().getBoolean("verify-resource-packs");
-        final VelocityConfig servers = getConfig().getConfig("servers");
+        final VelocityConfig groups = getConfig().getConfig("groups");
+        if (groups != null) {
+            addResourcePacks(player, "groups");
+        }
+
+        addResourcePacks(player, "servers");
+
+        if (!verifyPacks) {
+            logger.info("Loaded " + resourcePacks.size() + " resource packs without verification.");
+            return;
+        }
+
         final ConsoleCommandSource consoleSender = this.getServer().getConsoleCommandSource();
-        for (String serverName : servers.getKeys()) {
-            final VelocityConfig serverConfig = servers.getConfig(serverName);
+        Component loadedMsg = Component.text("Loaded " + resourcePacks.size() + " verified resource packs.").color(NamedTextColor.GREEN);
+        consoleSender.sendMessage(loadedMsg);
+        if (player != null) player.sendMessage(loadedMsg);
+    }
+
+    private void addResourcePacks(@Nullable Player player, String rootName) {
+        final boolean verifyPacks = getConfig().getBoolean("verify-resource-packs");
+        final ConsoleCommandSource consoleSender = this.getServer().getConsoleCommandSource();
+        final boolean groups = rootName.equals("groups");
+        final String typeName = groups ? "group" : "server";
+        VelocityConfig root = groups ? getConfig().getConfig("groups") : getConfig().getConfig("servers");
+        for (String name : root.getKeys()) {
+            final VelocityConfig serverConfig = root.getConfig(name);
             final VelocityConfig resourcePack = serverConfig.getConfig("resourcepack");
             String url = resourcePack.getString("url");
             String hash = resourcePack.getString("hash", "");
             AtomicInteger sizeInMB = new AtomicInteger();
 
             this.checkValidEnding(url);
-            this.checkForRehost(url, serverName);
+            this.checkForRehost(url, name);
 
             ResourcePackURLData data = this.tryGenerateHash(resourcePack, url, hash, sizeInMB);
             if (data != null) hash = data.getUrlHash();
@@ -179,14 +202,14 @@ public class ForcePackVelocity implements ForcePackAPI {
                     if (!hash.equalsIgnoreCase(data.getUrlHash())) {
                         this.getLogger().error("-----------------------------------------------");
                         this.getLogger().error("Your hash does not match the URL file provided!");
-                        this.getLogger().error("Target server: " + serverName);
+                        this.getLogger().error("Target " + typeName + ": " + name);
                         this.getLogger().error("The URL hash returned: " + data.getUrlHash());
                         this.getLogger().error("Your config hash returned: " + data.getConfigHash());
                         this.getLogger().error("Please provide a correct SHA-1 hash!");
                         this.getLogger().error("-----------------------------------------------");
                         return;
                     } else {
-                        Component hashMsg = Component.text("Hash verification complete for server " + serverName + ".").color(NamedTextColor.GREEN);
+                        Component hashMsg = Component.text("Hash verification complete for " + typeName + " " + name + ".").color(NamedTextColor.GREEN);
                         consoleSender.sendMessage(hashMsg);
                         if (player != null) player.sendMessage(hashMsg);
                     }
@@ -196,17 +219,23 @@ public class ForcePackVelocity implements ForcePackAPI {
                 }
             }
 
-            resourcePacks.add(new VelocityResourcePack(this, serverName, url, hash, sizeInMB.get()));
+            if (groups) {
+                final boolean exact = serverConfig.getBoolean("exact-match");
+                for (String serverName : serverConfig.getStringList("servers")) {
+                    for (RegisteredServer registeredServer : server.getAllServers()) {
+                        final String serverInfoName = registeredServer.getServerInfo().getName();
+                        final boolean matches = exact ?
+                                serverInfoName.equals(serverName) :
+                                serverInfoName.contains(serverName);
+                        if (!matches) continue;
+                        resourcePacks.add(new VelocityResourcePack(this, serverInfoName, url, hash, sizeInMB.get(), name));
+                        log("Added resource pack for server %s", serverInfoName);
+                    }
+                }
+            } else {
+                resourcePacks.add(new VelocityResourcePack(this, name, url, hash, sizeInMB.get(), null));
+            }
         }
-
-        if (!verifyPacks) {
-            logger.info("Loaded " + resourcePacks.size() + " resource packs without verification.");
-            return;
-        }
-
-        Component loadedMsg = Component.text("Loaded " + resourcePacks.size() + " verified resource packs.").color(NamedTextColor.GREEN);
-        consoleSender.sendMessage(loadedMsg);
-        if (player != null) player.sendMessage(loadedMsg);
     }
 
     private void checkUnload() {
@@ -223,7 +252,7 @@ public class ForcePackVelocity implements ForcePackAPI {
             ResourcePackURLData data = this.tryGenerateHash(unloadPack, url, hash, new AtomicInteger(0));
             if (data != null) hash = data.getUrlHash();
 
-            final VelocityResourcePack resourcePack = new VelocityResourcePack(this, EMPTY_SERVER_NAME, url, hash, 0);
+            final VelocityResourcePack resourcePack = new VelocityResourcePack(this, EMPTY_SERVER_NAME, url, hash, 0, null);
             resourcePacks.add(resourcePack);
         }
     }
@@ -243,7 +272,7 @@ public class ForcePackVelocity implements ForcePackAPI {
                 ResourcePackURLData data = this.tryGenerateHash(globalPack, url, hash, new AtomicInteger(0));
                 if (data != null) hash = data.getUrlHash();
 
-                final VelocityResourcePack resourcePack = new VelocityResourcePack(this, GLOBAL_SERVER_NAME, url, hash, 0);
+                final VelocityResourcePack resourcePack = new VelocityResourcePack(this, GLOBAL_SERVER_NAME, url, hash, 0, null);
                 resourcePacks.add(resourcePack);
                 globalResourcePack = resourcePack;
             }
