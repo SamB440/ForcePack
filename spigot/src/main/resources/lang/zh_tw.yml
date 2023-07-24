@@ -1,0 +1,8 @@
+# ForcePack 使用 Languagy。語言文件將會自動更新。 了解更多訊息: https://fortitude.islandearth.net/en/languagy
+declined: "&c你必須接受資源包才能在我們伺服器上遊玩。不知道怎麼做?查看 &ehttps://samb440.gitlab.io/resourcepack.html"
+accepted: "&a感謝你接受我們的資源包!你現在可以遊玩了"
+download_start_title: "&6正在下載資源包..."
+download_start_subtitle: "&6這可能需要一些時間..."
+download_failed: "&c資源包下載失敗。請重新連接並重試"
+prompt_text: "&e請接受我們的資源包，以改善你的伺服器遊玩體驗!" # 僅 1.18+ (1.17 以下沒有 API)
+reloading: "&a由於更新而需重新應用資源包!"
