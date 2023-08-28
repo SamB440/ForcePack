@@ -83,7 +83,7 @@ public class ResourcePackListener {
             final VelocityConfig actions = root.getConfig("actions").getConfig(status.name());
             for (String cmd : actions.getStringList("commands")) {
                 final CommandSource console = plugin.getServer().getConsoleCommandSource();
-                plugin.getServer().getCommandManager().executeAsync(console, cmd);
+                plugin.getServer().getCommandManager().executeAsync(console, cmd.replace("[player]", player.getUsername()));
             }
 
             final boolean kick = actions.getBoolean("kick");
