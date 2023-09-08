@@ -214,8 +214,7 @@ public class ForcePackVelocity implements ForcePackAPI {
                         if (player != null) player.sendMessage(hashMsg);
                     }
                 } catch (Exception e) {
-                    this.getLogger().error("Please provide a correct SHA-1 hash/url!");
-                    e.printStackTrace();
+                    this.getLogger().error("Please provide a correct SHA-1 hash/url!", e);
                 }
             }
 
@@ -323,7 +322,7 @@ public class ForcePackVelocity implements ForcePackAPI {
                 ResourcePackURLData data = HashingUtil.performPackCheck(url, hash);
                 getLogger().info("Size of ResourcePack: " + data.getSize() + " MB");
                 sizeInMB.set(data.getSize());
-                getLogger().info("Auto-generated ResourcePack hash: " + hash);
+                getLogger().info("Auto-generated ResourcePack hash: " + data.getUrlHash());
                 return data;
             } catch (Exception e) {
                 getLogger().error("Unable to auto-generate ResourcePack hash, reverting to config setting", e);
