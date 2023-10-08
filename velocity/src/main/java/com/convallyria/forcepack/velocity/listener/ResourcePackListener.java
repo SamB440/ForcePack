@@ -1,5 +1,6 @@
 package com.convallyria.forcepack.velocity.listener;
 
+import com.convallyria.forcepack.api.permission.Permissions;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
@@ -52,52 +53,54 @@ public class ResourcePackListener {
         }
 
         boolean geyser = plugin.getConfig().getBoolean("geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
-        boolean canBypass = player.hasPermission("ForcePack.bypass") && plugin.getConfig().getBoolean("bypass-permission");
-        if (!canBypass && !geyser) {
-            if (status == PlayerResourcePackStatusEvent.Status.SUCCESSFUL) {
-                // No longer applying, remove them from the list
-                currentServer.get().sendPluginMessage(MinecraftChannelIdentifier.create("forcepack", "status"), "SUCCESSFULLY_LOADED".getBytes(StandardCharsets.UTF_8));
-                plugin.getPackHandler().getApplying().remove(player.getUniqueId());
-            }
-            plugin.log(player.getUsername() + " sent status: " + event.getStatus());
+        boolean canBypass = player.hasPermission(Permissions.BYPASS) && plugin.getConfig().getBoolean("bypass-permission");
+        if (canBypass || geyser) {
+            plugin.log("Ignoring player " + player.getUsername() + " as they do not have permissions or are a geyser player.");
+            return;
+        }
 
-            final VelocityConfig root;
-            if (packByServer.get().getServer().equals(ForcePackVelocity.GLOBAL_SERVER_NAME)) {
-                root = plugin.getConfig().getConfig("global-pack");
-            } else {
-                if (packByServer.get() instanceof VelocityResourcePack) {
-                    VelocityResourcePack vrp = (VelocityResourcePack) packByServer.get();
-                    if (vrp.getGroup() != null) {
-                        root = plugin.getConfig().getConfig("groups").getConfig(vrp.getGroup());
-                    } else {
-                        root = plugin.getConfig().getConfig("servers").getConfig(serverName);
-                    }
+        if (status == PlayerResourcePackStatusEvent.Status.SUCCESSFUL) {
+            // No longer applying, remove them from the list
+            currentServer.get().sendPluginMessage(MinecraftChannelIdentifier.create("forcepack", "status"), "SUCCESSFULLY_LOADED".getBytes(StandardCharsets.UTF_8));
+            plugin.getPackHandler().getApplying().remove(player.getUniqueId());
+        }
+
+        plugin.log(player.getUsername() + " sent status: " + event.getStatus());
+
+        final VelocityConfig root;
+        if (packByServer.get().getServer().equals(ForcePackVelocity.GLOBAL_SERVER_NAME)) {
+            root = plugin.getConfig().getConfig("global-pack");
+        } else {
+            if (packByServer.get() instanceof VelocityResourcePack) {
+                VelocityResourcePack vrp = (VelocityResourcePack) packByServer.get();
+                if (vrp.getGroup() != null) {
+                    root = plugin.getConfig().getConfig("groups").getConfig(vrp.getGroup());
                 } else {
                     root = plugin.getConfig().getConfig("servers").getConfig(serverName);
                 }
-            }
-
-            if (tryValidateHacks(player, status, root, now)) return;
-            if (status != PlayerResourcePackStatusEvent.Status.ACCEPTED) sentAccept.remove(player.getUniqueId());
-
-            final VelocityConfig actions = root.getConfig("actions").getConfig(status.name());
-            for (String cmd : actions.getStringList("commands")) {
-                final CommandSource console = plugin.getServer().getConsoleCommandSource();
-                plugin.getServer().getCommandManager().executeAsync(console, cmd.replace("[player]", player.getUsername()));
-            }
-
-            final boolean kick = actions.getBoolean("kick");
-            final String text = actions.getString("message");
-            if (text == null) return;
-
-            final Component component = plugin.getMiniMessage().deserialize(text);
-            if (kick) {
-                player.disconnect(component);
             } else {
-                player.sendMessage(component);
+                root = plugin.getConfig().getConfig("servers").getConfig(serverName);
             }
+        }
+
+        if (tryValidateHacks(player, status, root, now)) return;
+        if (status != PlayerResourcePackStatusEvent.Status.ACCEPTED) sentAccept.remove(player.getUniqueId());
+
+        final VelocityConfig actions = root.getConfig("actions").getConfig(status.name());
+        for (String cmd : actions.getStringList("commands")) {
+            final CommandSource console = plugin.getServer().getConsoleCommandSource();
+            plugin.getServer().getCommandManager().executeAsync(console, cmd.replace("[player]", player.getUsername()));
+        }
+
+        final boolean kick = actions.getBoolean("kick");
+        final String text = actions.getString("message");
+        if (text == null) return;
+
+        final Component component = plugin.getMiniMessage().deserialize(text);
+        if (kick) {
+            player.disconnect(component);
         } else {
-            plugin.log("Ignoring player " + player.getUsername() + " as they do not have permissions or are a geyser player.");
+            player.sendMessage(component);
         }
     }
 
@@ -150,7 +153,7 @@ public class ResourcePackListener {
         if (currentServer.isEmpty()) return;
 
         boolean geyser = plugin.getConfig().getBoolean("geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
-        boolean canBypass = player.hasPermission("ForcePack.bypass") && plugin.getConfig().getBoolean("bypass-permission");
+        boolean canBypass = player.hasPermission(Permissions.BYPASS) && plugin.getConfig().getBoolean("bypass-permission");
         plugin.log(player.getUsername() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
         if (!canBypass && !geyser) {
             plugin.getPackHandler().setPack(player, currentServer.get());

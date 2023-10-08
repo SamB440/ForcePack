@@ -3,6 +3,7 @@ package com.convallyria.forcepack.spigot.command;
 import cloud.commandframework.annotations.CommandDescription;
 import cloud.commandframework.annotations.CommandMethod;
 import cloud.commandframework.annotations.CommandPermission;
+import com.convallyria.forcepack.api.permission.Permissions;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
@@ -37,7 +38,7 @@ public class ForcePackCommand {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (plugin.getWaiting().containsKey(player.getUniqueId())) continue;
                 boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
-                boolean canBypass = player.hasPermission("ForcePack.bypass") && plugin.getConfig().getBoolean("Server.bypass-permission");
+                boolean canBypass = player.hasPermission(Permissions.BYPASS) && plugin.getConfig().getBoolean("Server.bypass-permission");
                 plugin.log(player.getName() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
                 if (geyser || canBypass) continue;
 

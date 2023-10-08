@@ -8,7 +8,7 @@ import org.bukkit.plugin.messaging.PluginMessageListener;
 
 public class VelocityMessageListener implements PluginMessageListener {
 
-    private static String CHANNEL = "forcepack:status";
+    private static final String CHANNEL = "forcepack:status";
 
     private final ForcePackSpigot plugin;
 
