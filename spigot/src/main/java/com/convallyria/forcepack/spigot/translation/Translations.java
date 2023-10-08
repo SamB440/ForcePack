@@ -4,6 +4,8 @@ import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.languagy.api.language.Language;
 import com.convallyria.languagy.api.language.key.TranslationKey;
 import com.convallyria.languagy.api.language.translation.Translation;
+import net.kyori.adventure.platform.bukkit.BukkitComponentSerializer;
+import net.kyori.adventure.text.Component;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -36,7 +38,7 @@ public enum Translations {
     }
 
     public String get(Player player) {
-        return getTranslation(player).colour().get(0);
+        return BukkitComponentSerializer.legacy().serialize(getTranslation(player).colour().get(0));
     }
 
     public Translation getTranslation(Player player) {

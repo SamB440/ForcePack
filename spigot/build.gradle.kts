@@ -18,7 +18,9 @@ dependencies {
     compileOnly("com.viaversion:viaversion-api:4.1.1")
     compileOnly("com.github.LoneDev6:api-itemsadder:3.0.0")
 
-    implementation("com.convallyria.languagy:api:3.0.2") {
+    implementation("net.kyori:adventure-platform-bukkit:4.3.1")
+    implementation("net.kyori:adventure-text-minimessage:4.14.0")
+    implementation("com.convallyria.languagy:api:3.0.3-SNAPSHOT") {
         exclude("com.convallyria.languagy.libs")
     }
     implementation("org.bstats:bstats-bukkit:3.0.1")

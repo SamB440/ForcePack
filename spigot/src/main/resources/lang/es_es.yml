@@ -1,9 +1,9 @@
 # Traducción hecha por Luis Bazán
 # ForcePack utiliza Languagy. El archivo de lenguaje se actualizará automáticamente. Más información: https://fortitude.islandearth.net/en/languagy
-declined: "&cDebes aceptar el paquete de recursos para jugar en nuestro servidor. ¿No sabes cómo? Revisa &ehttps://samb440.gitlab.io/resourcepack.html."
-accepted: "&a¡Gracias por aceptar nuestro paquete de recursos! Ya puedes jugar."
-download_start_title: "&6Descargando el paquete de recursos..."
-download_start_subtitle: "&6Esto puede tomar un momento..."
-download_failed: "&cHubo un error en la descarga del paquete de recuersos, Vuelve a conectarte e inténtalo de nuevo."
-prompt_text: "&e¡Porfavor acepte nuestro paquete de recursos para mejorar su experiencia en el servidor!" # Solo para 1.18+ (1.17 no posee esta API)
-reloading: "&a¡Recargamos su paquete de recursos debido a una actualización!"
+declined: "<red>Debes aceptar el paquete de recursos para jugar en nuestro servidor. ¿No sabes cómo? Revisa <yellow>https://samb440.gitlab.io/resourcepack.html."
+accepted: "<green>¡Gracias por aceptar nuestro paquete de recursos! Ya puedes jugar."
+download_start_title: "<gold>Descargando el paquete de recursos..."
+download_start_subtitle: "<gold>Esto puede tomar un momento..."
+download_failed: "<red>Hubo un error en la descarga del paquete de recuersos, Vuelve a conectarte e inténtalo de nuevo."
+prompt_text: "<yellow>¡Porfavor acepte nuestro paquete de recursos para mejorar su experiencia en el servidor!" # Solo para 1.18+ (1.17 no posee esta API)
+reloading: "<green>¡Recargamos su paquete de recursos debido a una actualización!"

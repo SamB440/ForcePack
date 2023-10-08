@@ -15,8 +15,11 @@ import com.convallyria.forcepack.spigot.listener.VelocityMessageListener;
 import com.convallyria.forcepack.spigot.resourcepack.SpigotResourcePack;
 import com.convallyria.forcepack.spigot.schedule.BukkitScheduler;
 import com.convallyria.forcepack.spigot.translation.Translations;
+import com.convallyria.languagy.api.adventure.AdventurePlatform;
 import com.convallyria.languagy.api.language.Language;
 import com.convallyria.languagy.api.language.Translator;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -24,6 +27,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,6 +46,16 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
     private PlatformScheduler scheduler;
     private ResourcePack resourcePack;
     public boolean velocityMode;
+
+    private BukkitAudiences adventure;
+    private MiniMessage miniMessage;
+
+    public @NonNull BukkitAudiences adventure() {
+        if (this.adventure == null) {
+            throw new IllegalStateException("Tried to access Adventure when the plugin was disabled!");
+        }
+        return this.adventure;
+    }
 
     @Override
     public List<ResourcePack> getResourcePacks() {
@@ -63,11 +77,13 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
     public void onEnable() {
         this.generateLang();
         this.createConfig();
+        this.adventure = BukkitAudiences.create(this);
+        this.miniMessage = MiniMessage.miniMessage();
         this.velocityMode = getConfig().getBoolean("velocity-mode");
         this.scheduler = FoliaScheduler.RUNNING_FOLIA ? new FoliaScheduler(this) : new BukkitScheduler(this);
         this.registerListeners();
         this.registerCommands();
-        this.translator = Translator.of(this, "lang", Language.BRITISH_ENGLISH, debug());
+        this.translator = Translator.of(this, "lang", Language.BRITISH_ENGLISH, debug(), AdventurePlatform.create(miniMessage, adventure));
 
         // Convert legacy config
         try {
@@ -101,6 +117,10 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
     @Override
     public void onDisable() {
         translator.close();
+        if(this.adventure != null) {
+            this.adventure.close();
+            this.adventure = null;
+        }
     }
 
     public boolean reload() {
