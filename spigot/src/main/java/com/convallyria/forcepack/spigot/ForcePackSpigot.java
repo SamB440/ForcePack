@@ -30,11 +30,13 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -86,8 +88,10 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         this.translator = Translator.of(this, "lang", Language.BRITISH_ENGLISH, debug(), AdventurePlatform.create(miniMessage, adventure));
 
         // Convert legacy config
+        // Check server properties, too
         try {
             this.performLegacyCheck();
+            this.checkForServerProperties();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -256,6 +260,18 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
                 getConfig().set(sectionName, null);
                 getConfig().set("Server.kick", null);
                 getConfig().save(new File(getDataFolder() + File.separator + "config.yml"));
+            }
+        }
+    }
+
+    private void checkForServerProperties() throws IOException {
+        Properties properties = new Properties();
+        try (FileReader reader = new FileReader("./server.properties")) {
+            properties.load(reader);
+            String packUrl = properties.getProperty("resource-pack");
+            if (packUrl != null && !packUrl.isEmpty()) {
+                getLogger().severe("You have a resource pack set in server.properties!");
+                getLogger().severe("This will cause ForcePack to not function correctly. You MUST remove the resource pack URL from server.properties!");
             }
         }
     }
