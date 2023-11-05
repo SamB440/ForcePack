@@ -1,6 +1,7 @@
 package com.convallyria.forcepack.api.utils;
 
-import javax.annotation.Nonnull;
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 import java.util.Objects;
 
 /**
@@ -31,7 +32,7 @@ public class Pair<U, V> implements Tuple {
      * @param <V>    Second type
      * @return Created pair
      */
-    @Nonnull
+    @NonNull
     public static <U, V> Pair<U, V> of(
             final U first,
             final V second
@@ -85,7 +86,7 @@ public class Pair<U, V> implements Tuple {
     }
 
     @Override
-    @Nonnull
+    @NonNull
     public final Object[] toArray() {
         final Object[] array = new Object[2];
         array[0] = this.first;

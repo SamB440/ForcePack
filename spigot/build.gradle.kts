@@ -13,6 +13,7 @@ repositories {
 dependencies {
     implementation(project(":api"))
     implementation(project(":folia"))
+    implementation(project(":webserver", "shadow"))
 
     compileOnly("org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT")
     compileOnly("com.viaversion:viaversion-api:4.1.1")
@@ -28,7 +29,9 @@ dependencies {
 
 tasks {
     shadowJar {
-        minimize()
+        minimize {
+            exclude(project(":webserver"))
+        }
         relocate("io.papermc.lib", "com.convallyria.forcepack.spigot.libs.paperlib")
         relocate("com.convallyria.languagy", "com.convallyria.forcepack.spigot.libs.languagy")
         relocate("org.bstats", "com.convallyria.forcepack.spigot.libs.bstats")

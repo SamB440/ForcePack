@@ -7,7 +7,8 @@ import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.forcepack.spigot.translation.Translations;
-import com.viaversion.viaversion.api.Via;
+import com.convallyria.forcepack.spigot.util.ViaVersionUtil;
+import com.convallyria.forcepack.webserver.ForcePackWebServer;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -17,16 +18,20 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 public class ResourcePackListener implements Listener {
 
     private final ForcePackSpigot plugin;
 
     private final Map<UUID, Long> sentAccept = new HashMap<>();
+    private final Map<UUID, Consumer<Void>> sentFalsePack = new HashMap<>();
 
     public ResourcePackListener(final ForcePackSpigot plugin) {
         this.plugin = plugin;
@@ -46,6 +51,22 @@ public class ResourcePackListener implements Listener {
 
         final PlayerResourcePackStatusEvent.Status status = event.getStatus();
         plugin.log(player.getName() + " sent status: " + status);
+
+        // Just pass declined onto the other handlers for the correct log message
+        if (sentFalsePack.containsKey(player.getUniqueId()) && event.getStatus() != PlayerResourcePackStatusEvent.Status.DECLINED) {
+            if (event.getStatus() == PlayerResourcePackStatusEvent.Status.ACCEPTED) return; // First, it gets accepted
+            // We expect FAILED_DOWNLOAD, otherwise it must be SUCCESSFULLY_LOADED that was sent.
+            if (event.getStatus() != PlayerResourcePackStatusEvent.Status.FAILED_DOWNLOAD) {
+                plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (sent invalid status for fake resource pack).");
+                ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
+                return;
+            }
+
+            final Consumer<Void> remove = sentFalsePack.remove(player.getUniqueId());
+            remove.accept(null);
+            ensureMainThread(player::closeInventory);
+            return;
+        }
 
         // Only remove from waiting if they actually loaded the resource pack, rather than any status
         // Declined/failed is valid and should be allowed, server owner decides whether they get kicked
@@ -89,6 +110,7 @@ public class ResourcePackListener implements Listener {
                     ensureMainThread(() -> Translations.ACCEPTED.send(player));
                     boolean sendTitle = plugin.getConfig().getBoolean("send-loading-title");
                     if (sendTitle) player.sendTitle(null, null, 0, 0, 0); // resetTitle doesn't clear subtitle
+                    sentFalsePack.remove(player.getUniqueId());
                 }
                 break;
             }
@@ -139,11 +161,10 @@ public class ResourcePackListener implements Listener {
             return;
         }
 
-        final ResourcePack pack = plugin.getResourcePacks().get(0);
+        final ResourcePack pack = plugin.getPackForVersion(player);
         plugin.getWaiting().put(player.getUniqueId(), pack);
 
-        final boolean viaversion = Bukkit.getPluginManager().isPluginEnabled("ViaVersion");
-        final int version = viaversion ? Via.getAPI().getPlayerVersion(player) : 393; // 393 is 1.13 - default to this
+        final int version = ViaVersionUtil.getProtocolVersion(player);
         final int maxSize = ClientVersion.getMaxSizeForVersion(version);
         final boolean forceSend = getConfig().getBoolean("Server.force-invalid-size");
         if (!forceSend && pack.getSize() > maxSize) {
@@ -151,6 +172,41 @@ public class ResourcePackListener implements Listener {
             return;
         }
 
+        if (getConfig().getBoolean("try-to-stop-fake-accept-hacks", true)) {
+            this.sendFalsePack(player, pack, version);
+        } else {
+            this.runSetPackTask(player, pack, version);
+        }
+    }
+
+    private void sendFalsePack(Player player, ResourcePack pack, int version) {
+        final Optional<ForcePackWebServer> packWebServer = plugin.getWebServer();
+        final String fakeFile = UUID.randomUUID().toString().replace("-", "") + ".zip";
+        final String fakeUrl = packWebServer.map(server -> server.getUrl() + "/serve/" + fakeFile).orElse("https://");
+        packWebServer.ifPresent(server -> server.awaitServe(fakeFile, () -> {
+            if (!player.isOnline()) return;
+            // The player has requested the resource pack.
+            // So, we can send a close inventory packet along with the response.
+            // This prevents the "pack application failed" screen from showing.
+            // By sending it along with the pack response, we prevent slow connections seeing the screen for longer,
+            //  as theoretically these packets should arrive at about the same time.
+            //  (as long as the server is not lagging and depending on when the packets get flushed)
+            // Most people won't notice it at all unless they are paying attention.
+            ensureMainThread(player::closeInventory);
+        }));
+
+        plugin.log("Sending fake resource pack '" + fakeUrl + "' to " + player.getName() + ".");
+        // Send the fake resource pack and a fake hash
+        player.setResourcePack(fakeUrl, UUID.randomUUID().toString().replace("-", "").substring(0, 20).getBytes(StandardCharsets.UTF_8));
+
+        sentFalsePack.put(player.getUniqueId(), (v) -> {
+            if (!player.isOnline()) return;
+            ensureMainThread(player::closeInventory); // Send close inventory packet immediately after
+            this.runSetPackTask(player, pack, version);
+        });
+    }
+
+    private void runSetPackTask(Player player, ResourcePack pack, int version) {
         AtomicReference<PlatformScheduler.ForcePackTask> task = new AtomicReference<>();
         Runnable packTask = () -> {
             if (plugin.getWaiting().containsKey(player.getUniqueId())) {
@@ -181,6 +237,7 @@ public class ResourcePackListener implements Listener {
         Player player = pqe.getPlayer();
         plugin.getWaiting().remove(player.getUniqueId());
         sentAccept.remove(player.getUniqueId());
+        sentFalsePack.remove(player.getUniqueId());
     }
 
     private void ensureMainThread(Runnable runnable) {

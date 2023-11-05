@@ -3,7 +3,7 @@ package com.convallyria.forcepack.api;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.schedule.PlatformScheduler;
 
-import java.util.List;
+import java.util.Collection;
 
 public interface ForcePackAPI {
 
@@ -13,7 +13,7 @@ public interface ForcePackAPI {
      *   to verify the SHA-1 hash of the provided URL download.
      * @return the loaded ResourcePacks
      */
-    List<ResourcePack> getResourcePacks();
+    Collection<ResourcePack> getResourcePacks();
 
     /**
      * Gets the scheduler used for the current platform.

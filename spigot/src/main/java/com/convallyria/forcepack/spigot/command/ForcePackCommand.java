@@ -28,7 +28,7 @@ public class ForcePackCommand {
     }
 
     @CommandDescription("Reloads the plugin config along with the resource pack")
-    @CommandPermission("forcepack.reload")
+    @CommandPermission(Permissions.RELOAD)
     @CommandMethod("forcepack reload")
     public void onReload(CommandSender sender) {
         sender.sendMessage(ChatColor.GREEN + "Reloading...");
@@ -43,7 +43,8 @@ public class ForcePackCommand {
                 if (geyser || canBypass) continue;
 
                 Translations.RELOADING.send(player);
-                final ResourcePack resourcePack = plugin.getResourcePacks().get(0);
+
+                final ResourcePack resourcePack = plugin.getPackForVersion(player);
                 plugin.getWaiting().put(player.getUniqueId(), resourcePack);
                 resourcePack.setResourcePack(player.getUniqueId());
             }

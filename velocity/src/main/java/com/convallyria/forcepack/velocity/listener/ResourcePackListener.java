@@ -5,6 +5,7 @@ import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
+import com.convallyria.forcepack.velocity.handler.PackHandler;
 import com.convallyria.forcepack.velocity.resourcepack.VelocityResourcePack;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.event.PostOrder;
@@ -14,7 +15,6 @@ import com.velocitypowered.api.event.player.PlayerResourcePackStatusEvent;
 import com.velocitypowered.api.event.player.ServerPostConnectEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
-import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import net.kyori.adventure.text.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class ResourcePackListener {
 
@@ -59,14 +60,6 @@ public class ResourcePackListener {
             return;
         }
 
-        if (status == PlayerResourcePackStatusEvent.Status.SUCCESSFUL) {
-            // No longer applying, remove them from the list
-            currentServer.get().sendPluginMessage(MinecraftChannelIdentifier.create("forcepack", "status"), "SUCCESSFULLY_LOADED".getBytes(StandardCharsets.UTF_8));
-            plugin.getPackHandler().getApplying().remove(player.getUniqueId());
-        }
-
-        plugin.log(player.getUsername() + " sent status: " + event.getStatus());
-
         final VelocityConfig root;
         if (packByServer.get().getServer().equals(ForcePackVelocity.GLOBAL_SERVER_NAME)) {
             root = plugin.getConfig().getConfig("global-pack");
@@ -83,8 +76,26 @@ public class ResourcePackListener {
             }
         }
 
+        // Just pass declined onto the other handlers for the correct log message
+        if (plugin.getPackHandler().getSentFalsePack().containsKey(player.getUniqueId()) && event.getStatus() != PlayerResourcePackStatusEvent.Status.DECLINED) {
+            if (event.getStatus() == PlayerResourcePackStatusEvent.Status.ACCEPTED) return; // First, it gets accepted
+            // We expect FAILED_DOWNLOAD, otherwise it must be SUCCESSFULLY_LOADED that was sent.
+            if (event.getStatus() != PlayerResourcePackStatusEvent.Status.FAILED_DOWNLOAD) {
+                plugin.log("Kicked player %s because they are sending fake resource pack statuses (sent invalid status for fake resource pack).", player.getUsername());
+                final VelocityConfig actions = root.getConfig("actions").getConfig("FAILED_DOWNLOAD");
+                disconnectAction(player, actions);
+                return;
+            }
+
+            final Consumer<Void> remove = plugin.getPackHandler().getSentFalsePack().remove(player.getUniqueId());
+            remove.accept(null);
+//            PacketEvents.getAPI().getPlayerManager().getUser(player).writePacket(new WrapperPlayServerCloseWindow(0));
+            return;
+        }
+
+        plugin.log(player.getUsername() + " sent status: " + event.getStatus());
+
         if (tryValidateHacks(player, status, root, now)) return;
-        if (status != PlayerResourcePackStatusEvent.Status.ACCEPTED) sentAccept.remove(player.getUniqueId());
 
         final VelocityConfig actions = root.getConfig("actions").getConfig(status.name());
         for (String cmd : actions.getStringList("commands")) {
@@ -93,6 +104,19 @@ public class ResourcePackListener {
         }
 
         final boolean kick = actions.getBoolean("kick");
+
+        // Declined/failed is valid and should be allowed, server owner decides whether they get kicked
+        if (status != PlayerResourcePackStatusEvent.Status.ACCEPTED && !kick) {
+            plugin.log("Sent player '%s' plugin message downstream to '%s' for status '%s'", player.getUsername(), currentServer.get().getServerInfo().getName(), status.name());
+            // No longer applying, remove them from the list
+            final String name = status == PlayerResourcePackStatusEvent.Status.SUCCESSFUL ? "SUCCESSFULLY_LOADED" : status.name();
+            currentServer.get().sendPluginMessage(PackHandler.FORCEPACK_STATUS_IDENTIFIER, name.getBytes(StandardCharsets.UTF_8));
+            plugin.getPackHandler().getApplying().remove(player.getUniqueId());
+            plugin.getPackHandler().getSentFalsePack().remove(player.getUniqueId());
+        }
+
+        if (status != PlayerResourcePackStatusEvent.Status.ACCEPTED) sentAccept.remove(player.getUniqueId());
+
         final String text = actions.getString("message");
         if (text == null) return;
 
