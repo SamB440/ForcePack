@@ -5,6 +5,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
 public class ExemptionListener implements Listener {
@@ -32,6 +33,19 @@ public class ExemptionListener implements Listener {
             if (plugin.getWaiting().containsKey(damager.getUniqueId())) {
                 event.setCancelled(true);
                 plugin.log("Cancelled damage for damager '" + damager.getName() + "' due to resource pack not applied.");
+            }
+        }
+    }
+
+    @EventHandler
+    public void onDamage(EntityDamageEvent event) {
+        if (!plugin.getConfig().getBoolean("prevent-damage")) return;
+
+        if (event.getEntity() instanceof Player) {
+            Player damaged = (Player) event.getEntity();
+            if (plugin.getWaiting().containsKey(damaged.getUniqueId())) {
+                event.setCancelled(true);
+                plugin.log("Cancelled damage for player '" + damaged.getName() + "' due to resource pack not applied.");
             }
         }
     }
