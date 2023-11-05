@@ -1,5 +1,6 @@
 package com.convallyria.forcepack.api.resourcepack;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface IResourcePack {
@@ -34,6 +35,12 @@ public interface IResourcePack {
      * @return size in megabytes of this ResourcePack
      */
     public int getSize();
+
+    /**
+     * Gets the version intended for this resource pack.
+     * @return Optional containing the version intended for this resource pack, or empty if for any version.
+     */
+    public Optional<ResourcePackVersion> getVersion();
 
     /**
      * Attempts to apply the ResourcePack to the specified player.

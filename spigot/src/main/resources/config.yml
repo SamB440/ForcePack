@@ -1,5 +1,7 @@
+# Need help? Join our Discord: https://discord.gg/fh62mxU
+
 # If this is enabled, the plugin will be used purely for further compatibility with your Velocity proxy.
-# This is required for the prevent-movement feature.
+# This is required for the prevent-movement feature to work when behind the velocity plugin.
 # Actions (excluding kicks) will still take place. Bypass permissions will also still be enabled.
 velocity-mode: false
 
@@ -37,19 +39,41 @@ send-loading-title: true
 # Use this if you have a plugin teleporting someone after joining which closes the resource pack screen
 delay-pack-sending-by: 0
 
+# This configures the web server for force pack.
+# See ItemsAdder tutorial, which is essentially the same: https://itemsadder.devs.beer/plugin-usage/resourcepack-hosting/resourcepack-self-hosting
+# Note that you can leave the IP as localhost unless it is not working, as in most cases the plugin can automatically resolve it.
+# Having this enabled allows:
+#  - The use of the "forcepack://" protocol in resource pack URL
+#  - Better user experience when fake accept hacks detection is enabled
+# Enabling this DOES NOT mean you are forced to use a localhost resource pack.
+# I highly recommend you open a port on your server to allow this to work, instead of disabling this.
+web-server:
+  enabled: false
+  server-ip: localhost
+  port: 8080
+
 Server:
-  ResourcePack:
-    # The ResourcePack URL. This must be a direct URL, ending with .zip. For Dropbox URLs, add ?dl=1 to the end.
-    url: https://www.convallyria.com/files/BlankPack.zip
-    # Whether to automatically generate the SHA-1 hash. This is not recommended for security and reliability.
-    # The hash setting will be ignored if this is true, however it will fall back to that if the generation fails.
-    generate-hash: false
-    # Use a site such as http://onlinemd5.com/ or the hash provided when uploading to https://mc-packs.net/.
-    # Also see resource page for Linux/Windows commands.
-    hash: 118AFFFC54CDCD308702F81BA24E03223F15FE5F
+  packs:
+    all:
+      # The ResourcePack URL. This must be a direct URL, ending with .zip. For Dropbox URLs, add ?dl=1 to the end.
+      # To host a local file on the embedded webserver, change this to the relative path of the force pack folder prefixed by "forcepack://".
+      # For example, placing your resource pack as "plugins/ForcePack/pack.zip", the url will just be "forcepack://pack.zip".
+      url: https://www.convallyria.com/files/BlankPack.zip
+      # Geyser resource packs can only be locally hosted. Does not require the webserver to be enabled.
+      geyser-url: forcepack://pack.zip
+      # Whether to automatically generate the SHA-1 hash.
+      # The hash setting will be ignored if this is true, however it will fall back to that if the generation fails.
+      generate-hash: false
+      # Use a site such as http://onlinemd5.com/ or the hash provided when uploading to https://mc-packs.net/.
+      # Also see resource page for Linux/Windows commands.
+      hash: 118AFFFC54CDCD308702F81BA24E03223F15FE5F
+    # Here you can specify a pack format version-specific resource pack. You would copy the section above, replacing "all" with the number.
+    # Note that the "all" section must be kept as a fallback.
+    # See https://minecraft.fandom.com/wiki/Pack_format.
+    # Requires ViaVersion, to resolve client version.
 
   Actions:
-    # To disable commands, you can do Command: []
+    # To disable commands, you can do Commands: []
     # List of valid actions: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/player/PlayerResourcePackStatusEvent.Status.html
     ACCEPTED:
       kick: false

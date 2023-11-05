@@ -4,22 +4,24 @@ import com.convallyria.forcepack.api.ForcePackAPI;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.schedule.PlatformScheduler;
 import com.convallyria.forcepack.api.utils.ClientVersion;
+import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.api.utils.HashingUtil;
 import com.convallyria.forcepack.api.verification.ResourcePackURLData;
 import com.convallyria.forcepack.velocity.command.Commands;
-import com.convallyria.forcepack.velocity.command.ForcePackCommand;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.convallyria.forcepack.velocity.handler.PackHandler;
 import com.convallyria.forcepack.velocity.listener.ResourcePackListener;
 import com.convallyria.forcepack.velocity.resourcepack.VelocityResourcePack;
 import com.convallyria.forcepack.velocity.schedule.VelocityScheduler;
+import com.convallyria.forcepack.webserver.ForcePackWebServer;
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandManager;
-import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.event.EventManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.command.CommandExecuteEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
+import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
@@ -40,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,9 +51,14 @@ import java.util.function.Consumer;
 @Plugin(
         id = "forcepack",
         name = "ForcePack",
-        version = "1.2.9",
+        version = "1.3.0",
         description = "Force players to use your server resource pack.",
         url = "https://www.convallyria.com",
+        dependencies = {
+            @Dependency(id = "viaversion", optional = true),
+            @Dependency(id = "viabackwards", optional = true),
+            @Dependency(id = "viarewind", optional = true)
+        },
         authors = {"SamB440"}
 )
 public class ForcePackVelocity implements ForcePackAPI {
@@ -66,6 +74,12 @@ public class ForcePackVelocity implements ForcePackAPI {
     private final CommandManager commandManager;
     private final VelocityScheduler scheduler;
 
+    private ForcePackWebServer webServer;
+
+    public Optional<ForcePackWebServer> getWebServer() {
+        return Optional.ofNullable(webServer);
+    }
+
     @Inject
     public ForcePackVelocity(PluginContainer container, ProxyServer server, Logger logger, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory, CommandManager commandManager) {
         this.server = server;
@@ -75,6 +89,9 @@ public class ForcePackVelocity implements ForcePackAPI {
         this.metricsFactory = metricsFactory;
         this.commandManager = commandManager;
         this.scheduler = new VelocityScheduler(this);
+//        PacketEvents.setAPI(VelocityPacketEventsBuilder.build(server, container));
+//        PacketEvents.getAPI().getSettings().debug(false).checkForUpdates(false);
+//        PacketEvents.getAPI().load();
     }
 
     private VelocityConfig config;
@@ -85,11 +102,33 @@ public class ForcePackVelocity implements ForcePackAPI {
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
         getLogger().info("Enabling ForcePack (velocity)...");
+        GeyserUtil.isGeyserInstalledHere = server.getPluginManager().getPlugin("geyser").isPresent();
         this.reloadConfig();
+
+        final VelocityConfig webServerConfig = getConfig().getConfig("web-server");
+        if (webServerConfig != null && webServerConfig.getBoolean("enabled")) {
+            try {
+                final String configIp = webServerConfig.getString("server-ip", "localhost");
+                final String serverIp = !configIp.equals("localhost") ? configIp : ForcePackWebServer.getIp();
+                this.webServer = new ForcePackWebServer(dataDirectory, serverIp, webServerConfig.getInt("port", 8080));
+                getLogger().info("Started web server.");
+            } catch (IOException e) {
+                getLogger().error("Error starting web server: " + e.getMessage());
+                getLogger().error("It is highly likely you need to open a port or change it in the config. Please see the config for further information.");
+                return;
+            }
+        }
+
         this.packHandler = new PackHandler(this);
         this.loadResourcePacks(null);
         this.registerListeners();
         metricsFactory.make(this, 13678);
+    }
+
+    @Subscribe
+    public void onShutdown(ProxyShutdownEvent event) {
+        // Supporting reloads
+//        PacketEvents.getAPI().terminate();
     }
 
     private void createConfig() {
@@ -131,6 +170,7 @@ public class ForcePackVelocity implements ForcePackAPI {
 
     public void loadResourcePacks(@Nullable Player player) {
         resourcePacks.clear(); // Clear for reloads
+        getWebServer().ifPresent(ForcePackWebServer::clearHostedPacks);
 
         this.checkUnload();
         this.checkGlobal();
@@ -163,10 +203,11 @@ public class ForcePackVelocity implements ForcePackAPI {
         for (String name : root.getKeys()) {
             final VelocityConfig serverConfig = root.getConfig(name);
             final VelocityConfig resourcePack = serverConfig.getConfig("resourcepack");
-            String url = resourcePack.getString("url");
+            String url = resourcePack.getString("url", "");
             String hash = resourcePack.getString("hash", "");
             AtomicInteger sizeInMB = new AtomicInteger();
 
+            url = this.checkLocalHostUrl(url);
             this.checkValidEnding(url);
             this.checkForRehost(url, name);
 
@@ -241,8 +282,9 @@ public class ForcePackVelocity implements ForcePackAPI {
         final VelocityConfig unloadPack = getConfig().getConfig("unload-pack");
         final boolean enableUnload = unloadPack.getBoolean("enable");
         if (enableUnload) {
-            final String url = unloadPack.getString("url");
+            String url = unloadPack.getString("url", "");
 
+            url = this.checkLocalHostUrl(url);
             this.checkValidEnding(url);
             this.checkForRehost(url, "unload-pack");
 
@@ -261,8 +303,9 @@ public class ForcePackVelocity implements ForcePackAPI {
         if (globalPack != null) {
             final boolean enableGlobal = globalPack.getBoolean("enable");
             if (enableGlobal) {
-                final String url = globalPack.getString("url");
+                String url = globalPack.getString("url", "");
 
+                url = this.checkLocalHostUrl(url);
                 this.checkValidEnding(url);
                 this.checkForRehost(url, "global-pack");
 
@@ -276,6 +319,19 @@ public class ForcePackVelocity implements ForcePackAPI {
                 globalResourcePack = resourcePack;
             }
         }
+    }
+
+    private String checkLocalHostUrl(String url) {
+        if (url.startsWith("forcepack://")) { // Localhost
+            log("Using local resource pack host for " + url);
+            if (getWebServer().isEmpty()) {
+                getLogger().error("Unable to locally host resource pack '" + url + "' because the web server is not active!");
+                return url;
+            }
+            webServer.addHostedPack(new File(getDataDirectory() + File.separator + url.replace("forcepack://", "")));
+            url = webServer.getHostedEndpoint(url);
+        }
+        return url;
     }
 
     private void checkValidEnding(String url) {
@@ -348,7 +404,7 @@ public class ForcePackVelocity implements ForcePackAPI {
     }
 
     @Override
-    public List<ResourcePack> getResourcePacks() {
+    public Collection<ResourcePack> getResourcePacks() {
         return resourcePacks;
     }
 

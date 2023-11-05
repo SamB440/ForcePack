@@ -1,9 +1,12 @@
 package com.convallyria.forcepack.spigot;
 
 import com.convallyria.forcepack.api.ForcePackAPI;
+import com.convallyria.forcepack.api.resourcepack.PackFormatResolver;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
+import com.convallyria.forcepack.api.resourcepack.ResourcePackVersion;
 import com.convallyria.forcepack.api.schedule.PlatformScheduler;
 import com.convallyria.forcepack.api.utils.ClientVersion;
+import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.api.utils.HashingUtil;
 import com.convallyria.forcepack.api.verification.ResourcePackURLData;
 import com.convallyria.forcepack.folia.schedule.FoliaScheduler;
@@ -15,6 +18,8 @@ import com.convallyria.forcepack.spigot.listener.VelocityMessageListener;
 import com.convallyria.forcepack.spigot.resourcepack.SpigotResourcePack;
 import com.convallyria.forcepack.spigot.schedule.BukkitScheduler;
 import com.convallyria.forcepack.spigot.translation.Translations;
+import com.convallyria.forcepack.spigot.util.ViaVersionUtil;
+import com.convallyria.forcepack.webserver.ForcePackWebServer;
 import com.convallyria.languagy.api.adventure.AdventurePlatform;
 import com.convallyria.languagy.api.language.Language;
 import com.convallyria.languagy.api.language.Translator;
@@ -24,18 +29,21 @@ import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,22 +54,33 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
     private Translator translator;
     private PlatformScheduler scheduler;
-    private ResourcePack resourcePack;
+    private final Map<ResourcePackVersion, ResourcePack> resourcePacks = new HashMap<>();
     public boolean velocityMode;
 
     private BukkitAudiences adventure;
-    private MiniMessage miniMessage;
-
-    public @NonNull BukkitAudiences adventure() {
-        if (this.adventure == null) {
-            throw new IllegalStateException("Tried to access Adventure when the plugin was disabled!");
-        }
-        return this.adventure;
-    }
 
     @Override
-    public List<ResourcePack> getResourcePacks() {
-        return List.of(resourcePack);
+    public Collection<ResourcePack> getResourcePacks() {
+        return resourcePacks.values();
+    }
+
+    public ResourcePack getPackForVersion(Player player) {
+        final int protocolVersion = ViaVersionUtil.getProtocolVersion(player);
+        final int packFormat = PackFormatResolver.getPackFormat(protocolVersion);
+
+        ResourcePack anyVersionPack = null;
+        for (ResourcePack resourcePack : getResourcePacks()) {
+            final Optional<ResourcePackVersion> version = resourcePack.getVersion();
+            if (version.isEmpty()) {
+                anyVersionPack = resourcePack;
+                continue;
+            }
+
+            if (version.get().version() == packFormat) {
+                return resourcePack;
+            }
+        }
+        return anyVersionPack;
     }
 
     @Override
@@ -75,12 +94,19 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         return waiting;
     }
 
+    private @Nullable ForcePackWebServer webServer;
+
+    public Optional<ForcePackWebServer> getWebServer() {
+        return Optional.ofNullable(webServer);
+    }
+
     @Override
     public void onEnable() {
+        GeyserUtil.isGeyserInstalledHere = Bukkit.getPluginManager().getPlugin("Geyser-Spigot") != null;
         this.generateLang();
         this.createConfig();
         this.adventure = BukkitAudiences.create(this);
-        this.miniMessage = MiniMessage.miniMessage();
+        MiniMessage miniMessage = MiniMessage.miniMessage();
         this.velocityMode = getConfig().getBoolean("velocity-mode");
         this.scheduler = FoliaScheduler.RUNNING_FOLIA ? new FoliaScheduler(this) : new BukkitScheduler(this);
         this.registerListeners();
@@ -97,12 +123,23 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         }
 
         Runnable run = () -> {
-            if (!reload()) {
-                getLogger().severe("Unable to load ForcePack correctly.");
-                return;
+            if (getConfig().getBoolean("web-server.enabled")) {
+                try {
+                    final String configIp = getConfig().getString("web-server.server-ip", "localhost");
+                    final String serverIp = !configIp.equals("localhost") ? configIp : !Bukkit.getIp().isEmpty() ? Bukkit.getIp() : ForcePackWebServer.getIp();
+                    this.webServer = new ForcePackWebServer(this.getDataFolder().toPath(), serverIp, getConfig().getInt("web-server.port", 8080));
+                    getLogger().info("Started web server.");
+                } catch (IOException e) {
+                    getLogger().severe("Error starting web server: " + e.getMessage());
+                    getLogger().severe("It is highly likely you need to open a port or change it in the config. Please see the config for further information.");
+                    return;
+                }
             }
 
+            reload();
+
             new Metrics(this, 13677);
+
             this.getLogger().info("[ForcePack] Enabled!");
         };
 
@@ -120,17 +157,53 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
     @Override
     public void onDisable() {
+        if (webServer != null) webServer.shutdown();
         translator.close();
-        if(this.adventure != null) {
+        if (this.adventure != null) {
             this.adventure.close();
             this.adventure = null;
         }
     }
 
-    public boolean reload() {
-        if (velocityMode) return true;
-        String url = getConfig().getString("Server.ResourcePack.url", "");
-        String hash = getConfig().getString("Server.ResourcePack.hash", "");
+    public void reload() {
+        if (velocityMode) return;
+
+        resourcePacks.clear(); // Clear for reloads
+        getWebServer().ifPresent(ForcePackWebServer::clearHostedPacks);
+
+        final int versionNumber = getVersionNumber();
+        getLogger().info("Detected server version: " + Bukkit.getBukkitVersion() + " (" + getVersionNumber() + ").");
+        if (versionNumber >= 18) {
+            getLogger().info("Using recent ResourcePack methods to show prompt text.");
+        } else {
+            getLogger().warning("Your server version does not support prompt text.");
+        }
+
+        final ConfigurationSection packs = getConfig().getConfigurationSection("Server.packs");
+        for (String versionId : packs.getKeys(false)) {
+            ResourcePackVersion version = versionId.equals("all") ? null : () -> Integer.parseInt(versionId);
+            final ConfigurationSection packSection = packs.getConfigurationSection(versionId);
+            final String url = packSection.getString("url", "");
+            final boolean generateHash = packSection.getBoolean("generate-hash");
+            final String hash = packSection.getString("hash");
+            final boolean success = checkPack(version, url, generateHash, hash);
+            if (!success) {
+                getLogger().severe("Unable to load all resource packs correctly.");
+            }
+        }
+    }
+
+    private boolean checkPack(ResourcePackVersion version, String url, boolean generateHash, String hash) {
+        if (url.startsWith("forcepack://")) { // Localhost
+            log("Using local resource pack host for " + url);
+            if (webServer == null) {
+                getLogger().severe("Unable to locally host resource pack '" + url + "' because the web server is not active!");
+                return false;
+            }
+            webServer.addHostedPack(new File(getDataFolder() + File.separator + url.replace("forcepack://", "")));
+            url = webServer.getHostedEndpoint(url);
+        }
+
         AtomicInteger sizeMB = new AtomicInteger();
 
         List<String> validUrlEndings = Arrays.asList(".zip", "&dl=1");
@@ -149,7 +222,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         }
 
         ResourcePackURLData data = null;
-        if (getConfig().getBoolean("Server.ResourcePack.generate-hash")) {
+        if (generateHash) {
             getLogger().info("Auto-generating ResourcePack hash.");
             try {
                 data = HashingUtil.performPackCheck(url, hash);
@@ -209,15 +282,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
             }
         }
 
-        final int versionNumber = getVersionNumber();
-        getLogger().info("Detected server version: " + Bukkit.getBukkitVersion() + " (" + getVersionNumber() + ").");
-        if (versionNumber >= 18) {
-            getLogger().info("Using recent ResourcePack methods to show prompt text.");
-        } else {
-            getLogger().warning("Your server version does not support prompt text.");
-        }
-
-        resourcePack = new SpigotResourcePack(this, url, hash, sizeMB.get());
+        resourcePacks.put(version, new SpigotResourcePack(this, url, hash, sizeMB.get(), version));
         return true;
     }
 
@@ -261,6 +326,19 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
                 getConfig().set("Server.kick", null);
                 getConfig().save(new File(getDataFolder() + File.separator + "config.yml"));
             }
+        }
+
+        final ConfigurationSection oldPackSection = getConfig().getConfigurationSection("Server.ResourcePack");
+        if (oldPackSection != null) {
+            getLogger().warning("Detected legacy resource pack section, converting your config now (consider regenerating config for comments and new settings!)...");
+            final String oldUrl = oldPackSection.getString("url");
+            final boolean oldGenerateHash = oldPackSection.getBoolean("generate-hash");
+            final String oldHash = oldPackSection.getString("hash");
+            getConfig().set("Server.packs.all.url", oldUrl);
+            getConfig().set("Server.packs.all.generate-hash", oldGenerateHash);
+            getConfig().set("Server.packs.all.hash", oldHash);
+            getConfig().set("Server.ResourcePack", null);
+            getConfig().save(new File(getDataFolder() + File.separator + "config.yml"));
         }
     }
 

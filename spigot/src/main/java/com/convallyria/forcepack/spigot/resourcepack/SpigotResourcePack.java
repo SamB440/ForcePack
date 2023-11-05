@@ -1,10 +1,12 @@
 package com.convallyria.forcepack.spigot.resourcepack;
 
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
+import com.convallyria.forcepack.api.resourcepack.ResourcePackVersion;
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.forcepack.spigot.translation.Translations;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.UUID;
 
@@ -13,8 +15,8 @@ public final class SpigotResourcePack extends ResourcePack {
     private final ForcePackSpigot spigotPlugin;
     private boolean hasWarned;
 
-    public SpigotResourcePack(final ForcePackSpigot plugin, String url, String hash, int size) {
-        super(plugin, url, hash, size);
+    public SpigotResourcePack(final ForcePackSpigot plugin, String url, String hash, int size, @Nullable ResourcePackVersion packVersion) {
+        super(plugin, url, hash, size, packVersion);
         this.spigotPlugin = plugin;
     }
 

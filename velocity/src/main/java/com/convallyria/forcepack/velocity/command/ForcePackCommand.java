@@ -3,6 +3,7 @@ package com.convallyria.forcepack.velocity.command;
 import cloud.commandframework.annotations.CommandDescription;
 import cloud.commandframework.annotations.CommandMethod;
 import cloud.commandframework.annotations.CommandPermission;
+import com.convallyria.forcepack.api.permission.Permissions;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
@@ -31,7 +32,7 @@ public class ForcePackCommand {
     }
 
     @CommandDescription("Reloads the plugin config along with the resource pack")
-    @CommandPermission("forcepack.reload")
+    @CommandPermission(Permissions.RELOAD)
     @CommandMethod("vforcepack|velocityforcepack reload")
     public void onReload(CommandSource commandSource) {
         final CommandSource source = plugin.getServer().getConsoleCommandSource();

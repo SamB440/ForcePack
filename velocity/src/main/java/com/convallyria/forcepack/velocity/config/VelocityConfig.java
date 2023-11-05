@@ -90,6 +90,10 @@ public class VelocityConfig {
         return config.getOrElse(path, -1);
     }
 
+    public int getInt(String path, int def) {
+        return config.getOrElse(path, def);
+    }
+
     public long getLong(String path) {
         return config.get(path);
     }

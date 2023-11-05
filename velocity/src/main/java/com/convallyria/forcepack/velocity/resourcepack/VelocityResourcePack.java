@@ -9,11 +9,9 @@ import com.velocitypowered.api.proxy.player.ResourcePackInfo;
 import net.kyori.adventure.text.Component;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 public final class VelocityResourcePack extends ResourcePack {
 
@@ -22,7 +20,7 @@ public final class VelocityResourcePack extends ResourcePack {
     private final @Nullable String group;
 
     public VelocityResourcePack(final ForcePackVelocity plugin, final String server, String url, String hash, int size, String group) {
-        super(plugin, url, hash, size);
+        super(plugin, url, hash, size, null);
         this.velocityPlugin = plugin;
         this.server = server;
         this.group = group;
@@ -64,7 +62,7 @@ public final class VelocityResourcePack extends ResourcePack {
             if (currentServer.isPresent()) {
                 if (excluded.contains(currentServer.get().getServerInfo().getName())) return;
             } else {
-                ((ForcePackVelocity) plugin).log("Unable to check global resource pack exclusion list as player is not in a server!?");
+                velocityPlugin.log("Unable to check global resource pack exclusion list as player is not in a server!?");
             }
         } else {
             serverConfig = velocityPlugin.getConfig().getConfig("servers").getConfig(server);
@@ -75,6 +73,12 @@ public final class VelocityResourcePack extends ResourcePack {
             final Component promptComponent = velocityPlugin.getMiniMessage().deserialize(promptText);
             infoBuilder.setPrompt(promptComponent);
         }
+
         player.get().sendResourcePackOffer(infoBuilder.build());
+        if (group != null) {
+            velocityPlugin.log("Sending resource pack %s to %s", group, player.get().getUsername());
+        } else {
+            velocityPlugin.log("Sending resource pack to %s", player.get().getUsername());
+        }
     }
 }

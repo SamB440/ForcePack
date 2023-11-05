@@ -1,6 +1,6 @@
 package com.convallyria.forcepack.api.utils;
 
-import javax.annotation.Nonnull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * Tuple type
@@ -19,6 +19,6 @@ public interface Tuple {
      *
      * @return Created array
      */
-    @Nonnull Object[] toArray();
+    @NonNull Object[] toArray();
 
 }

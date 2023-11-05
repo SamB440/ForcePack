@@ -1,3 +1,4 @@
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/W7W4KMMB4)
 <br/>
 <p align="center">
   <h3 align="center">ForcePack</h3>
@@ -38,9 +39,10 @@ You can find the Spigot resource at: https://www.spigotmc.org/resources/forcepac
 
 ## Features
 - Pack unloading for Velocity sub-servers without a resource pack
+- Local webserver resource pack hosting
 - Prevents escaping out bypass for clients <= 1.12 (requires ViaVersion for Spigot)
 - Run commands on pack statuses
-- RGB support, also via MiniMessage on Velocity
+- RGB via MiniMessage support
 - Prevent failed downloads from bypassing the resource pack
 - Geyser support to ignore bedrock players
 - Per-client version maximum size verification
