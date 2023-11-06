@@ -206,7 +206,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
         AtomicInteger sizeMB = new AtomicInteger();
 
-        List<String> validUrlEndings = Arrays.asList(".zip", "&dl=1");
+        List<String> validUrlEndings = Arrays.asList(".zip", "dl=1");
         boolean hasEnding = false;
         for (String validUrlEnding : validUrlEndings) {
             if (url.endsWith(validUrlEnding)) {
@@ -217,7 +217,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
         if (!hasEnding) {
             getLogger().severe("Your URL has an invalid or unknown format. " +
-                    "URLs must have no redirects and use the .zip extension. If you are using Dropbox, change &dl=0 to &dl=1.");
+                    "URLs must have no redirects and use the .zip extension. If you are using Dropbox, change dl=0 to dl=1.");
             getLogger().severe("ForcePack will still load in the event this check is incorrect. Please make an issue or pull request if this is so.");
         }
 
