@@ -5,6 +5,7 @@ import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.convallyria.forcepack.webserver.ForcePackWebServer;
+import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
@@ -60,7 +61,7 @@ public final class PackHandler {
 
             // Check if they already have this ResourcePack applied.
             final ResourcePackInfo appliedResourcePack = player.getAppliedResourcePack();
-            final boolean forceApply = plugin.getConfig().getBoolean("force-constant-download", false);
+            final boolean forceApply = (plugin.getConfig().getBoolean("ignore-1-20-2-server-switch-players", true) && player.getProtocolVersion().getProtocol() < ProtocolVersion.MINECRAFT_1_20_2.getProtocol()) && plugin.getConfig().getBoolean("force-constant-download", false);
             if (appliedResourcePack != null && !forceApply) {
                 if (Arrays.equals(appliedResourcePack.getHash(), resourcePack.getHashSum())) {
                     plugin.log("Not applying already applied pack to player " + player.getUsername() + ".");
