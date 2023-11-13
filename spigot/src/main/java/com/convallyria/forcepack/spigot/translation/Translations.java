@@ -5,7 +5,6 @@ import com.convallyria.languagy.api.language.Language;
 import com.convallyria.languagy.api.language.key.TranslationKey;
 import com.convallyria.languagy.api.language.translation.Translation;
 import net.kyori.adventure.platform.bukkit.BukkitComponentSerializer;
-import net.kyori.adventure.text.Component;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -51,7 +50,9 @@ public enum Translations {
 
         for (Language language : Language.values()) {
             try {
-                plugin.saveResource("lang/" + language.getKey().getCode() + ".yml", false);
+                if (!new File(lang + File.separator + language.getKey().getCode() + ".yml").exists()) {
+                    plugin.saveResource("lang/" + language.getKey().getCode() + ".yml", false);
+                }
                 plugin.getLogger().info("Generated " + language.getKey().getCode() + ".yml");
             } catch (IllegalArgumentException ignored) { }
 
