@@ -50,8 +50,9 @@ public final class PackHandler {
     public void setPack(final Player player, final ServerConnection server) {
         // Find whether the config contains this server
         final ServerInfo serverInfo = server.getServerInfo();
-        plugin.getPackByServer(serverInfo.getName()).ifPresentOrElse(resourcePack -> {
-            final int protocol = player.getProtocolVersion().getProtocol();
+        final ProtocolVersion protocolVersion = player.getProtocolVersion();
+        plugin.getPackByServerAndVersion(serverInfo.getName(), protocolVersion).ifPresentOrElse(resourcePack -> {
+            final int protocol = protocolVersion.getProtocol();
             final int maxSize = ClientVersion.getMaxSizeForVersion(protocol);
             final boolean forceSend = plugin.getConfig().getBoolean("force-invalid-size", false);
             if (!forceSend && resourcePack.getSize() > maxSize) {
@@ -61,7 +62,7 @@ public final class PackHandler {
 
             // Check if they already have this ResourcePack applied.
             final ResourcePackInfo appliedResourcePack = player.getAppliedResourcePack();
-            final boolean forceApply = (plugin.getConfig().getBoolean("ignore-1-20-2-server-switch-players", true) && player.getProtocolVersion().getProtocol() < ProtocolVersion.MINECRAFT_1_20_2.getProtocol()) && plugin.getConfig().getBoolean("force-constant-download", false);
+            final boolean forceApply = (plugin.getConfig().getBoolean("ignore-1-20-2-server-switch-players", true) && protocol < ProtocolVersion.MINECRAFT_1_20_2.getProtocol()) && plugin.getConfig().getBoolean("force-constant-download", false);
             if (appliedResourcePack != null && !forceApply) {
                 if (Arrays.equals(appliedResourcePack.getHash(), resourcePack.getHashSum())) {
                     plugin.log("Not applying already applied pack to player " + player.getUsername() + ".");
@@ -94,7 +95,7 @@ public final class PackHandler {
             final List<String> excluded = unloadPack.getStringList("exclude");
             if (excluded.contains(serverInfo.getName())) return;
 
-            plugin.getPackByServer(ForcePackVelocity.EMPTY_SERVER_NAME).ifPresent(empty -> {
+            plugin.getPackByServerAndVersion(ForcePackVelocity.EMPTY_SERVER_NAME, player.getProtocolVersion()).ifPresent(empty -> {
                 // If their current applied resource pack is the unloaded one, don't send it again
                 // Checking URL rather than hash should be fine... it's simpler and should be unique.
                 if (appliedResourcePack.getUrl().equals(empty.getURL())) return;

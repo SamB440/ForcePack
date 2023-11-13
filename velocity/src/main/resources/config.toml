@@ -4,7 +4,6 @@
 # Need help? Join our Discord: https://discord.gg/fh62mxU
 
 # Whether to ignore geyser players. Only enable this if you use geyser.
-#  Java clients can spoof this and bypass the ResourcePack!
 geyser = false
 
 # Whether to verify that your resource packs have the correct hash.
@@ -77,7 +76,7 @@ debug = false
     # Whether to send an empty resource pack when joining a server without one configured, and the player has one applied
     enable = true
     # The URL of the unload pack
-    # It's highly recommended you re-host this pack on a CDN such as mc-packs.net for faster load times.
+    # It's highly recommended you re-host this pack using the webserver or on a CDN such as mc-packs.net for faster load times.
     # Leaving this as default potentially sends a lot of requests to my personal web server, which isn't ideal!
     url = "https://www.convallyria.com/files/BlankPack.zip"
     # The SHA-1 hash of the unload pack file
@@ -190,3 +189,13 @@ debug = false
             [servers.example-server.actions.SUCCESSFUL]
                 kick = false
                 commands = []
+        # Here you can specify a pack format version-specific resource pack.
+        # Note that the "all" section above must be kept as a fallback.
+        # You can do the same thing in the global resource pack and resource pack groups.
+        # See https://minecraft.fandom.com/wiki/Pack_format.
+        # 222 is an example number.
+        #[servers.example-server.version.222]
+        #    resourcepack.url = "https://www.convallyria.com/files/BlankPack.zip"
+        #    resourcepack.generate-hash = false
+        #    resourcepack.hash = "118AFFFC54CDCD308702F81BA24E03223F15FE5F"
+        #    resourcepack.prompt = "<yellow>Please accept our resource pack to improve your experience."
