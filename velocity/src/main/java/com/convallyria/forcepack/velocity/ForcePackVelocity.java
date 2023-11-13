@@ -1,7 +1,9 @@
 package com.convallyria.forcepack.velocity;
 
 import com.convallyria.forcepack.api.ForcePackAPI;
+import com.convallyria.forcepack.api.resourcepack.PackFormatResolver;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
+import com.convallyria.forcepack.api.resourcepack.ResourcePackVersion;
 import com.convallyria.forcepack.api.schedule.PlatformScheduler;
 import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.api.utils.GeyserUtil;
@@ -21,6 +23,7 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.command.CommandExecuteEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
+import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.PluginContainer;
@@ -43,10 +46,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Plugin(
         id = "forcepack",
@@ -96,7 +103,7 @@ public class ForcePackVelocity implements ForcePackAPI {
 
     private VelocityConfig config;
     private PackHandler packHandler;
-    private @Nullable ResourcePack globalResourcePack;
+    private final List<ResourcePack> globalResourcePacks = new ArrayList<>();
     private final List<ResourcePack> resourcePacks = new ArrayList<>();
 
     @Subscribe
@@ -196,85 +203,108 @@ public class ForcePackVelocity implements ForcePackAPI {
 
     private void addResourcePacks(@Nullable Player player, String rootName) {
         final boolean verifyPacks = getConfig().getBoolean("verify-resource-packs");
-        final ConsoleCommandSource consoleSender = this.getServer().getConsoleCommandSource();
         final boolean groups = rootName.equals("groups");
         final String typeName = groups ? "group" : "server";
         VelocityConfig root = groups ? getConfig().getConfig("groups") : getConfig().getConfig("servers");
         for (String name : root.getKeys()) {
             final VelocityConfig serverConfig = root.getConfig(name);
-            final VelocityConfig resourcePack = serverConfig.getConfig("resourcepack");
-            String url = resourcePack.getString("url", "");
-            String hash = resourcePack.getString("hash", "");
-            AtomicInteger sizeInMB = new AtomicInteger();
-
-            url = this.checkLocalHostUrl(url);
-            this.checkValidEnding(url);
-            this.checkForRehost(url, name);
-
-            ResourcePackURLData data = this.tryGenerateHash(resourcePack, url, hash, sizeInMB);
-            if (data != null) hash = data.getUrlHash();
-
-            if (getConfig().getBoolean("enable-mc-164316-fix", false)) {
-                url = url + "#" + hash;
+            final Map<String, VelocityConfig> configs = new HashMap<>();
+            // Add the default fallback
+            configs.put("default", serverConfig.getConfig("resourcepack"));
+            final VelocityConfig versionConfig = serverConfig.getConfig("version");
+            if (versionConfig != null) {
+                log("Detected versioned resource packs for %s", name);
+                for (String versionId : versionConfig.getKeys()) {
+                    configs.put(versionId, versionConfig.getConfig(versionId).getConfig("resourcepack"));
+                    log("Added version config %s for %s", versionId, name);
+                }
             }
 
-            if (verifyPacks) {
-                try {
-                    Consumer<Integer> consumer = (size) -> {
-                        getLogger().info("Performing version size check...");
-                        for (ClientVersion clientVersion : ClientVersion.values()) {
-                            String sizeStr = clientVersion.getDisplay() + " (" + clientVersion.getMaxSizeMB() + " MB): ";
-                            if (clientVersion.getMaxSizeMB() < size) {
-                                logger.info(sizeStr + "Unsupported.");
-                            } else {
-                                logger.info(sizeStr + "Supported.");
-                            }
+            configs.forEach((id, config) -> this.registerResourcePack(serverConfig, config, id, name, typeName, groups, verifyPacks, player));
+        }
+    }
+    
+    private void registerResourcePack(VelocityConfig rootServerConfig, VelocityConfig resourcePack, String id, String name, String typeName, boolean groups, boolean verifyPacks, @Nullable Player player) {
+        final ConsoleCommandSource consoleSender = this.getServer().getConsoleCommandSource();
+        String url = resourcePack.getString("url", "");
+        if (url.isEmpty()) {
+            logger.error("No URL found for " + name + ". Did you set up the config correctly?");
+        }
+        String hash = resourcePack.getString("hash", "");
+        AtomicInteger sizeInMB = new AtomicInteger();
+
+        url = this.checkLocalHostUrl(url);
+        this.checkValidEnding(url);
+        this.checkForRehost(url, name);
+
+        ResourcePackURLData data = this.tryGenerateHash(resourcePack, url, hash, sizeInMB);
+        if (data != null) hash = data.getUrlHash();
+
+        if (getConfig().getBoolean("enable-mc-164316-fix", false)) {
+            url = url + "#" + hash;
+        }
+
+        if (verifyPacks) {
+            try {
+                Consumer<Integer> consumer = (size) -> {
+                    getLogger().info("Performing version size check for " + name + " (" + id + ")...");
+                    for (ClientVersion clientVersion : ClientVersion.values()) {
+                        String sizeStr = clientVersion.getDisplay() + " (" + clientVersion.getMaxSizeMB() + " MB): ";
+                        if (clientVersion.getMaxSizeMB() < size) {
+                            logger.info(sizeStr + "Unsupported.");
+                        } else {
+                            logger.info(sizeStr + "Supported.");
                         }
-
-                        sizeInMB.set(size);
-                    };
-
-                    if (data == null) {
-                        data = HashingUtil.performPackCheck(url, hash);
                     }
 
-                    consumer.accept(data.getSize());
+                    sizeInMB.set(size);
+                };
 
-                    if (!hash.equalsIgnoreCase(data.getUrlHash())) {
-                        this.getLogger().error("-----------------------------------------------");
-                        this.getLogger().error("Your hash does not match the URL file provided!");
-                        this.getLogger().error("Target " + typeName + ": " + name);
-                        this.getLogger().error("The URL hash returned: " + data.getUrlHash());
-                        this.getLogger().error("Your config hash returned: " + data.getConfigHash());
-                        this.getLogger().error("Please provide a correct SHA-1 hash!");
-                        this.getLogger().error("-----------------------------------------------");
-                        return;
-                    } else {
-                        Component hashMsg = Component.text("Hash verification complete for " + typeName + " " + name + ".").color(NamedTextColor.GREEN);
-                        consoleSender.sendMessage(hashMsg);
-                        if (player != null) player.sendMessage(hashMsg);
-                    }
-                } catch (Exception e) {
-                    this.getLogger().error("Please provide a correct SHA-1 hash/url!", e);
+                if (data == null) {
+                    data = HashingUtil.performPackCheck(url, hash);
+                }
+
+                consumer.accept(data.getSize());
+
+                if (!hash.equalsIgnoreCase(data.getUrlHash())) {
+                    this.getLogger().error("-----------------------------------------------");
+                    this.getLogger().error("Your hash does not match the URL file provided!");
+                    this.getLogger().error("Target " + typeName + ": " + name + " (" + id + ")");
+                    this.getLogger().error("The URL hash returned: " + data.getUrlHash());
+                    this.getLogger().error("Your config hash returned: " + data.getConfigHash());
+                    this.getLogger().error("Please provide a correct SHA-1 hash!");
+                    this.getLogger().error("-----------------------------------------------");
+                    return;
+                } else {
+                    Component hashMsg = Component.text("Hash verification complete for " + typeName + " " + name + " (" + id + ").").color(NamedTextColor.GREEN);
+                    consoleSender.sendMessage(hashMsg);
+                    if (player != null) player.sendMessage(hashMsg);
+                }
+            } catch (Exception e) {
+                this.getLogger().error("Please provide a correct SHA-1 hash/url!", e);
+            }
+        }
+
+        ResourcePackVersion version = null;
+        try {
+            version = () -> Integer.parseInt(id);
+        } catch (NumberFormatException ignored) {}
+
+        if (groups) {
+            final boolean exact = rootServerConfig.getBoolean("exact-match");
+            for (String serverName : rootServerConfig.getStringList("servers")) {
+                for (RegisteredServer registeredServer : server.getAllServers()) {
+                    final String serverInfoName = registeredServer.getServerInfo().getName();
+                    final boolean matches = exact ?
+                            serverInfoName.equals(serverName) :
+                            serverInfoName.contains(serverName);
+                    if (!matches) continue;
+                    resourcePacks.add(new VelocityResourcePack(this, serverInfoName, url, hash, sizeInMB.get(), name, version));
+                    log("Added resource pack for server %s", serverInfoName);
                 }
             }
-
-            if (groups) {
-                final boolean exact = serverConfig.getBoolean("exact-match");
-                for (String serverName : serverConfig.getStringList("servers")) {
-                    for (RegisteredServer registeredServer : server.getAllServers()) {
-                        final String serverInfoName = registeredServer.getServerInfo().getName();
-                        final boolean matches = exact ?
-                                serverInfoName.equals(serverName) :
-                                serverInfoName.contains(serverName);
-                        if (!matches) continue;
-                        resourcePacks.add(new VelocityResourcePack(this, serverInfoName, url, hash, sizeInMB.get(), name));
-                        log("Added resource pack for server %s", serverInfoName);
-                    }
-                }
-            } else {
-                resourcePacks.add(new VelocityResourcePack(this, name, url, hash, sizeInMB.get(), null));
-            }
+        } else {
+            resourcePacks.add(new VelocityResourcePack(this, name, url, hash, sizeInMB.get(), null, version));
         }
     }
 
@@ -293,7 +323,7 @@ public class ForcePackVelocity implements ForcePackAPI {
             ResourcePackURLData data = this.tryGenerateHash(unloadPack, url, hash, new AtomicInteger(0));
             if (data != null) hash = data.getUrlHash();
 
-            final VelocityResourcePack resourcePack = new VelocityResourcePack(this, EMPTY_SERVER_NAME, url, hash, 0, null);
+            final VelocityResourcePack resourcePack = new VelocityResourcePack(this, EMPTY_SERVER_NAME, url, hash, 0, null, null);
             resourcePacks.add(resourcePack);
         }
     }
@@ -303,22 +333,43 @@ public class ForcePackVelocity implements ForcePackAPI {
         if (globalPack != null) {
             final boolean enableGlobal = globalPack.getBoolean("enable");
             if (enableGlobal) {
-                String url = globalPack.getString("url", "");
+                final Map<String, VelocityConfig> configs = new HashMap<>();
+                // Add the default fallback
+                configs.put("default", globalPack);
+                final VelocityConfig versionConfig = globalPack.getConfig("version");
+                if (versionConfig != null) {
+                    log("Detected versioned resource packs for global pack");
+                    for (String versionId : versionConfig.getKeys()) {
+                        configs.put(versionId, versionConfig.getConfig(versionId));
+                        log("Added version config %s for global pack", versionId);
+                    }
+                }
 
-                url = this.checkLocalHostUrl(url);
-                this.checkValidEnding(url);
-                this.checkForRehost(url, "global-pack");
-
-                String hash = globalPack.getString("hash");
-
-                ResourcePackURLData data = this.tryGenerateHash(globalPack, url, hash, new AtomicInteger(0));
-                if (data != null) hash = data.getUrlHash();
-
-                final VelocityResourcePack resourcePack = new VelocityResourcePack(this, GLOBAL_SERVER_NAME, url, hash, 0, null);
-                resourcePacks.add(resourcePack);
-                globalResourcePack = resourcePack;
+                configs.forEach((id, config) -> this.registerGlobalResourcePack(config, id));
             }
         }
+    }
+
+    private void registerGlobalResourcePack(VelocityConfig globalPack, String id) {
+        String url = globalPack.getString("url", "");
+
+        url = this.checkLocalHostUrl(url);
+        this.checkValidEnding(url);
+        this.checkForRehost(url, "global-pack");
+
+        String hash = globalPack.getString("hash");
+
+        ResourcePackURLData data = this.tryGenerateHash(globalPack, url, hash, new AtomicInteger(0));
+        if (data != null) hash = data.getUrlHash();
+
+        ResourcePackVersion version = null;
+        try {
+            version = () -> Integer.parseInt(id);
+        } catch (NumberFormatException ignored) {}
+
+        final VelocityResourcePack resourcePack = new VelocityResourcePack(this, GLOBAL_SERVER_NAME, url, hash, 0, null, version);
+        resourcePacks.add(resourcePack);
+        globalResourcePacks.add(resourcePack);
     }
 
     private String checkLocalHostUrl(String url) {
@@ -363,7 +414,7 @@ public class ForcePackVelocity implements ForcePackAPI {
 
         if (!rehosted) {
             getLogger().warn(String.format("[%s] You are using a default resource pack provided by the plugin. ", section) +
-                    " It's highly recommended you re-host this pack on a CDN such as https://mc-packs.net for faster load times. " +
+                    " It's highly recommended you re-host this pack using the webserver or on a CDN such as https://mc-packs.net for faster load times. " +
                     "Leaving this as default potentially sends a lot of requests to my personal web server, which isn't ideal!");
             getLogger().warn("ForcePack will still load and function like normally.");
         }
@@ -405,7 +456,7 @@ public class ForcePackVelocity implements ForcePackAPI {
 
     @Override
     public Collection<ResourcePack> getResourcePacks() {
-        return resourcePacks;
+        return Collections.unmodifiableCollection(resourcePacks);
     }
 
     @Override
@@ -413,18 +464,27 @@ public class ForcePackVelocity implements ForcePackAPI {
         return scheduler;
     }
 
-    public Optional<ResourcePack> getPackByServer(final String server) {
-        for (ResourcePack resourcePack : resourcePacks) {
-            if (resourcePack.getServer().equals(server)) {
+    public Optional<ResourcePack> getPackByServerAndVersion(final String server, final ProtocolVersion version) {
+        final int protocolVersion = version.getProtocol();
+        final int packFormat = PackFormatResolver.getPackFormat(protocolVersion);
+        return searchForValidPack(resourcePacks, server, packFormat).or(() -> searchForValidPack(globalResourcePacks, server, packFormat));
+    }
+
+    private Optional<ResourcePack> searchForValidPack(List<ResourcePack> packs, String serverName, int packFormat) {
+        ResourcePack anyVersionPack = null;
+        for (ResourcePack resourcePack : packs.stream().filter(pack -> pack.getServer().equals(serverName)).collect(Collectors.toList())) {
+            final Optional<ResourcePackVersion> packVersion = resourcePack.getVersion();
+            if (packVersion.isEmpty()) {
+                anyVersionPack = resourcePack;
+                continue;
+            }
+
+            if (packVersion.get().version() == packFormat) {
                 return Optional.of(resourcePack);
             }
         }
 
-        if (globalResourcePack != null) {
-            return Optional.of(globalResourcePack);
-        }
-
-        return Optional.empty();
+        return Optional.ofNullable(anyVersionPack);
     }
 
     public PackHandler getPackHandler() {

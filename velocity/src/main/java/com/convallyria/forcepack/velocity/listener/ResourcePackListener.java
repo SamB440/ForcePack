@@ -47,7 +47,7 @@ public class ResourcePackListener {
 
         // Check if the server they're on has a resource pack
         final String serverName = currentServer.get().getServerInfo().getName();
-        final Optional<ResourcePack> packByServer = plugin.getPackByServer(serverName);
+        final Optional<ResourcePack> packByServer = plugin.getPackByServerAndVersion(serverName, player.getProtocolVersion());
         if (packByServer.isEmpty()) {
             plugin.log("%s does not have a resource pack, ignoring status %s.", serverName, status.toString());
             return;

@@ -46,7 +46,7 @@ delay-pack-sending-by: 0
 #  - The use of the "forcepack://" protocol in resource pack URL
 #  - Better user experience when fake accept hacks detection is enabled
 # Enabling this DOES NOT mean you are forced to use a localhost resource pack.
-# I highly recommend you open a port on your server to allow this to work, instead of disabling this.
+# You need to make sure the port is open. Usually you can just add it via pterodactyl panel.
 web-server:
   enabled: false
   server-ip: localhost
@@ -98,7 +98,6 @@ Server:
   # Should we forcefully send a resource pack that has an invalid size for the player's client version? (requires ViaVersion)
   force-invalid-size: false
   # Whether to ignore geyser players. Only enable this if you use geyser.
-  #  Java clients can spoof this and bypass the ResourcePack!
   geyser: false
   # Whether to enable the bypass permission. If you disable this, all OPs will no longer be able to bypass.
   # But you should really fix your permissions instead.

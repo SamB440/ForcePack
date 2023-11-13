@@ -1,6 +1,7 @@
 package com.convallyria.forcepack.velocity.resourcepack;
 
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
+import com.convallyria.forcepack.api.resourcepack.ResourcePackVersion;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.velocitypowered.api.proxy.Player;
@@ -18,12 +19,14 @@ public final class VelocityResourcePack extends ResourcePack {
     private final ForcePackVelocity velocityPlugin;
     private final String server;
     private final @Nullable String group;
+    private final @Nullable ResourcePackVersion version;
 
-    public VelocityResourcePack(final ForcePackVelocity plugin, final String server, String url, String hash, int size, String group) {
+    public VelocityResourcePack(final ForcePackVelocity plugin, final String server, String url, String hash, int size, @Nullable String group, @Nullable ResourcePackVersion version) {
         super(plugin, url, hash, size, null);
         this.velocityPlugin = plugin;
         this.server = server;
         this.group = group;
+        this.version = version;
     }
 
     @Override
