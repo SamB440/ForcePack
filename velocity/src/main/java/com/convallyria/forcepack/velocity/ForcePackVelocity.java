@@ -48,9 +48,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -103,8 +105,8 @@ public class ForcePackVelocity implements ForcePackAPI {
 
     private VelocityConfig config;
     private PackHandler packHandler;
-    private final List<ResourcePack> globalResourcePacks = new ArrayList<>();
-    private final List<ResourcePack> resourcePacks = new ArrayList<>();
+    private final Set<ResourcePack> globalResourcePacks = new HashSet<>();
+    private final Set<ResourcePack> resourcePacks = new HashSet<>();
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
@@ -455,8 +457,8 @@ public class ForcePackVelocity implements ForcePackAPI {
     }
 
     @Override
-    public Collection<ResourcePack> getResourcePacks() {
-        return Collections.unmodifiableCollection(resourcePacks);
+    public Set<ResourcePack> getResourcePacks() {
+        return Collections.unmodifiableSet(resourcePacks);
     }
 
     @Override
@@ -470,7 +472,7 @@ public class ForcePackVelocity implements ForcePackAPI {
         return searchForValidPack(resourcePacks, server, packFormat).or(() -> searchForValidPack(globalResourcePacks, server, packFormat));
     }
 
-    private Optional<ResourcePack> searchForValidPack(List<ResourcePack> packs, String serverName, int packFormat) {
+    private Optional<ResourcePack> searchForValidPack(Set<ResourcePack> packs, String serverName, int packFormat) {
         ResourcePack anyVersionPack = null;
         for (ResourcePack resourcePack : packs.stream().filter(pack -> pack.getServer().equals(serverName)).collect(Collectors.toList())) {
             final Optional<ResourcePackVersion> packVersion = resourcePack.getVersion();
