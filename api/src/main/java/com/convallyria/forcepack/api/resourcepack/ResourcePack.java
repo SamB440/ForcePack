@@ -5,6 +5,7 @@ import com.convallyria.forcepack.api.utils.HashingUtil;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,7 +21,8 @@ public abstract class ResourcePack implements IResourcePack {
 	public ResourcePack(final ForcePackAPI plugin, String url, String hash, int size, @Nullable ResourcePackVersion packVersion) {
 		this.plugin = plugin;
 		// This is the same method vanilla uses to generate a UUID from the server.properties url
-		this.uuid = UUID.nameUUIDFromBytes(url.getBytes(StandardCharsets.UTF_8));
+		// We add the hash though because we support cross-version stuff
+		this.uuid = UUID.nameUUIDFromBytes((url + hash).getBytes(StandardCharsets.UTF_8));
 		this.url = url;
 		this.hash = hash;
 		this.size = size;
@@ -61,6 +63,14 @@ public abstract class ResourcePack implements IResourcePack {
 
 	@Override
 	public int hashCode() {
-		return uuid.hashCode();
+		return Objects.hash(uuid);
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof ResourcePack)) return false;
+		ResourcePack that = (ResourcePack) o;
+		return Objects.equals(uuid, that.uuid);
 	}
 }

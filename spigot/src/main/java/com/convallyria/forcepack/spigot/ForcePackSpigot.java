@@ -23,7 +23,6 @@ import com.convallyria.forcepack.webserver.ForcePackWebServer;
 import com.convallyria.languagy.api.adventure.AdventurePlatform;
 import com.convallyria.languagy.api.language.Language;
 import com.convallyria.languagy.api.language.Translator;
-import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bstats.bukkit.Metrics;
@@ -39,9 +38,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -60,15 +57,15 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
     private Translator translator;
     private PlatformScheduler scheduler;
-    private final Map<ResourcePackVersion, List<ResourcePack>> resourcePacks = new HashMap<>();
+    private final Map<ResourcePackVersion, Set<ResourcePack>> resourcePacks = new HashMap<>();
     public boolean velocityMode;
 
     private BukkitAudiences adventure;
 
     @Override
-    public Collection<ResourcePack> getResourcePacks() {
+    public Set<ResourcePack> getResourcePacks() {
         return resourcePacks.values().stream()
-                .flatMap(List::stream)
+                .flatMap(Set::stream)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
@@ -356,7 +353,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         final String finalUrl = url;
         final String finalHash = hash;
         resourcePacks.compute(version, (u, existingPacks) -> {
-            List<ResourcePack> packs = existingPacks == null ? new ArrayList<>() : existingPacks;
+            Set<ResourcePack> packs = existingPacks == null ? new HashSet<>() : existingPacks;
             final SpigotResourcePack pack = new SpigotResourcePack(this, finalUrl, finalHash, sizeMB.get(), version);
             packs.add(pack);
             this.getLogger().info("Generated resource pack (" + pack.getURL() + ") for version " + version.version() + " with id " + pack.getUUID());
