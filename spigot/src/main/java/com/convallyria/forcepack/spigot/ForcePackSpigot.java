@@ -23,6 +23,7 @@ import com.convallyria.forcepack.webserver.ForcePackWebServer;
 import com.convallyria.languagy.api.adventure.AdventurePlatform;
 import com.convallyria.languagy.api.language.Language;
 import com.convallyria.languagy.api.language.Translator;
+import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bstats.bukkit.Metrics;
@@ -38,37 +39,45 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
     private Translator translator;
     private PlatformScheduler scheduler;
-    private final Map<ResourcePackVersion, ResourcePack> resourcePacks = new HashMap<>();
+    private final Map<ResourcePackVersion, List<ResourcePack>> resourcePacks = new HashMap<>();
     public boolean velocityMode;
 
     private BukkitAudiences adventure;
 
     @Override
     public Collection<ResourcePack> getResourcePacks() {
-        return resourcePacks.values();
+        return resourcePacks.values().stream()
+                .flatMap(List::stream)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
-    public ResourcePack getPackForVersion(Player player) {
+    public Set<ResourcePack> getPacksForVersion(Player player) {
         final int protocolVersion = ViaVersionUtil.getProtocolVersion(player);
         final int packFormat = PackFormatResolver.getPackFormat(protocolVersion);
 
         ResourcePack anyVersionPack = null;
+        Set<ResourcePack> validPacks = new HashSet<>();
         for (ResourcePack resourcePack : getResourcePacks()) {
             final Optional<ResourcePackVersion> version = resourcePack.getVersion();
             if (version.isEmpty()) {
@@ -77,10 +86,18 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
             }
 
             if (version.get().version() == packFormat) {
-                return resourcePack;
+                validPacks.add(resourcePack);
+                if (protocolVersion < 765) { // If < 1.20.3, only one pack can be applied.
+                    break;
+                }
             }
         }
-        return anyVersionPack;
+
+        if (!validPacks.isEmpty()) {
+            return validPacks;
+        }
+
+        return anyVersionPack == null ? Set.of() : Set.of(anyVersionPack);
     }
 
     @Override
@@ -88,10 +105,54 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         return scheduler;
     }
 
-    private final Map<UUID, ResourcePack> waiting = new HashMap<>();
+    private final Map<UUID, Set<ResourcePack>> waiting = new HashMap<>();
 
-    public Map<UUID, ResourcePack> getWaiting() {
-        return waiting;
+    public void processWaitingResourcePack(Player player, UUID packId) {
+        final UUID playerId = player.getUniqueId();
+        // If the player is on a version older than 1.20.3, they can only have one resource pack.
+        if (ViaVersionUtil.getProtocolVersion(player) < 765) {
+            removeFromWaiting(player);
+            return;
+        }
+
+        final Set<ResourcePack> newSet = waiting.computeIfPresent(playerId, (a, packs) -> {
+            packs.removeIf(pack -> pack.getUUID().equals(packId));
+            return packs;
+        });
+
+        if (newSet == null || newSet.isEmpty()) {
+            removeFromWaiting(player);
+        }
+    }
+
+    public boolean isWaiting(Player player) {
+        return waiting.containsKey(player.getUniqueId());
+    }
+
+    public boolean isWaitingFor(Player player, UUID packId) {
+        if (!isWaiting(player)) return false;
+
+        // If the player is on a version older than 1.20.3, they can only have one resource pack.
+        if (ViaVersionUtil.getProtocolVersion(player) < 765) {
+            return true;
+        }
+
+        final Set<ResourcePack> waitingPacks = waiting.get(player.getUniqueId());
+        return waitingPacks.stream().anyMatch(pack -> pack.getUUID().equals(packId));
+    }
+
+    public void removeFromWaiting(Player player) {
+        waiting.remove(player.getUniqueId());
+    }
+
+    public void addToWaiting(UUID uuid, @Nullable Set<ResourcePack> packs) {
+        waiting.compute(uuid, (a, existing) -> {
+            if (existing != null && packs != null) {
+                existing.addAll(packs);
+                return existing;
+            }
+            return packs;
+        });
     }
 
     private @Nullable ForcePackWebServer webServer;
@@ -180,16 +241,26 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         }
 
         final ConfigurationSection packs = getConfig().getConfigurationSection("Server.packs");
+        boolean success = true;
         for (String versionId : packs.getKeys(false)) {
             ResourcePackVersion version = versionId.equals("all") ? null : () -> Integer.parseInt(versionId);
             final ConfigurationSection packSection = packs.getConfigurationSection(versionId);
-            final String url = packSection.getString("url", "");
+            final List<String> urls = packSection.contains("urls", true)
+                    ? packSection.getStringList("urls")
+                    : List.of(packSection.getString("url", ""));
+            final List<String> hashes = packSection.contains("hashes", true)
+                    ? packSection.getStringList("hashes")
+                    : List.of(packSection.getString("hash", ""));
             final boolean generateHash = packSection.getBoolean("generate-hash");
-            final String hash = packSection.getString("hash");
-            final boolean success = checkPack(version, url, generateHash, hash);
-            if (!success) {
-                getLogger().severe("Unable to load all resource packs correctly.");
+            for (int i = 0; i < urls.size(); i++) {
+                String url = urls.get(i);
+                String hash = hashes.get(i);
+                success = success && checkPack(version, url, generateHash, hash);
             }
+        }
+
+        if (!success) {
+            getLogger().severe("Unable to load all resource packs correctly.");
         }
     }
 
@@ -282,7 +353,15 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
             }
         }
 
-        resourcePacks.put(version, new SpigotResourcePack(this, url, hash, sizeMB.get(), version));
+        final String finalUrl = url;
+        final String finalHash = hash;
+        resourcePacks.compute(version, (u, existingPacks) -> {
+            List<ResourcePack> packs = existingPacks == null ? new ArrayList<>() : existingPacks;
+            final SpigotResourcePack pack = new SpigotResourcePack(this, finalUrl, finalHash, sizeMB.get(), version);
+            packs.add(pack);
+            this.getLogger().info("Generated resource pack (" + pack.getURL() + ") for version " + version.version() + " with id " + pack.getUUID());
+            return packs;
+        });
         return true;
     }
 

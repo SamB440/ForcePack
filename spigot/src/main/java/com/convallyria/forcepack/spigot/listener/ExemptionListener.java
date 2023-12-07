@@ -22,7 +22,7 @@ public class ExemptionListener implements Listener {
 
         if (event.getEntity() instanceof Player) {
             Player player = (Player) event.getEntity();
-            if (plugin.getWaiting().containsKey(player.getUniqueId())) {
+            if (plugin.isWaiting(player)) {
                 event.setCancelled(true);
                 plugin.log("Cancelled damage for player '" + player.getName() + "' due to resource pack not applied.");
             }
@@ -30,7 +30,7 @@ public class ExemptionListener implements Listener {
 
         if (event.getDamager() instanceof Player) {
             Player damager = (Player) event.getDamager();
-            if (plugin.getWaiting().containsKey(damager.getUniqueId())) {
+            if (plugin.isWaiting(damager)) {
                 event.setCancelled(true);
                 plugin.log("Cancelled damage for damager '" + damager.getName() + "' due to resource pack not applied.");
             }
@@ -43,7 +43,7 @@ public class ExemptionListener implements Listener {
 
         if (event.getEntity() instanceof Player) {
             Player damaged = (Player) event.getEntity();
-            if (plugin.getWaiting().containsKey(damaged.getUniqueId())) {
+            if (plugin.isWaiting(damaged)) {
                 event.setCancelled(true);
                 plugin.log("Cancelled damage for player '" + damaged.getName() + "' due to resource pack not applied.");
             }
@@ -55,7 +55,7 @@ public class ExemptionListener implements Listener {
         if (!plugin.getConfig().getBoolean("prevent-movement")) return;
 
         final Player player = event.getPlayer();
-        if (plugin.getWaiting().containsKey(player.getUniqueId())) {
+        if (plugin.isWaiting(player)) {
             event.setCancelled(true);
             plugin.log("Cancelled movement for player '" + player.getName() + "' due to resource pack not applied.");
         }

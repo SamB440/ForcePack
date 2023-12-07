@@ -12,6 +12,12 @@ public interface IResourcePack {
     public String getServer();
 
     /**
+     * Gets the UUID sent to 1.20.3+ clients.
+     * @return uuid of the resource pack
+     */
+    public UUID getUUID();
+
+    /**
      * Gets the URL of this ResourcePack.
      * @return string representation of URL
      */

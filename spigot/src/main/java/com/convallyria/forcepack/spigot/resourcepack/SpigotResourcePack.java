@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 public final class SpigotResourcePack extends ResourcePack {
@@ -43,7 +44,7 @@ public final class SpigotResourcePack extends ResourcePack {
         if (spigotPlugin.getVersionNumber() >= 18) {
             spigotPlugin.log("Using 1.18 method");
             try {
-                player.setResourcePack(url, getHashSum(), Translations.PROMPT_TEXT.get(player), spigotPlugin.getConfig().getBoolean("use-new-force-pack-screen", true));
+                player.setResourcePack(getUUID(), url, getHashSum(), Translations.PROMPT_TEXT.get(player), spigotPlugin.getConfig().getBoolean("use-new-force-pack-screen", true));
             } catch (NoSuchMethodError ignored) { // Server is not up-to-date
                 if (!hasWarned) {
                     spigotPlugin.getLogger().warning("Your server is not up-to-date: cannot use new ResourcePack methods.");

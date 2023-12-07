@@ -76,23 +76,6 @@ public class ResourcePackListener {
             }
         }
 
-        // Just pass declined onto the other handlers for the correct log message
-        if (plugin.getPackHandler().getSentFalsePack().containsKey(player.getUniqueId()) && event.getStatus() != PlayerResourcePackStatusEvent.Status.DECLINED) {
-            if (event.getStatus() == PlayerResourcePackStatusEvent.Status.ACCEPTED) return; // First, it gets accepted
-            // We expect FAILED_DOWNLOAD, otherwise it must be SUCCESSFULLY_LOADED that was sent.
-            if (event.getStatus() != PlayerResourcePackStatusEvent.Status.FAILED_DOWNLOAD) {
-                plugin.log("Kicked player %s because they are sending fake resource pack statuses (sent invalid status for fake resource pack).", player.getUsername());
-                final VelocityConfig actions = root.getConfig("actions").getConfig("FAILED_DOWNLOAD");
-                disconnectAction(player, actions);
-                return;
-            }
-
-            final Consumer<Void> remove = plugin.getPackHandler().getSentFalsePack().remove(player.getUniqueId());
-            remove.accept(null);
-//            PacketEvents.getAPI().getPlayerManager().getUser(player).writePacket(new WrapperPlayServerCloseWindow(0));
-            return;
-        }
-
         plugin.log(player.getUsername() + " sent status: " + event.getStatus());
 
         if (tryValidateHacks(player, status, root, now)) return;
@@ -112,7 +95,6 @@ public class ResourcePackListener {
             final String name = status == PlayerResourcePackStatusEvent.Status.SUCCESSFUL ? "SUCCESSFULLY_LOADED" : status.name();
             currentServer.get().sendPluginMessage(PackHandler.FORCEPACK_STATUS_IDENTIFIER, name.getBytes(StandardCharsets.UTF_8));
             plugin.getPackHandler().getApplying().remove(player.getUniqueId());
-            plugin.getPackHandler().getSentFalsePack().remove(player.getUniqueId());
         }
 
         if (status != PlayerResourcePackStatusEvent.Status.ACCEPTED) sentAccept.remove(player.getUniqueId());
