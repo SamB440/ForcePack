@@ -248,6 +248,10 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
             final List<String> hashes = packSection.contains("hashes", true)
                     ? packSection.getStringList("hashes")
                     : List.of(packSection.getString("hash", ""));
+            if (urls.size() != hashes.size()) {
+                getLogger().severe("There are not the same amount of URLs and hashes! Please provide a hash for every resource pack URL!");
+            }
+
             final boolean generateHash = packSection.getBoolean("generate-hash");
             for (int i = 0; i < urls.size(); i++) {
                 String url = urls.get(i);
