@@ -1,6 +1,7 @@
 # ForcePack Velocity config.
 # ForcePack uses MiniMessage for message formatting.
 # You can check the MiniMessage documentation for how to use it: https://docs.adventure.kyori.net/minimessage#format
+# ForcePack documentation: https://fortitude.islandearth.net/category/forcepack
 # Need help? Join our Discord: https://discord.gg/fh62mxU
 
 # Whether to ignore geyser players. Only enable this if you use geyser.
@@ -21,11 +22,6 @@ force-invalid-size = false
 
 # If this is true, resource packs will always be sent to the player even if they already seem to have the same resource pack.
 force-constant-download = false
-
-# https://bugs.mojang.com/browse/MC-265673
-# Doesn't resend the resource pack to 1.20.2+ players, because velocity will resend it.
-# Setting is here for convenience, should almost always be true.
-ignore-1-20-2-server-switch-players = true
 
 # If this is true, a player will not be able to execute any commands until the resource pack is loaded.
 disable-commands-until-loaded = false

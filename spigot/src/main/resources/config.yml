@@ -1,4 +1,5 @@
 # Need help? Join our Discord: https://discord.gg/fh62mxU
+# ForcePack documentation: https://fortitude.islandearth.net/category/forcepack
 
 # If this is enabled, the plugin will be used purely for further compatibility with your Velocity proxy.
 # This is required for the prevent-movement feature to work when behind the velocity plugin.
@@ -58,15 +59,14 @@ Server:
       # The ResourcePack URL. This must be a direct URL, ending with .zip. For Dropbox URLs, add ?dl=1 to the end.
       # To host a local file on the embedded webserver, change this to the relative path of the force pack folder prefixed by "forcepack://".
       # For example, placing your resource pack as "plugins/ForcePack/pack.zip", the url will just be "forcepack://pack.zip".
-      url: https://www.convallyria.com/files/BlankPack.zip
-      # Geyser resource packs can only be locally hosted. Does not require the webserver to be enabled.
-      geyser-url: forcepack://pack.zip
+      # ONLY PLAYERS ON 1.20.3+ CAN RECEIVE MULTIPLE RESOURCE PACKS. The first URL/Hash pair will be taken for older client versions.
+      # URLs list and hashes list MUST BE THE SAME SIZE.
+      urls: ["https://www.convallyria.com/files/BlankPack.zip"]
       # Whether to automatically generate the SHA-1 hash.
       # The hash setting will be ignored if this is true, however it will fall back to that if the generation fails.
       generate-hash: false
-      # Use a site such as http://onlinemd5.com/ or the hash provided when uploading to https://mc-packs.net/.
-      # Also see resource page for Linux/Windows commands.
-      hash: 118AFFFC54CDCD308702F81BA24E03223F15FE5F
+      # See https://fortitude.islandearth.net/forcepack/configuration#getting-the-sha-1-hash-of-a-resource-pack
+      hashes: ["118AFFFC54CDCD308702F81BA24E03223F15FE5F"]
     # Here you can specify a pack format version-specific resource pack. You would copy the section above, replacing "all" with the number.
     # Note that the "all" section must be kept as a fallback.
     # See https://minecraft.fandom.com/wiki/Pack_format.
@@ -75,10 +75,15 @@ Server:
   Actions:
     # To disable commands, you can do Commands: []
     # List of valid actions: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/player/PlayerResourcePackStatusEvent.Status.html
+    # DOWNLOADED, FAILED_RELOAD, DISCARDED only apply to 1.20.3+ clients.
     ACCEPTED:
       kick: false
       Commands:
         - say [player] accepted the resource pack!
+    DOWNLOADED:
+      kick: false
+      Commands:
+        - say [player] finished downloading the resource pack!
     DECLINED:
       kick: true
       Commands:
@@ -87,6 +92,15 @@ Server:
       kick: true
       Commands:
         - say [player] failed to download the resource pack!
+    FAILED_RELOAD:
+      kick: true
+      Commands:
+        - say [player] failed to reload the resource pack!
+    DISCARDED:
+      kick: true
+      Commands:
+        - say [player] discarded the resource pack!
+
   # Speed in ticks at which the ResourcePack prompt will be resent to the player (prevents escaping out)
   Update GUI Speed: 20
   # Whether to re-send the GUI. This will only update for clients <= 1.12. (requires ViaVersion)

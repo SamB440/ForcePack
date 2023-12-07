@@ -4,7 +4,6 @@ import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
-import com.convallyria.forcepack.webserver.ForcePackWebServer;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
@@ -17,14 +16,10 @@ import com.velocitypowered.api.scheduler.Scheduler;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 public final class PackHandler {
 
@@ -32,7 +27,6 @@ public final class PackHandler {
 
     private final ForcePackVelocity plugin;
     private final List<UUID> applying;
-    private final Map<UUID, Consumer<Void>> sentFalsePack = new HashMap<>();
 
     public PackHandler(final ForcePackVelocity plugin) {
         this.plugin = plugin;
@@ -41,10 +35,6 @@ public final class PackHandler {
 
     public List<UUID> getApplying() {
         return applying;
-    }
-
-    public Map<UUID, Consumer<Void>> getSentFalsePack() {
-        return sentFalsePack;
     }
 
     public void setPack(final Player player, final ServerConnection server) {
@@ -62,7 +52,7 @@ public final class PackHandler {
 
             // Check if they already have this ResourcePack applied.
             final ResourcePackInfo appliedResourcePack = player.getAppliedResourcePack();
-            final boolean forceApply = (plugin.getConfig().getBoolean("ignore-1-20-2-server-switch-players", true) && protocol < ProtocolVersion.MINECRAFT_1_20_2.getProtocol()) && plugin.getConfig().getBoolean("force-constant-download", false);
+            final boolean forceApply = protocol != ProtocolVersion.MINECRAFT_1_20_2.getProtocol() && plugin.getConfig().getBoolean("force-constant-download", false);
             if (appliedResourcePack != null && !forceApply) {
                 if (Arrays.equals(appliedResourcePack.getHash(), resourcePack.getHashSum())) {
                     plugin.log("Not applying already applied pack to player " + player.getUsername() + ".");
@@ -71,12 +61,7 @@ public final class PackHandler {
                 }
             }
 
-            final boolean tryPrevent = plugin.getConfig().getBoolean("try-to-stop-fake-accept-hacks", true);
-            if (tryPrevent) {
-                sendFalsePack(player, resourcePack, protocol);
-            } else {
-                runSetPackTask(player, resourcePack, protocol);
-            }
+            this.runSetPackTask(player, resourcePack, protocol);
         }, () -> {
             final ResourcePackInfo appliedResourcePack = player.getAppliedResourcePack();
             // This server doesn't have a pack set - send unload pack if enabled and if they already have one
@@ -102,35 +87,6 @@ public final class PackHandler {
 
                 empty.setResourcePack(player.getUniqueId());
             });
-        });
-    }
-
-    private void sendFalsePack(Player player, ResourcePack pack, int version) {
-        final Optional<ForcePackWebServer> packWebServer = plugin.getWebServer();
-        final String fakeFile = UUID.randomUUID().toString().replace("-", "") + ".zip";
-        final String fakeUrl = packWebServer.map(server -> server.getUrl() + "/serve/" + fakeFile).orElse("https://");
-        packWebServer.ifPresent(server -> server.awaitServe(fakeFile, () -> {
-            if (!player.isActive()) return;
-            // The player has requested the resource pack.
-            // So, we can send a close inventory packet along with the response.
-            // This prevents the "pack application failed" screen from showing.
-            // By sending it along with the pack response, we prevent slow connections seeing the screen for longer,
-            //  as theoretically these packets should arrive at about the same time.
-            //  (as long as the server is not lagging and depending on when the packets get flushed)
-            // Most people won't notice it at all unless they are paying attention.
-//            PacketEvents.getAPI().getPlayerManager().getUser(player).writePacket(new WrapperPlayServerCloseWindow(0));
-        }));
-
-        plugin.log("Sending fake resource pack '" + fakeUrl + "' to " + player.getUsername() + ".");
-        final ResourcePackInfo.Builder infoBuilder = plugin.getServer()
-                .createResourcePackBuilder(fakeUrl)
-                .setHash(UUID.randomUUID().toString().substring(0, 20).getBytes(StandardCharsets.UTF_8))
-                .setShouldForce(plugin.getConfig().getBoolean("use-new-force-pack-screen", true));
-        player.sendResourcePackOffer(infoBuilder.build());
-
-        sentFalsePack.put(player.getUniqueId(), (v) -> {
-//            PacketEvents.getAPI().getPlayerManager().getUser(player).writePacket(new WrapperPlayServerCloseWindow(0));
-            this.runSetPackTask(player, pack, version);
         });
     }
 

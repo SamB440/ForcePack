@@ -13,6 +13,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.Set;
+
 public class ForcePackCommand {
 
     private final ForcePackSpigot plugin;
@@ -36,7 +38,7 @@ public class ForcePackCommand {
         plugin.reload();
         if (!plugin.velocityMode) {
             for (Player player : Bukkit.getOnlinePlayers()) {
-                if (plugin.getWaiting().containsKey(player.getUniqueId())) continue;
+                if (plugin.isWaiting(player)) continue;
                 boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
                 boolean canBypass = player.hasPermission(Permissions.BYPASS) && plugin.getConfig().getBoolean("Server.bypass-permission");
                 plugin.log(player.getName() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
@@ -44,9 +46,9 @@ public class ForcePackCommand {
 
                 Translations.RELOADING.send(player);
 
-                final ResourcePack resourcePack = plugin.getPackForVersion(player);
-                plugin.getWaiting().put(player.getUniqueId(), resourcePack);
-                resourcePack.setResourcePack(player.getUniqueId());
+                final Set<ResourcePack> resourcePacks = plugin.getPacksForVersion(player);
+                plugin.addToWaiting(player.getUniqueId(), resourcePacks);
+                resourcePacks.forEach(pack -> pack.setResourcePack(player.getUniqueId()));
             }
         }
 
