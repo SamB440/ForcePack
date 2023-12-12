@@ -6,6 +6,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 
+import java.util.UUID;
+
 public class VelocityMessageListener implements PluginMessageListener {
 
     private static final String CHANNEL = "forcepack:status";
@@ -25,6 +27,6 @@ public class VelocityMessageListener implements PluginMessageListener {
 
         final String data = new String(message);
         plugin.log("Posted event");
-        Bukkit.getPluginManager().callEvent(new PlayerResourcePackStatusEvent(player, PlayerResourcePackStatusEvent.Status.valueOf(data)));
+        Bukkit.getPluginManager().callEvent(new PlayerResourcePackStatusEvent(player, UUID.fromString(data.split(";")[0]), PlayerResourcePackStatusEvent.Status.valueOf(data.split(";")[1])));
     }
 }

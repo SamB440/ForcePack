@@ -134,12 +134,6 @@ public class ForcePackVelocity implements ForcePackAPI {
         metricsFactory.make(this, 13678);
     }
 
-    @Subscribe
-    public void onShutdown(ProxyShutdownEvent event) {
-        // Supporting reloads
-//        PacketEvents.getAPI().terminate();
-    }
-
     private void createConfig() {
         final Path dirPath = Path.of(dataDirectory + File.separator);
         final File dirFile = dirPath.toFile();
@@ -227,12 +221,33 @@ public class ForcePackVelocity implements ForcePackAPI {
     }
     
     private void registerResourcePack(VelocityConfig rootServerConfig, VelocityConfig resourcePack, String id, String name, String typeName, boolean groups, boolean verifyPacks, @Nullable Player player) {
+        List<String> urls = resourcePack.getStringList("urls");
+        if (urls.isEmpty()) {
+           urls = List.of(resourcePack.getString("url", ""));
+        }
+
+        List<String> hashes = resourcePack.getStringList("hashes");
+        if (hashes.isEmpty()) {
+            hashes = List.of(resourcePack.getString("hash", ""));
+        }
+
+        if (urls.size() != hashes.size()) {
+            getLogger().error("There are not the same amount of URLs and hashes! Please provide a hash for every resource pack URL! (" + id + ", " + name + ")");
+        }
+
+        for (int i = 0; i < urls.size(); i++) {
+            final String url = urls.get(i);
+            final String hash = hashes.get(i);
+            this.handleRegister(rootServerConfig, resourcePack, name, id, typeName, url, hash, groups, verifyPacks, player);
+        }
+    }
+
+    private void handleRegister(VelocityConfig rootServerConfig, VelocityConfig resourcePack, String name, String id, String typeName, String url, String hash, boolean groups, boolean verifyPacks, @Nullable Player player) {
         final ConsoleCommandSource consoleSender = this.getServer().getConsoleCommandSource();
-        String url = resourcePack.getString("url", "");
         if (url.isEmpty()) {
             logger.error("No URL found for " + name + ". Did you set up the config correctly?");
         }
-        String hash = resourcePack.getString("hash", "");
+
         AtomicInteger sizeInMB = new AtomicInteger();
 
         url = this.checkLocalHostUrl(url);

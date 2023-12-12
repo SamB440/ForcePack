@@ -47,8 +47,8 @@ public class ResourcePackListener {
 
         // Check if the server they're on has a resource pack
         final String serverName = currentServer.get().getServerInfo().getName();
-        final Optional<ResourcePack> packByServer = plugin.getPackByServerAndVersion(serverName, player.getProtocolVersion());
-        if (packByServer.isEmpty()) {
+        final ResourcePack packByServer = plugin.getPackByServerAndVersion(serverName, player.getProtocolVersion()).orElse(null);
+        if (packByServer == null) {
             plugin.log("%s does not have a resource pack, ignoring status %s.", serverName, status.toString());
             return;
         }
@@ -61,11 +61,11 @@ public class ResourcePackListener {
         }
 
         final VelocityConfig root;
-        if (packByServer.get().getServer().equals(ForcePackVelocity.GLOBAL_SERVER_NAME)) {
+        if (packByServer.getServer().equals(ForcePackVelocity.GLOBAL_SERVER_NAME)) {
             root = plugin.getConfig().getConfig("global-pack");
         } else {
-            if (packByServer.get() instanceof VelocityResourcePack) {
-                VelocityResourcePack vrp = (VelocityResourcePack) packByServer.get();
+            if (packByServer instanceof VelocityResourcePack) {
+                VelocityResourcePack vrp = (VelocityResourcePack) packByServer;
                 if (vrp.getGroup() != null) {
                     root = plugin.getConfig().getConfig("groups").getConfig(vrp.getGroup());
                 } else {
@@ -93,7 +93,7 @@ public class ResourcePackListener {
             plugin.log("Sent player '%s' plugin message downstream to '%s' for status '%s'", player.getUsername(), currentServer.get().getServerInfo().getName(), status.name());
             // No longer applying, remove them from the list
             final String name = status == PlayerResourcePackStatusEvent.Status.SUCCESSFUL ? "SUCCESSFULLY_LOADED" : status.name();
-            currentServer.get().sendPluginMessage(PackHandler.FORCEPACK_STATUS_IDENTIFIER, name.getBytes(StandardCharsets.UTF_8));
+            currentServer.get().sendPluginMessage(PackHandler.FORCEPACK_STATUS_IDENTIFIER, (packByServer.getUUID().toString() + ";" + name).getBytes(StandardCharsets.UTF_8));
             plugin.getPackHandler().getApplying().remove(player.getUniqueId());
         }
 

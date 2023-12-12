@@ -6,6 +6,7 @@ import com.convallyria.forcepack.api.schedule.PlatformScheduler;
 import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
+import com.convallyria.forcepack.spigot.event.ForcePackReloadEvent;
 import com.convallyria.forcepack.spigot.translation.Translations;
 import com.convallyria.forcepack.spigot.util.ViaVersionUtil;
 import org.bukkit.Bukkit;
@@ -22,7 +23,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 public class ResourcePackListener implements Listener {
 
@@ -106,7 +106,7 @@ public class ResourcePackListener implements Listener {
     private boolean tryValidateHacks(Player player, PlayerResourcePackStatusEvent.Status status, long now) {
         final boolean tryPrevent = getConfig().getBoolean("try-to-stop-fake-accept-hacks", true);
         if (status == PlayerResourcePackStatusEvent.Status.ACCEPTED) {
-            if (tryPrevent && sentAccept.containsKey(player.getUniqueId())) {
+            if (tryPrevent && sentAccept.containsKey(player.getUniqueId()) && plugin.getWaitingFor(player).size() <= 1) {
                 plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (accepted sent twice).");
                 ensureMainThread(() -> player.kickPlayer(Translations.DECLINED.get(player)));
                 return true;
@@ -156,6 +156,7 @@ public class ResourcePackListener implements Listener {
         plugin.addToWaiting(player.getUniqueId(), packs);
 
         for (ResourcePack pack : packs) {
+            plugin.log("Sending pack " + pack.getUUID() + " to player " + player.getName());
             final int version = ViaVersionUtil.getProtocolVersion(player);
             final int maxSize = ClientVersion.getMaxSizeForVersion(version);
             final boolean forceSend = getConfig().getBoolean("Server.force-invalid-size");
@@ -165,6 +166,14 @@ public class ResourcePackListener implements Listener {
             }
 
             this.runSetPackTask(player, pack, version);
+        }
+    }
+
+    @EventHandler
+    public void onReload(ForcePackReloadEvent event) {
+        for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+            if (plugin.isWaiting(onlinePlayer)) continue;
+            sentAccept.remove(onlinePlayer.getUniqueId());
         }
     }
 

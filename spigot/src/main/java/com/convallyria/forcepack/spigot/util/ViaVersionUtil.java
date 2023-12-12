@@ -8,6 +8,6 @@ public class ViaVersionUtil {
 
     public static int getProtocolVersion(Player player) {
         final boolean viaversion = Bukkit.getPluginManager().isPluginEnabled("ViaVersion");
-        return viaversion ? Via.getAPI().getPlayerVersion(player) : 764; // 764 is 1.20.2 - default to this
+        return viaversion ? Via.getAPI().getPlayerVersion(player) : 765; // 765 is 1.20.3 - default to this
     }
 }
