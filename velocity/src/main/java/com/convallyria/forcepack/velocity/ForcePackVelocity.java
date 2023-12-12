@@ -16,13 +16,13 @@ import com.convallyria.forcepack.velocity.listener.ResourcePackListener;
 import com.convallyria.forcepack.velocity.resourcepack.VelocityResourcePack;
 import com.convallyria.forcepack.velocity.schedule.VelocityScheduler;
 import com.convallyria.forcepack.webserver.ForcePackWebServer;
+import com.convallyria.forcepack.webserver.downloader.WebServerDependencyDownloader;
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.event.EventManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.command.CommandExecuteEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
-import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
@@ -43,9 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -117,6 +115,10 @@ public class ForcePackVelocity implements ForcePackAPI {
         final VelocityConfig webServerConfig = getConfig().getConfig("web-server");
         if (webServerConfig != null && webServerConfig.getBoolean("enabled")) {
             try {
+                getLogger().info("Enabling web server...");
+                getLogger().info("Downloading required dependencies, this might take a while! Subsequent startups will be faster.");
+                WebServerDependencyDownloader.download(this, getDataDirectory(), this::log);
+                getLogger().info("Finished downloading required dependencies.");
                 final String configIp = webServerConfig.getString("server-ip", "localhost");
                 final String serverIp = !configIp.equals("localhost") ? configIp : ForcePackWebServer.getIp();
                 this.webServer = new ForcePackWebServer(dataDirectory, serverIp, webServerConfig.getInt("port", 8080));
