@@ -7,6 +7,7 @@ import com.convallyria.forcepack.api.permission.Permissions;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
+import com.convallyria.forcepack.spigot.event.ForcePackReloadEvent;
 import com.convallyria.forcepack.spigot.translation.Translations;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -36,6 +37,7 @@ public class ForcePackCommand {
         sender.sendMessage(ChatColor.GREEN + "Reloading...");
         plugin.reloadConfig();
         plugin.reload();
+        Bukkit.getPluginManager().callEvent(new ForcePackReloadEvent());
         if (!plugin.velocityMode) {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (plugin.isWaiting(player)) continue;

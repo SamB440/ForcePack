@@ -56,7 +56,7 @@ public final class PackHandler {
             if (appliedResourcePack != null && !forceApply) {
                 if (Arrays.equals(appliedResourcePack.getHash(), resourcePack.getHashSum())) {
                     plugin.log("Not applying already applied pack to player " + player.getUsername() + ".");
-                    server.sendPluginMessage(FORCEPACK_STATUS_IDENTIFIER, "SUCCESSFULLY_LOADED".getBytes(StandardCharsets.UTF_8));
+                    server.sendPluginMessage(FORCEPACK_STATUS_IDENTIFIER, (resourcePack.getUUID().toString() + ";SUCCESSFULLY_LOADED").getBytes(StandardCharsets.UTF_8));
                     return;
                 }
             }

@@ -78,7 +78,8 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         for (ResourcePack resourcePack : getResourcePacks()) {
             final Optional<ResourcePackVersion> version = resourcePack.getVersion();
             if (version.isEmpty()) {
-                anyVersionPack = resourcePack;
+                if (anyVersionPack == null) anyVersionPack = resourcePack; // Pick first all-version resource pack
+                validPacks.add(resourcePack); // This is still a valid pack that we want to apply.
                 continue;
             }
 
@@ -138,6 +139,10 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         return waitingPacks.stream().anyMatch(pack -> pack.getUUID().equals(packId));
     }
 
+    public Set<ResourcePack> getWaitingFor(Player player) {
+        return waiting.getOrDefault(player.getUniqueId(), Set.of());
+    }
+
     public void removeFromWaiting(Player player) {
         waiting.remove(player.getUniqueId());
     }
@@ -148,7 +153,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
                 existing.addAll(packs);
                 return existing;
             }
-            return packs;
+            return packs == null ? null : new HashSet<>(packs);
         });
     }
 
@@ -265,7 +270,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         }
     }
 
-    private boolean checkPack(ResourcePackVersion version, String url, boolean generateHash, String hash) {
+    private boolean checkPack(@Nullable ResourcePackVersion version, String url, boolean generateHash, String hash) {
         if (url.startsWith("forcepack://")) { // Localhost
             log("Using local resource pack host for " + url);
             if (webServer == null) {
@@ -360,7 +365,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
             Set<ResourcePack> packs = existingPacks == null ? new HashSet<>() : existingPacks;
             final SpigotResourcePack pack = new SpigotResourcePack(this, finalUrl, finalHash, sizeMB.get(), version);
             packs.add(pack);
-            this.getLogger().info("Generated resource pack (" + pack.getURL() + ") for version " + version.version() + " with id " + pack.getUUID());
+            this.getLogger().info("Generated resource pack (" + pack.getURL() + ") for version " + (version == null ? "all" : version) + " with id " + pack.getUUID());
             return packs;
         });
         return true;
