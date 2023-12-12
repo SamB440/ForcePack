@@ -1,3 +1,7 @@
+plugins {
+    id("dev.vankka.dependencydownload.plugin") version "1.3.1"
+}
+
 repositories {
     mavenCentral()
 }
@@ -6,14 +10,19 @@ dependencies {
     compileOnly(project(":api"))
     compileOnly("com.google.guava:guava:32.1.3-jre")
 
-    implementation("io.javalin:javalin:5.6.1")
+    runtimeDownload("io.javalin:javalin:6.0.0-beta.3")
+
+    implementation("dev.vankka:dependencydownload-runtime:1.3.1")
 }
 
 tasks {
     shadowJar {
-//        minimize {
-//            exclude(dependency("org.eclipse.jetty:.*:.*"))
-//        }
-//        relocate("io.javalin", "com.convallyria.forcepack.libs.javalin")
+        dependsOn(generateRuntimeDownloadResourceForRuntimeDownloadOnly, generateRuntimeDownloadResourceForRuntimeDownload)
+        relocate("io.javalin", "com.convallyria.forcepack.libs.javalin")
+        generateRuntimeDownloadResourceForRuntimeDownloadOnly.get().relocate("io.javalin", "com.convallyria.forcepack.libs.javalin")
+    }
+
+    jar {
+        dependsOn(generateRuntimeDownloadResourceForRuntimeDownloadOnly, generateRuntimeDownloadResourceForRuntimeDownload)
     }
 }

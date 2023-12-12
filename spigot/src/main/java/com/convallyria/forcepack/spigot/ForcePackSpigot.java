@@ -20,6 +20,7 @@ import com.convallyria.forcepack.spigot.schedule.BukkitScheduler;
 import com.convallyria.forcepack.spigot.translation.Translations;
 import com.convallyria.forcepack.spigot.util.ViaVersionUtil;
 import com.convallyria.forcepack.webserver.ForcePackWebServer;
+import com.convallyria.forcepack.webserver.downloader.WebServerDependencyDownloader;
 import com.convallyria.languagy.api.adventure.AdventurePlatform;
 import com.convallyria.languagy.api.language.Language;
 import com.convallyria.languagy.api.language.Translator;
@@ -188,6 +189,10 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         Runnable run = () -> {
             if (getConfig().getBoolean("web-server.enabled")) {
                 try {
+                    getLogger().info("Enabling web server...");
+                    getLogger().info("Downloading required dependencies, this might take a while! Subsequent startups will be faster.");
+                    WebServerDependencyDownloader.download(this, getDataFolder().toPath(), this::log);
+                    getLogger().info("Finished downloading required dependencies.");
                     final String configIp = getConfig().getString("web-server.server-ip", "localhost");
                     final String serverIp = !configIp.equals("localhost") ? configIp : !Bukkit.getIp().isEmpty() ? Bukkit.getIp() : ForcePackWebServer.getIp();
                     this.webServer = new ForcePackWebServer(this.getDataFolder().toPath(), serverIp, getConfig().getInt("web-server.port", 8080));
