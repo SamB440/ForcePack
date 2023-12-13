@@ -15,7 +15,7 @@ dependencies {
     implementation(project(":folia"))
     implementation(project(":webserver", "shadow"))
 
-    compileOnly("org.spigotmc:spigot-api:1.20.3-R0.1-SNAPSHOT")
+    compileOnly("org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT")
     compileOnly("com.viaversion:viaversion-api:4.9.2")
     compileOnly("com.github.LoneDev6:api-itemsadder:3.0.0")
 
