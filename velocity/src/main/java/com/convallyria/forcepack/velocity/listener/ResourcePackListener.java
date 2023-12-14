@@ -81,12 +81,14 @@ public class ResourcePackListener {
         if (tryValidateHacks(player, status, root, now)) return;
 
         final VelocityConfig actions = root.getConfig("actions").getConfig(status.name());
-        for (String cmd : actions.getStringList("commands")) {
-            final CommandSource console = plugin.getServer().getConsoleCommandSource();
-            plugin.getServer().getCommandManager().executeAsync(console, cmd.replace("[player]", player.getUsername()));
+        if (actions != null) {
+            for (String cmd : actions.getStringList("commands")) {
+                final CommandSource console = plugin.getServer().getConsoleCommandSource();
+                plugin.getServer().getCommandManager().executeAsync(console, cmd.replace("[player]", player.getUsername()));
+            }
         }
 
-        final boolean kick = actions.getBoolean("kick");
+        final boolean kick = actions != null && actions.getBoolean("kick");
 
         // Declined/failed is valid and should be allowed, server owner decides whether they get kicked
         if (status != PlayerResourcePackStatusEvent.Status.ACCEPTED && !kick) {
@@ -99,7 +101,7 @@ public class ResourcePackListener {
 
         if (status != PlayerResourcePackStatusEvent.Status.ACCEPTED) sentAccept.remove(player.getUniqueId());
 
-        final String text = actions.getString("message");
+        final String text = actions == null ? null : actions.getString("message");
         if (text == null) return;
 
         final Component component = plugin.getMiniMessage().deserialize(text);
