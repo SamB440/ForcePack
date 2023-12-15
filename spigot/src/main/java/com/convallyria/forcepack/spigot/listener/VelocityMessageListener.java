@@ -27,6 +27,12 @@ public class VelocityMessageListener implements PluginMessageListener {
 
         final String data = new String(message);
         plugin.log("Posted event");
-        Bukkit.getPluginManager().callEvent(new PlayerResourcePackStatusEvent(player, UUID.fromString(data.split(";")[0]), PlayerResourcePackStatusEvent.Status.valueOf(data.split(";")[1])));
+
+        try {
+            Bukkit.getPluginManager().callEvent(new PlayerResourcePackStatusEvent(player, UUID.fromString(data.split(";")[0]), PlayerResourcePackStatusEvent.Status.valueOf(data.split(";")[1])));
+        } catch (IllegalArgumentException ignored) {
+            plugin.log("Unable to post status event because of mismatched versions");
+            // Isn't present on this server version...
+        }
     }
 }
