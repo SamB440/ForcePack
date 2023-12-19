@@ -17,13 +17,8 @@ public final class SpigotResourcePack extends ResourcePack {
     private boolean hasWarned;
 
     public SpigotResourcePack(final ForcePackSpigot plugin, String url, String hash, int size, @Nullable ResourcePackVersion packVersion) {
-        super(plugin, url, hash, size, packVersion);
+        super(plugin, Bukkit.getServer().getName(), url, hash, size, packVersion);
         this.spigotPlugin = plugin;
-    }
-
-    @Override
-    public String getServer() {
-        return Bukkit.getServer().getName();
     }
 
     @Override
