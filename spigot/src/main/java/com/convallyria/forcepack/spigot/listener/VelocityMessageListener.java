@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 
+import java.lang.reflect.Constructor;
 import java.util.UUID;
 
 public class VelocityMessageListener implements PluginMessageListener {
@@ -18,6 +19,16 @@ public class VelocityMessageListener implements PluginMessageListener {
         this.plugin = plugin;
     }
 
+    private static final Constructor<PlayerResourcePackStatusEvent> LEGACY_CONSTRUCTOR;
+
+    static {
+        try {
+            LEGACY_CONSTRUCTOR = PlayerResourcePackStatusEvent.class.getConstructor(Player.class, PlayerResourcePackStatusEvent.Status.class);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     public void onPluginMessageReceived(String channel, Player player, byte[] message) {
         if (!channel.equals(CHANNEL)) {
@@ -28,11 +39,20 @@ public class VelocityMessageListener implements PluginMessageListener {
         final String data = new String(message);
         plugin.log("Posted event");
 
+        final PlayerResourcePackStatusEvent.Status status = PlayerResourcePackStatusEvent.Status.valueOf(data.split(";")[1]);
+        // Yeah this is cursed. But I don't know how else to handle statuses on the backend properly - velocity doesn't pass them correctly!
         try {
-            Bukkit.getPluginManager().callEvent(new PlayerResourcePackStatusEvent(player, UUID.fromString(data.split(";")[0]), PlayerResourcePackStatusEvent.Status.valueOf(data.split(";")[1])));
+            Bukkit.getPluginManager().callEvent(new PlayerResourcePackStatusEvent(player, UUID.fromString(data.split(";")[0]), status));
         } catch (IllegalArgumentException ignored) {
             plugin.log("Unable to post status event because of mismatched versions");
             // Isn't present on this server version...
+        } catch (NoSuchMethodError e) {
+            // We are on a server version that doesn't have resource pack UUIDs
+            try {
+                Bukkit.getPluginManager().callEvent(LEGACY_CONSTRUCTOR.newInstance(player, status));
+            } catch (ReflectiveOperationException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 }

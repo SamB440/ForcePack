@@ -21,15 +21,10 @@ public final class VelocityResourcePack extends ResourcePack {
     private final @Nullable String group;
 
     public VelocityResourcePack(final ForcePackVelocity plugin, final String server, String url, String hash, int size, @Nullable String group, @Nullable ResourcePackVersion version) {
-        super(plugin, url, hash, size, version);
+        super(plugin, server, url, hash, size, version);
         this.velocityPlugin = plugin;
         this.server = server;
         this.group = group;
-    }
-
-    @Override
-    public String getServer() {
-        return server;
     }
 
     public @Nullable String getGroup() {

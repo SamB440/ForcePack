@@ -23,6 +23,7 @@ import com.velocitypowered.api.event.EventManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.command.CommandExecuteEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
@@ -134,6 +135,11 @@ public class ForcePackVelocity implements ForcePackAPI {
         this.loadResourcePacks(null);
         this.registerListeners();
         metricsFactory.make(this, 13678);
+    }
+
+    @Subscribe
+    public void onShutdown(ProxyShutdownEvent event) {
+        if (webServer != null) webServer.shutdown();
     }
 
     private void createConfig() {
@@ -306,7 +312,8 @@ public class ForcePackVelocity implements ForcePackAPI {
 
         ResourcePackVersion version = null;
         try {
-            version = () -> Integer.parseInt(id);
+            final int versionId = Integer.parseInt(id);
+            version = () -> versionId;
         } catch (NumberFormatException ignored) {}
 
         if (groups) {
@@ -318,8 +325,9 @@ public class ForcePackVelocity implements ForcePackAPI {
                             serverInfoName.equals(serverName) :
                             serverInfoName.contains(serverName);
                     if (!matches) continue;
-                    resourcePacks.add(new VelocityResourcePack(this, serverInfoName, url, hash, sizeInMB.get(), name, version));
-                    log("Added resource pack for server %s", serverInfoName);
+                    final VelocityResourcePack pack = new VelocityResourcePack(this, serverInfoName, url, hash, sizeInMB.get(), name, version);
+                    resourcePacks.add(pack);
+                    log("Added resource pack for server %s (%s)", serverInfoName, pack.getUUID().toString());
                 }
             }
         } else {
@@ -491,7 +499,12 @@ public class ForcePackVelocity implements ForcePackAPI {
 
     private Optional<ResourcePack> searchForValidPack(Set<ResourcePack> packs, String serverName, int packFormat) {
         ResourcePack anyVersionPack = null;
-        for (ResourcePack resourcePack : packs.stream().filter(pack -> pack.getServer().equals(serverName)).collect(Collectors.toList())) {
+        for (ResourcePack resourcePack : packs.stream().filter(pack -> {
+            boolean matches = pack.getServer().equals(serverName);
+            log("Filtering out %s: %s != %s", pack.getUUID().toString(), pack.getServer(), serverName);
+            return matches;
+        }).collect(Collectors.toList())) {
+            log("Trying resource pack %s (%s)", resourcePack.getURL(), resourcePack.getVersion().toString());
             final Optional<ResourcePackVersion> packVersion = resourcePack.getVersion();
             if (packVersion.isEmpty()) {
                 anyVersionPack = resourcePack;

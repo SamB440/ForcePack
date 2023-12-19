@@ -13,20 +13,27 @@ public abstract class ResourcePack implements IResourcePack {
 
 	protected final ForcePackAPI plugin;
 	protected final UUID uuid;
+	protected final String server;
 	protected final String url;
 	protected final String hash;
 	protected final int size;
 	protected final ResourcePackVersion packVersion;
 
-	public ResourcePack(final ForcePackAPI plugin, String url, String hash, int size, @Nullable ResourcePackVersion packVersion) {
+	public ResourcePack(final ForcePackAPI plugin, String server, String url, String hash, int size, @Nullable ResourcePackVersion packVersion) {
 		this.plugin = plugin;
+		this.server = server;
 		// This is the same method vanilla uses to generate a UUID from the server.properties url
-		// We add the hash though because we support cross-version stuff
-		this.uuid = UUID.nameUUIDFromBytes((url + hash).getBytes(StandardCharsets.UTF_8));
+		// We add the hash and server though because we support cross-version and cross-server stuff
+		this.uuid = UUID.nameUUIDFromBytes((url + hash + server).getBytes(StandardCharsets.UTF_8));
 		this.url = url;
 		this.hash = hash;
 		this.size = size;
 		this.packVersion = packVersion;
+	}
+
+	@Override
+	public String getServer() {
+		return server;
 	}
 
 	@Override

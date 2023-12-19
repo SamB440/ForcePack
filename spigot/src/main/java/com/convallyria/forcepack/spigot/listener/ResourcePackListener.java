@@ -38,7 +38,15 @@ public class ResourcePackListener implements Listener {
     public void onStatus(PlayerResourcePackStatusEvent event) {
         final long now = System.currentTimeMillis();
         final Player player = event.getPlayer();
-        final UUID id = event.getID();
+        UUID id;
+
+        // Support outdated servers
+        try {
+            id = event.getID();
+        } catch (NoSuchMethodError e) {
+            id = null;
+        }
+
         boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
         boolean canBypass = player.hasPermission(Permissions.BYPASS) && getConfig().getBoolean("Server.bypass-permission");
         plugin.log(player.getName() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
