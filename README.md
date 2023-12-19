@@ -38,8 +38,10 @@ ForcePack facilitates forcing users to accept your resource pack, with utilities
 You can find the Spigot resource at: https://www.spigotmc.org/resources/forcepack.45439/
 
 ## Features
-- Pack unloading for Velocity sub-servers without a resource pack
+- Support for 1.20.3+ multiple resource packs
+- Ability to set resource packs on a per-version basis
 - Local webserver resource pack hosting
+- Pack unloading for Velocity sub-servers without a resource pack
 - Prevents escaping out bypass for clients <= 1.12 (requires ViaVersion for Spigot)
 - Run commands on pack statuses
 - RGB via MiniMessage support
@@ -58,7 +60,7 @@ To contribute, follow the steps below. Contributions are very welcome.
 
 ### Prerequisites
 
-* [JDK 11](https://adoptium.net/)
+* [JDK 17](https://adoptium.net/)
 * [Gradle](https://gradle.org/)
 * [Git](https://gitforwindows.org/), if on windows.
 
