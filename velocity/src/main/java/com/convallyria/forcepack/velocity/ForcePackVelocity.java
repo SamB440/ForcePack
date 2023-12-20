@@ -391,7 +391,8 @@ public class ForcePackVelocity implements ForcePackAPI {
 
         ResourcePackVersion version = null;
         try {
-            version = () -> Integer.parseInt(id);
+            final int versionId = Integer.parseInt(id);
+            version = () -> versionId;
         } catch (NumberFormatException ignored) {}
 
         final VelocityResourcePack resourcePack = new VelocityResourcePack(this, GLOBAL_SERVER_NAME, url, hash, 0, null, version);
