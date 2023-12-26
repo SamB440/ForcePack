@@ -103,17 +103,21 @@ debug = false
     ]
 
     [global-pack.actions]
-        # List of valid actions: https://jd.velocitypowered.com/3.0.0/com/velocitypowered/api/event/player/PlayerResourcePackStatusEvent.Status.html
+        # List of valid actions: https://jd.advntr.dev/api/4.15.0/net/kyori/adventure/resource/ResourcePackStatus.html
         [global-pack.actions.ACCEPTED]
             kick = false
             commands = []
         [global-pack.actions.DECLINED]
             kick = true
-            message = "<color:#FF5555>Please accept our ResourcePack to play on the server!"
+            message = "<color:#FF5555>Please accept our resource pack to play on the server!"
             commands = []
         [global-pack.actions.FAILED_DOWNLOAD]
             kick = true
-            message = "<color:#FF5555>The ResourcePack download failed. Please try rejoining."
+            message = "<color:#FF5555>The resource pack download failed. Please try rejoining."
+            commands = []
+        [global-pack.actions.FAILED_RELOAD]
+            kick = true
+            message = "<color:#FF5555>The resource pack reload failed. Please try rejoining."
             commands = []
         [global-pack.actions.SUCCESSFUL]
             kick = false
@@ -139,17 +143,21 @@ debug = false
         # The prompt message for clients on 1.17+.
         resourcepack.prompt = "<yellow>Please accept our resource pack to improve your experience."
         [groups.example-group.actions]
-            # List of valid actions: https://jd.velocitypowered.com/3.0.0/com/velocitypowered/api/event/player/PlayerResourcePackStatusEvent.Status.html
+            # List of valid actions: https://jd.advntr.dev/api/4.15.0/net/kyori/adventure/resource/ResourcePackStatus.html
             [groups.example-group.actions.ACCEPTED]
                 kick = false
                 commands = []
             [groups.example-group.actions.DECLINED]
                 kick = true
-                message = "<color:#FF5555>Please accept our ResourcePack to play on the server!"
+                message = "<color:#FF5555>Please accept our resource pack to play on the server!"
                 commands = []
             [groups.example-group.actions.FAILED_DOWNLOAD]
                 kick = true
-                message = "<color:#FF5555>The ResourcePack download failed. Please try rejoining."
+                message = "<color:#FF5555>The resource pack download failed. Please try rejoining."
+                commands = []
+            [groups.example-group.actions.FAILED_RELOAD]
+                kick = true
+                message = "<color:#FF5555>The resource pack reload failed. Please try rejoining."
                 commands = []
             [groups.example-group.actions.SUCCESSFUL]
                 kick = false
@@ -172,17 +180,21 @@ debug = false
         # The prompt message for clients on 1.17+.
         resourcepack.prompt = "<yellow>Please accept our resource pack to improve your experience."
         [servers.example-server.actions]
-            # List of valid actions: https://jd.velocitypowered.com/3.0.0/com/velocitypowered/api/event/player/PlayerResourcePackStatusEvent.Status.html
+            # List of valid actions: https://jd.advntr.dev/api/4.15.0/net/kyori/adventure/resource/ResourcePackStatus.html
             [servers.example-server.actions.ACCEPTED]
                 kick = false
                 commands = []
             [servers.example-server.actions.DECLINED]
                 kick = true
-                message = "<color:#FF5555>Please accept our ResourcePack to play on the server!"
+                message = "<color:#FF5555>Please accept our resource pack to play on the server!"
                 commands = []
             [servers.example-server.actions.FAILED_DOWNLOAD]
                 kick = true
                 message = "<color:#FF5555>The ResourcePack download failed. Please try rejoining."
+                commands = []
+            [servers.example-server.actions.FAILED_RELOAD]
+                kick = true
+                message = "<color:#FF5555>The resource pack reload failed. Please try rejoining."
                 commands = []
             [servers.example-server.actions.SUCCESSFUL]
                 kick = false

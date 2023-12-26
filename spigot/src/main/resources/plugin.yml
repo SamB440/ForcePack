@@ -2,7 +2,7 @@ name: ForcePack
 main: com.convallyria.forcepack.spigot.ForcePackSpigot
 author: SamB440
 website: https://fortitude.islandearth.net
-softdepend: [ViaVersion, ItemsAdder]
+softdepend: [ViaVersion, ViaBackwards, ViaRewind, ProtocolLib, ProtocolSupport, Geyser-Spigot, ItemsAdder]
 version: '${version}'
 api-version: 1.13
 folia-supported: true

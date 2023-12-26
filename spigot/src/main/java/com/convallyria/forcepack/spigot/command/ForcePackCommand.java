@@ -9,7 +9,7 @@ import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.forcepack.spigot.event.ForcePackReloadEvent;
 import com.convallyria.forcepack.spigot.translation.Translations;
-import com.convallyria.forcepack.spigot.util.ViaVersionUtil;
+import com.convallyria.forcepack.spigot.util.ProtocolUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -51,7 +51,7 @@ public class ForcePackCommand {
 
                 final Set<ResourcePack> resourcePacks = plugin.getPacksForVersion(player);
                 plugin.addToWaiting(player.getUniqueId(), resourcePacks);
-                if (ViaVersionUtil.getProtocolVersion(player) >= 765) { // 1.20.3+
+                if (ProtocolUtil.getProtocolVersion(player) >= 765) { // 1.20.3+
                     player.removeResourcePacks();
                 }
                 resourcePacks.forEach(pack -> pack.setResourcePack(player.getUniqueId()));

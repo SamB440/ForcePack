@@ -74,7 +74,7 @@ Server:
 
   Actions:
     # To disable commands, you can do Commands: []
-    # List of valid actions: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/player/PlayerResourcePackStatusEvent.Status.html
+    # List of valid actions: https://jd.advntr.dev/api/4.15.0/net/kyori/adventure/resource/ResourcePackStatus.html
     # DOWNLOADED, FAILED_RELOAD, DISCARDED only apply to 1.20.3+ clients.
     ACCEPTED:
       kick: false
@@ -84,6 +84,10 @@ Server:
       kick: false
       Commands:
         - say [player] finished downloading the resource pack!
+    SUCCESSFULLY_LOADED:
+      kick: false
+      Commands:
+        - say [player] successfully loaded the resource pack!
     DECLINED:
       kick: true
       Commands:

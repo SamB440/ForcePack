@@ -4,11 +4,16 @@ import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.resourcepack.ResourcePackVersion;
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.forcepack.spigot.translation.Translations;
+import net.kyori.adventure.resource.ResourcePackInfo;
+import net.kyori.adventure.resource.ResourcePackRequest;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.nio.charset.StandardCharsets;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.UUID;
 
 public final class SpigotResourcePack extends ResourcePack {
@@ -38,17 +43,27 @@ public final class SpigotResourcePack extends ResourcePack {
         // Find a prompt method that is available to us
         if (spigotPlugin.getVersionNumber() >= 18) {
             spigotPlugin.log("Using 1.18 method");
+            // Uh. Pain.
             try {
-                player.setResourcePack(getUUID(), url, getHashSum(), Translations.PROMPT_TEXT.get(player), spigotPlugin.getConfig().getBoolean("use-new-force-pack-screen", true));
-            } catch (NoSuchMethodError ignored) { // Server is not up-to-date
-                if (!hasWarned) {
-                    spigotPlugin.getLogger().warning("Your server is not up-to-date: cannot use new ResourcePack methods.");
-                    this.hasWarned = true;
-                }
+                player.sendResourcePacks(ResourcePackRequest.resourcePackRequest()
+                        .required(spigotPlugin.getConfig().getBoolean("use-new-force-pack-screen", true))
+                        .prompt(Component.join(JoinConfiguration.newlines(), Translations.PROMPT_TEXT.getProper(player)))
+                        .packs(ResourcePackInfo.resourcePackInfo(getUUID(), new URI(url), hash)));
+            } catch (NoSuchMethodError ignored) {
+                try {
+                    player.setResourcePack(getUUID(), url, getHashSum(), Translations.PROMPT_TEXT.get(player), spigotPlugin.getConfig().getBoolean("use-new-force-pack-screen", true));
+                } catch (NoSuchMethodError ignored2) { // Server is not up-to-date
+                    if (!hasWarned) {
+                        spigotPlugin.getLogger().warning("Your server is not up-to-date: cannot use new ResourcePack methods.");
+                        this.hasWarned = true;
+                    }
 
-                spigotPlugin.log("Had to fallback");
-                // Fallback
-                player.setResourcePack(url, getHashSum());
+                    spigotPlugin.log("Had to fallback");
+                    // Fallback
+                    player.setResourcePack(url, getHashSum());
+                }
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
             }
         } else if (spigotPlugin.getVersionNumber() >= 11) { // 1.11 - 1.17 support
             spigotPlugin.log("Using 1.11-1.17 method");

@@ -13,16 +13,18 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.PlayerResourcePackStatusEvent;
 import com.velocitypowered.api.event.player.ServerPostConnectEvent;
+import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
+import com.velocitypowered.api.proxy.player.ResourcePackInfo;
 import net.kyori.adventure.text.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 public class ResourcePackListener {
 
@@ -47,7 +49,19 @@ public class ResourcePackListener {
 
         // Check if the server they're on has a resource pack
         final String serverName = currentServer.get().getServerInfo().getName();
-        final ResourcePack packByServer = plugin.getPackByServerAndVersion(serverName, player.getProtocolVersion()).orElse(null);
+        final ResourcePackInfo packInfo = event.getPackInfo(); // Returns null on < 1.20.3 clients, and if a UUID isn't provided I guess?
+        final UUID id = packInfo == null ? null : packInfo.getId();
+        if ((packInfo != null && packInfo.getOrigin() != ResourcePackInfo.Origin.PLUGIN_ON_PROXY) || !plugin.getPackHandler().isWaitingFor(player, id)) {
+            plugin.log("Resource pack with URL %s and ID %s was sent from a downstream server! This is unsupported behaviour.", packInfo == null ? "(unknown: legacy)" : packInfo.getUrl(), id);
+            return;
+        }
+
+        // If on 1.20.3+, use UUID to find the resource pack
+        // Otherwise, it's a singular resource pack, just filter to what is the first (and can only be) the first element.
+        final Set<ResourcePack> packsByServer = plugin.getPacksByServerAndVersion(serverName, player.getProtocolVersion()).orElse(null);
+        ResourcePack packByServer = packsByServer == null ? null : packsByServer.stream()
+                .filter(pack -> player.getProtocolVersion().getProtocol() < ProtocolVersion.MINECRAFT_1_20_3.getProtocol() || pack.getUUID().equals(id))
+                .findFirst().orElse(null);
         if (packByServer == null) {
             plugin.log("%s does not have a resource pack, ignoring status %s.", serverName, status.toString());
             return;
@@ -91,12 +105,12 @@ public class ResourcePackListener {
         final boolean kick = actions != null && actions.getBoolean("kick");
 
         // Declined/failed is valid and should be allowed, server owner decides whether they get kicked
-        if (status != PlayerResourcePackStatusEvent.Status.ACCEPTED && !kick) {
+        if (status != PlayerResourcePackStatusEvent.Status.ACCEPTED && status != PlayerResourcePackStatusEvent.Status.DOWNLOADED && !kick) {
             plugin.log("Sent player '%s' plugin message downstream to '%s' for status '%s'", player.getUsername(), currentServer.get().getServerInfo().getName(), status.name());
             // No longer applying, remove them from the list
             final String name = status == PlayerResourcePackStatusEvent.Status.SUCCESSFUL ? "SUCCESSFULLY_LOADED" : status.name();
             currentServer.get().sendPluginMessage(PackHandler.FORCEPACK_STATUS_IDENTIFIER, (packByServer.getUUID().toString() + ";" + name).getBytes(StandardCharsets.UTF_8));
-            plugin.getPackHandler().getApplying().remove(player.getUniqueId());
+            plugin.getPackHandler().processWaitingResourcePack(player, packByServer.getUUID());
         }
 
         if (status != PlayerResourcePackStatusEvent.Status.ACCEPTED) sentAccept.remove(player.getUniqueId());
@@ -118,7 +132,7 @@ public class ResourcePackListener {
 
         final VelocityConfig actionsRoot = root.getConfig("actions");
         if (status == PlayerResourcePackStatusEvent.Status.ACCEPTED) {
-            if (sentAccept.containsKey(player.getUniqueId())) {
+            if (sentAccept.containsKey(player.getUniqueId()) && player.getProtocolVersion().getProtocol() < ProtocolVersion.MINECRAFT_1_20_3.getProtocol()) {
                 plugin.log("Kicked player " + player.getUsername() + " because they are sending fake resource pack statuses (accepted sent twice).");
                 final VelocityConfig actions = actionsRoot.getConfig("DECLINED");
                 return disconnectAction(player, actions);
