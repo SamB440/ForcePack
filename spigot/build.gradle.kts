@@ -49,6 +49,5 @@ tasks {
         filesMatching("plugin.yml") {
             expand("version" to project.version)
         }
-        exclude("assets/mappings/block/*.json")
     }
 }
