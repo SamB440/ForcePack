@@ -18,6 +18,11 @@ public class VelocityScheduler extends PlatformScheduler<ForcePackVelocity> {
     }
 
     @Override
+    public void executeAsync(Runnable runnable) {
+        executeOnMain(runnable);
+    }
+
+    @Override
     public ForcePackTask executeRepeating(Runnable runnable, long delay, long period) {
         final ScheduledTask task = api.getServer().getScheduler().buildTask(api, runnable)
                 .delay(delay * 50, TimeUnit.MILLISECONDS)

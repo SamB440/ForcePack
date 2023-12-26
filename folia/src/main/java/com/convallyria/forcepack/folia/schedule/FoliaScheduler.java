@@ -48,6 +48,11 @@ public class FoliaScheduler extends PlatformScheduler<ForcePackAPI> implements L
     }
 
     @Override
+    public void executeAsync(Runnable runnable) {
+        Bukkit.getAsyncScheduler().runNow((Plugin) api, (s) -> runnable.run());
+    }
+
+    @Override
     public ForcePackTask executeRepeating(Runnable runnable, long delay, long period) {
         final ScheduledTask task = Bukkit.getGlobalRegionScheduler().runAtFixedRate((Plugin) api, (s) -> runnable.run(), delay, period);
         return task::cancel;
