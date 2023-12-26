@@ -5,11 +5,13 @@ import com.convallyria.languagy.api.language.Language;
 import com.convallyria.languagy.api.language.key.TranslationKey;
 import com.convallyria.languagy.api.language.translation.Translation;
 import net.kyori.adventure.platform.bukkit.BukkitComponentSerializer;
+import net.kyori.adventure.text.Component;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
 import java.io.File;
+import java.util.List;
 
 public enum Translations {
     DECLINED(TranslationKey.of("declined")),
@@ -36,6 +38,11 @@ public enum Translations {
         message.send();
     }
 
+    public List<Component> getProper(Player player) {
+        return getTranslation(player).colour();
+    }
+
+    @Deprecated
     public String get(Player player) {
         return BukkitComponentSerializer.legacy().serialize(getTranslation(player).colour().get(0));
     }

@@ -13,17 +13,20 @@ import com.convallyria.forcepack.folia.schedule.FoliaScheduler;
 import com.convallyria.forcepack.spigot.command.Commands;
 import com.convallyria.forcepack.spigot.integration.ItemsAdderIntegration;
 import com.convallyria.forcepack.spigot.listener.ExemptionListener;
+import com.convallyria.forcepack.spigot.listener.PacketListener;
 import com.convallyria.forcepack.spigot.listener.ResourcePackListener;
 import com.convallyria.forcepack.spigot.listener.VelocityMessageListener;
 import com.convallyria.forcepack.spigot.resourcepack.SpigotResourcePack;
 import com.convallyria.forcepack.spigot.schedule.BukkitScheduler;
 import com.convallyria.forcepack.spigot.translation.Translations;
-import com.convallyria.forcepack.spigot.util.ViaVersionUtil;
+import com.convallyria.forcepack.spigot.util.ProtocolUtil;
 import com.convallyria.forcepack.webserver.ForcePackWebServer;
 import com.convallyria.forcepack.webserver.downloader.WebServerDependencyDownloader;
 import com.convallyria.languagy.api.adventure.AdventurePlatform;
 import com.convallyria.languagy.api.language.Language;
 import com.convallyria.languagy.api.language.Translator;
+import com.github.retrooper.packetevents.PacketEvents;
+import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bstats.bukkit.Metrics;
@@ -34,6 +37,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.File;
@@ -71,7 +75,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
     }
 
     public Set<ResourcePack> getPacksForVersion(Player player) {
-        final int protocolVersion = ViaVersionUtil.getProtocolVersion(player);
+        final int protocolVersion = ProtocolUtil.getProtocolVersion(player);
         final int packFormat = PackFormatResolver.getPackFormat(protocolVersion);
 
         ResourcePack anyVersionPack = null;
@@ -109,7 +113,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
     public void processWaitingResourcePack(Player player, UUID packId) {
         final UUID playerId = player.getUniqueId();
         // If the player is on a version older than 1.20.3, they can only have one resource pack.
-        if (ViaVersionUtil.getProtocolVersion(player) < 765) {
+        if (ProtocolUtil.getProtocolVersion(player) < 765) {
             removeFromWaiting(player);
             return;
         }
@@ -132,7 +136,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         if (!isWaiting(player)) return false;
 
         // If the player is on a version older than 1.20.3, they can only have one resource pack.
-        if (ViaVersionUtil.getProtocolVersion(player) < 765) {
+        if (ProtocolUtil.getProtocolVersion(player) < 765) {
             return true;
         }
 
@@ -148,13 +152,13 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         waiting.remove(player.getUniqueId());
     }
 
-    public void addToWaiting(UUID uuid, @Nullable Set<ResourcePack> packs) {
+    public void addToWaiting(UUID uuid, @NonNull Set<ResourcePack> packs) {
         waiting.compute(uuid, (a, existing) -> {
-            if (existing != null && packs != null) {
+            if (existing != null) {
                 existing.addAll(packs);
                 return existing;
             }
-            return packs == null ? null : new HashSet<>(packs);
+            return new HashSet<>(packs);
         });
     }
 
@@ -166,6 +170,10 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
     @Override
     public void onEnable() {
+        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
+        PacketEvents.getAPI().getSettings().debug(false).checkForUpdates(false);
+        PacketEvents.getAPI().load();
+
         GeyserUtil.isGeyserInstalledHere = Bukkit.getPluginManager().getPlugin("Geyser-Spigot") != null;
         this.generateLang();
         this.createConfig();
@@ -176,6 +184,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         this.registerListeners();
         this.registerCommands();
         this.translator = Translator.of(this, "lang", Language.BRITISH_ENGLISH, debug(), AdventurePlatform.create(miniMessage, adventure));
+        PacketEvents.getAPI().init();
 
         // Convert legacy config
         // Check server properties, too
@@ -385,6 +394,8 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
         pm.registerEvents(new ResourcePackListener(this), this);
         pm.registerEvents(new ExemptionListener(this), this);
+
+        PacketEvents.getAPI().getEventManager().registerListeners(new PacketListener(this));
     }
 
     private void registerCommands() {

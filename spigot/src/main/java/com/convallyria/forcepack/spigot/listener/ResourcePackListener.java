@@ -7,8 +7,10 @@ import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.forcepack.spigot.event.ForcePackReloadEvent;
+import com.convallyria.forcepack.spigot.event.MultiVersionResourcePackStatusEvent;
 import com.convallyria.forcepack.spigot.translation.Translations;
-import com.convallyria.forcepack.spigot.util.ViaVersionUtil;
+import com.convallyria.forcepack.spigot.util.ProtocolUtil;
+import net.kyori.adventure.resource.ResourcePackStatus;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -16,7 +18,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,17 +36,10 @@ public class ResourcePackListener implements Listener {
     }
 
     @EventHandler
-    public void onStatus(PlayerResourcePackStatusEvent event) {
+    public void onStatus(MultiVersionResourcePackStatusEvent event) {
         final long now = System.currentTimeMillis();
         final Player player = event.getPlayer();
-        UUID id;
-
-        // Support outdated servers
-        try {
-            id = event.getID();
-        } catch (NoSuchMethodError e) {
-            id = null;
-        }
+        final UUID id = event.getID();
 
         boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
         boolean canBypass = player.hasPermission(Permissions.BYPASS) && getConfig().getBoolean("Server.bypass-permission");
@@ -55,17 +49,20 @@ public class ResourcePackListener implements Listener {
             return;
         }
 
-        final PlayerResourcePackStatusEvent.Status status = event.getStatus();
+        final ResourcePackStatus status = event.getStatus();
         plugin.log(player.getName() + " sent status: " + status);
 
         // If we did not set this resource pack, ignore
-        if (!plugin.isWaitingFor(player, id)) {
+        if (!event.isProxy() && !plugin.isWaitingFor(player, id)) {
+            plugin.log("Ignoring resource pack " + id + " because it wasn't set by ForcePack.");
             return;
+        } else if (event.isProxy()) {
+            plugin.log("Resource pack with id " + id + " sent by proxy.");
         }
 
         // Only remove from waiting if they actually loaded the resource pack, rather than any status
         // Declined/failed is valid and should be allowed, server owner decides whether they get kicked
-        if (status != PlayerResourcePackStatusEvent.Status.ACCEPTED) {
+        if (status != ResourcePackStatus.ACCEPTED && status != ResourcePackStatus.DOWNLOADED) {
             plugin.processWaitingResourcePack(player, id);
         }
 
@@ -111,16 +108,16 @@ public class ResourcePackListener implements Listener {
         }
     }
 
-    private boolean tryValidateHacks(Player player, PlayerResourcePackStatusEvent.Status status, long now) {
+    private boolean tryValidateHacks(Player player, ResourcePackStatus status, long now) {
         final boolean tryPrevent = getConfig().getBoolean("try-to-stop-fake-accept-hacks", true);
-        if (status == PlayerResourcePackStatusEvent.Status.ACCEPTED) {
-            if (tryPrevent && sentAccept.containsKey(player.getUniqueId()) && plugin.getWaitingFor(player).size() <= 1) {
+        if (status == ResourcePackStatus.ACCEPTED) {
+            if (tryPrevent && sentAccept.containsKey(player.getUniqueId()) && plugin.getWaitingFor(player).size() <= 1) { //TODO can we fix this for 1.20.3+?
                 plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (accepted sent twice).");
                 ensureMainThread(() -> player.kickPlayer(Translations.DECLINED.get(player)));
                 return true;
             }
             if (tryPrevent) sentAccept.put(player.getUniqueId(), now);
-        } else if (status == PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED) {
+        } else if (status == ResourcePackStatus.SUCCESSFULLY_LOADED) {
             if (tryPrevent && !sentAccept.containsKey(player.getUniqueId())) {
                 plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (order not maintained).");
                 ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
@@ -151,7 +148,7 @@ public class ResourcePackListener implements Listener {
 
         if (plugin.velocityMode) {
             plugin.log("Velocity mode is enabled");
-            plugin.addToWaiting(player.getUniqueId(), null);
+            plugin.addToWaiting(player.getUniqueId(), Set.of());
             return;
         }
 
@@ -165,7 +162,7 @@ public class ResourcePackListener implements Listener {
 
         for (ResourcePack pack : packs) {
             plugin.log("Sending pack " + pack.getUUID() + " to player " + player.getName());
-            final int version = ViaVersionUtil.getProtocolVersion(player);
+            final int version = ProtocolUtil.getProtocolVersion(player);
             final int maxSize = ClientVersion.getMaxSizeForVersion(version);
             final boolean forceSend = getConfig().getBoolean("Server.force-invalid-size");
             if (!forceSend && pack.getSize() > maxSize) {

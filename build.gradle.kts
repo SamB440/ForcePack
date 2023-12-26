@@ -17,6 +17,7 @@ allprojects {
 
     java {
         toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+        disableAutoTargetJvm()
     }
 
     dependencies {
@@ -36,18 +37,10 @@ allprojects {
         maven("https://erethon.de/repo/")
         maven("https://repo.convallyria.com/snapshots")
         maven("https://repo.viaversion.com")
-        maven {
-            name = "codemc-repo"
-            url = uri("https://repo.codemc.org/repository/maven-snapshots/")
-        }
-        maven {
-            name = "papermc"
-            url = uri("https://repo.papermc.io/repository/maven-public/")
-        }
-        maven {
-            name = "sonatype"
-            url = uri("https://oss.sonatype.org/content/groups/public/")
-        }
+        maven("https://repo.papermc.io/repository/maven-public/")
+        maven("https://repo.codemc.io/repository/maven-releases/")
+        maven("https://repo.codemc.org/repository/maven-snapshots/")
+        maven("https://oss.sonatype.org/content/groups/public/")
     }
 
     tasks {

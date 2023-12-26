@@ -97,9 +97,6 @@ public class ForcePackVelocity implements ForcePackAPI {
         this.metricsFactory = metricsFactory;
         this.commandManager = commandManager;
         this.scheduler = new VelocityScheduler(this);
-//        PacketEvents.setAPI(VelocityPacketEventsBuilder.build(server, container));
-//        PacketEvents.getAPI().getSettings().debug(false).checkForUpdates(false);
-//        PacketEvents.getAPI().load();
     }
 
     private VelocityConfig config;
@@ -171,8 +168,8 @@ public class ForcePackVelocity implements ForcePackAPI {
                 Player player = (Player) event.getCommandSource();
                 final String command = event.getCommand();
                 if (getConfig().getStringList("exclude-commands").contains(command)) return;
-                if (packHandler.getApplying().contains(player.getUniqueId())) {
-                    log("Stopping command '%s' because player has not loaded the resource pack yet.", command);
+                if (packHandler.isWaiting(player)) {
+                    log("Stopping command '%s' because player has not loaded all their resource packs yet.", command);
                     event.setResult(CommandExecuteEvent.CommandResult.denied());
                 }
             }
@@ -492,13 +489,14 @@ public class ForcePackVelocity implements ForcePackAPI {
         return scheduler;
     }
 
-    public Optional<ResourcePack> getPackByServerAndVersion(final String server, final ProtocolVersion version) {
+    public Optional<Set<ResourcePack>> getPacksByServerAndVersion(final String server, final ProtocolVersion version) {
         final int protocolVersion = version.getProtocol();
         final int packFormat = PackFormatResolver.getPackFormat(protocolVersion);
-        return searchForValidPack(resourcePacks, server, packFormat).or(() -> searchForValidPack(globalResourcePacks, server, packFormat));
+        return searchForValidPacks(resourcePacks, server, packFormat).or(() -> searchForValidPacks(globalResourcePacks, server, packFormat));
     }
 
-    private Optional<ResourcePack> searchForValidPack(Set<ResourcePack> packs, String serverName, int packFormat) {
+    private Optional<Set<ResourcePack>> searchForValidPacks(Set<ResourcePack> packs, String serverName, int playerVersion) {
+        Set<ResourcePack> validPacks = new HashSet<>();
         ResourcePack anyVersionPack = null;
         for (ResourcePack resourcePack : packs.stream().filter(pack -> {
             boolean matches = pack.getServer().equals(serverName);
@@ -506,18 +504,27 @@ public class ForcePackVelocity implements ForcePackAPI {
             return matches;
         }).collect(Collectors.toList())) {
             log("Trying resource pack %s (%s)", resourcePack.getURL(), resourcePack.getVersion().toString());
-            final Optional<ResourcePackVersion> packVersion = resourcePack.getVersion();
-            if (packVersion.isEmpty()) {
-                anyVersionPack = resourcePack;
+
+            final Optional<ResourcePackVersion> version = resourcePack.getVersion();
+            if (version.isEmpty()) {
+                if (anyVersionPack == null) anyVersionPack = resourcePack; // Pick first all-version resource pack
+                validPacks.add(resourcePack); // This is still a valid pack that we want to apply.
                 continue;
             }
 
-            if (packVersion.get().version() == packFormat) {
-                return Optional.of(resourcePack);
+            if (version.get().version() == playerVersion) {
+                validPacks.add(resourcePack);
+                if (playerVersion < 765) { // If < 1.20.3, only one pack can be applied.
+                    break;
+                }
             }
         }
 
-        return Optional.ofNullable(anyVersionPack);
+        if (!validPacks.isEmpty()) {
+            return Optional.of(validPacks);
+        }
+
+        return anyVersionPack == null ? Optional.empty() : Optional.of(Set.of(anyVersionPack));
     }
 
     public PackHandler getPackHandler() {
