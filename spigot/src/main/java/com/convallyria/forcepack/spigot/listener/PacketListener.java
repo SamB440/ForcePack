@@ -9,7 +9,6 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientRe
 import net.kyori.adventure.resource.ResourcePackStatus;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 
 import java.util.UUID;
 
@@ -33,7 +32,7 @@ public class PacketListener extends PacketListenerAbstract {
             final Player player = (Player) event.getPlayer();
             final WrapperPlayClientResourcePackStatus.Result result = status.getResult();
             final UUID packId = status.getPackId();
-            Bukkit.getPluginManager().callEvent(new MultiVersionResourcePackStatusEvent(player, packId, ResourcePackStatus.valueOf(result.name()), false));
+            plugin.getScheduler().executeAsync(() -> Bukkit.getPluginManager().callEvent(new MultiVersionResourcePackStatusEvent(player, packId, ResourcePackStatus.valueOf(result.name()), false)));
         }
     }
 }

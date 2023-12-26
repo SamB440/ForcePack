@@ -4,7 +4,6 @@ import net.kyori.adventure.resource.ResourcePackStatus;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
-import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -14,24 +13,34 @@ import java.util.UUID;
 /**
  * Like {@link PlayerResourcePackStatusEvent} but helps with multiple version support
  */
-public class MultiVersionResourcePackStatusEvent extends PlayerEvent {
+public class MultiVersionResourcePackStatusEvent extends Event {
 
     private static final HandlerList HANDLER_LIST = new HandlerList();
 
+    private final Player player;
     private final UUID id;
     private final ResourcePackStatus status;
     private final boolean proxy;
 
     public MultiVersionResourcePackStatusEvent(@NotNull final Player who, @NotNull UUID id, @NotNull ResourcePackStatus resourcePackStatus, boolean proxy) {
-        super(who);
+        super(true);
+        this.player = who;
         this.id = id;
         this.status = resourcePackStatus;
         this.proxy = proxy;
     }
 
     /**
+     * Returns the player involved in this event
+     * @return Player who is involved in this event
+     */
+    @NotNull
+    public final Player getPlayer() {
+        return player;
+    }
+
+    /**
      * Gets the unique ID of this pack.
-     *
      * @return unique resource pack ID.
      */
     @Nullable
@@ -41,7 +50,6 @@ public class MultiVersionResourcePackStatusEvent extends PlayerEvent {
 
     /**
      * Gets the status of this pack.
-     *
      * @return the current status
      */
     @NotNull

@@ -19,17 +19,17 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ResourcePackListener implements Listener {
 
     private final ForcePackSpigot plugin;
 
-    private final Map<UUID, Long> sentAccept = new HashMap<>();
+    private final Map<UUID, Long> sentAccept = new ConcurrentHashMap<>();
 
     public ResourcePackListener(final ForcePackSpigot plugin) {
         this.plugin = plugin;
@@ -110,15 +110,16 @@ public class ResourcePackListener implements Listener {
 
     private boolean tryValidateHacks(Player player, ResourcePackStatus status, long now) {
         final boolean tryPrevent = getConfig().getBoolean("try-to-stop-fake-accept-hacks", true);
+        final Long acceptTime = sentAccept.get(player.getUniqueId());
         if (status == ResourcePackStatus.ACCEPTED) {
-            if (tryPrevent && sentAccept.containsKey(player.getUniqueId()) && plugin.getWaitingFor(player).size() <= 1) { //TODO can we fix this for 1.20.3+?
+            if (tryPrevent && acceptTime != null && plugin.getWaitingFor(player).size() <= 1) { //TODO can we fix this for 1.20.3+?
                 plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (accepted sent twice).");
                 ensureMainThread(() -> player.kickPlayer(Translations.DECLINED.get(player)));
                 return true;
             }
-            if (tryPrevent) sentAccept.put(player.getUniqueId(), now);
+            if (tryPrevent && acceptTime == null) sentAccept.put(player.getUniqueId(), now);
         } else if (status == ResourcePackStatus.SUCCESSFULLY_LOADED) {
-            if (tryPrevent && !sentAccept.containsKey(player.getUniqueId())) {
+            if (tryPrevent && acceptTime == null) {
                 plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (order not maintained).");
                 ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
                 return true;
@@ -127,7 +128,7 @@ public class ResourcePackListener implements Listener {
             // If a player is cheating and sends multiple status packets and tryPrevent is false, sentAccept may not contain the player
             // See issue https://github.com/SamB440/ForcePack/issues/9
             // Always set time to 11 if tryPrevent false to stop NullPointerException
-            long time = !tryPrevent ? 11 : now - sentAccept.remove(player.getUniqueId());
+            long time = !tryPrevent ? 11 : now - acceptTime;
             if (tryPrevent && time <= 10) {
                 plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (sent too fast).");
                 ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));

@@ -17,6 +17,11 @@ public class BukkitScheduler extends PlatformScheduler<ForcePackSpigot> {
     }
 
     @Override
+    public void executeAsync(Runnable runnable) {
+        Bukkit.getScheduler().runTaskAsynchronously(api, runnable);
+    }
+
+    @Override
     public ForcePackTask executeRepeating(Runnable runnable, long delay, long period) {
         final BukkitTask task = Bukkit.getScheduler().runTaskTimer(api, runnable, delay, period);
         return task::cancel;

@@ -12,6 +12,8 @@ public abstract class PlatformScheduler<T extends ForcePackAPI> {
 
     public abstract void executeOnMain(Runnable runnable);
 
+    public abstract void executeAsync(Runnable runnable);
+
     public abstract ForcePackTask executeRepeating(Runnable runnable, long delay, long period);
 
     public abstract void executeDelayed(Runnable runnable, long delay);
