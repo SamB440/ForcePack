@@ -32,7 +32,7 @@ public class PacketListener extends PacketListenerAbstract {
             final Player player = (Player) event.getPlayer();
             final WrapperPlayClientResourcePackStatus.Result result = status.getResult();
             final UUID packId = status.getPackId();
-            plugin.getScheduler().executeAsync(() -> Bukkit.getPluginManager().callEvent(new MultiVersionResourcePackStatusEvent(player, packId, ResourcePackStatus.valueOf(result.name()), false)));
+            Bukkit.getPluginManager().callEvent(new MultiVersionResourcePackStatusEvent(player, packId, ResourcePackStatus.valueOf(result.name()), false));
         }
     }
 }
