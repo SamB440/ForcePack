@@ -42,8 +42,8 @@ public final class VelocityResourcePack extends ResourcePack {
     }
 
     private void runSetResourcePack(UUID uuid) {
-        final Optional<Player> player = velocityPlugin.getServer().getPlayer(uuid);
-        if (player.isEmpty()) return;
+        final Player player = velocityPlugin.getServer().getPlayer(uuid).orElse(null);
+        if (player == null) return;
 
         final ResourcePackInfo.Builder infoBuilder = velocityPlugin.getServer()
                 .createResourcePackBuilder(getURL())
@@ -55,7 +55,7 @@ public final class VelocityResourcePack extends ResourcePack {
         if (server.equals(ForcePackVelocity.GLOBAL_SERVER_NAME)) {
             serverConfig = velocityPlugin.getConfig().getConfig("global-pack");
             final List<String> excluded = serverConfig.getStringList("exclude");
-            final Optional<ServerConnection> currentServer = player.get().getCurrentServer();
+            final Optional<ServerConnection> currentServer = player.getCurrentServer();
             if (currentServer.isPresent()) {
                 if (excluded.contains(currentServer.get().getServerInfo().getName())) return;
             } else {
@@ -71,11 +71,13 @@ public final class VelocityResourcePack extends ResourcePack {
             infoBuilder.setPrompt(promptComponent);
         }
 
-        player.get().sendResourcePackOffer(infoBuilder.build());
+        final ResourcePackInfo built = infoBuilder.build();
+        player.sendResourcePackOffer(built);
+        velocityPlugin.getOrCreatePlayer(player).addAppliedPack(built);
         if (group != null) {
-            velocityPlugin.log("Sending resource pack %s to %s", group, player.get().getUsername());
+            velocityPlugin.log("Sending resource pack %s to %s", group, player.getUsername());
         } else {
-            velocityPlugin.log("Sending resource pack to %s", player.get().getUsername());
+            velocityPlugin.log("Sending resource pack to %s", player.getUsername());
         }
     }
 }

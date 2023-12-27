@@ -98,8 +98,11 @@ public final class PackHandler {
             final boolean forceApply = protocol != ProtocolVersion.MINECRAFT_1_20_2.getProtocol() && plugin.getConfig().getBoolean("force-constant-download", false);
             if (protocol >= ProtocolVersion.MINECRAFT_1_20_3.getProtocol()) {
                 // Get all packs the player has applied and remove any not on this server!
-                player.getAppliedResourcePacks().stream().filter(pack -> forceApply || resourcePacks.stream().noneMatch(pack2 -> pack2.getUUID().equals(pack.getId()))).forEach(toRemove -> {
+                plugin.getOrCreatePlayer(player).getAppliedResourcePacks()
+                        .stream().filter(pack -> forceApply || resourcePacks.stream().noneMatch(pack2 -> pack2.getUUID().equals(pack.getId()))).forEach(toRemove -> {
+                    plugin.log("Removing resource pack %s from %s", toRemove.getId(), player.getUsername());
                     player.removeResourcePacks(toRemove.getId());
+                    plugin.getOrCreatePlayer(player).removeAppliedPack(toRemove);
                 });
             }
 
@@ -111,12 +114,17 @@ public final class PackHandler {
                 if (forceApply) return true; // force = all packs are sent
 
                 // Check if they already have this ResourcePack applied.
-                for (ResourcePackInfo applied : player.getAppliedResourcePacks()) {
+                for (ResourcePackInfo applied : plugin.getOrCreatePlayer(player).getAppliedResourcePacks()) {
+                    plugin.log("Checking applied pack %s on %s", applied.getId().toString(), player.getUsername());
                     if (Arrays.equals(applied.getHash(), pack.getHashSum())) {
                         plugin.log("Not applying already applied pack '" + pack.getUUID().toString() + "' to player " + player.getUsername() + ".");
                         server.sendPluginMessage(FORCEPACK_STATUS_IDENTIFIER, (pack.getUUID().toString() + ";SUCCESSFULLY_LOADED").getBytes(StandardCharsets.UTF_8));
                         return false;
                     }
+                }
+
+                if (player.getAppliedResourcePacks().isEmpty()) {
+                    plugin.log("Player %s doesn't have any applied resource packs!", player.getUsername());
                 }
 
                 if (!forceSend && pack.getSize() > maxSize) {
@@ -130,6 +138,7 @@ public final class PackHandler {
             // 1.20.3+ allows us to simply clear all their applied resource packs!
             if (protocol >= ProtocolVersion.MINECRAFT_1_20_3.getProtocol()) {
                 player.clearResourcePacks();
+                plugin.getOrCreatePlayer(player).removeAppliedPacks();
                 return;
             }
 
