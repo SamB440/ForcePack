@@ -32,6 +32,6 @@ public class VelocityMessageListener implements PluginMessageListener {
         plugin.log("Posted event");
 
         final PlayerResourcePackStatusEvent.Status status = PlayerResourcePackStatusEvent.Status.valueOf(split[1]);
-        Bukkit.getPluginManager().callEvent(new MultiVersionResourcePackStatusEvent(player, UUID.fromString(split[0]), ResourcePackStatus.valueOf(status.name()), true));
+        plugin.getScheduler().executeAsync(() -> Bukkit.getPluginManager().callEvent(new MultiVersionResourcePackStatusEvent(player, UUID.fromString(split[0]), ResourcePackStatus.valueOf(status.name()), true)));
     }
 }
