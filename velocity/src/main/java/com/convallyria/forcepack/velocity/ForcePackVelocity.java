@@ -492,10 +492,10 @@ public class ForcePackVelocity implements ForcePackAPI {
     public Optional<Set<ResourcePack>> getPacksByServerAndVersion(final String server, final ProtocolVersion version) {
         final int protocolVersion = version.getProtocol();
         final int packFormat = PackFormatResolver.getPackFormat(protocolVersion);
-        return searchForValidPacks(resourcePacks, server, packFormat).or(() -> searchForValidPacks(globalResourcePacks, GLOBAL_SERVER_NAME, packFormat));
+        return searchForValidPacks(resourcePacks, server, version, packFormat).or(() -> searchForValidPacks(globalResourcePacks, GLOBAL_SERVER_NAME, version, packFormat));
     }
 
-    private Optional<Set<ResourcePack>> searchForValidPacks(Set<ResourcePack> packs, String serverName, int playerVersion) {
+    private Optional<Set<ResourcePack>> searchForValidPacks(Set<ResourcePack> packs, String serverName, final ProtocolVersion protocolVersion, int packVersion) {
         Set<ResourcePack> validPacks = new HashSet<>();
         ResourcePack anyVersionPack = null;
         for (ResourcePack resourcePack : packs.stream().filter(pack -> {
@@ -512,9 +512,9 @@ public class ForcePackVelocity implements ForcePackAPI {
                 continue;
             }
 
-            if (version.get().version() == playerVersion) {
+            if (version.get().version() == packVersion) {
                 validPacks.add(resourcePack);
-                if (playerVersion < 765) { // If < 1.20.3, only one pack can be applied.
+                if (protocolVersion.getProtocol() < 765) { // If < 1.20.3, only one pack can be applied.
                     break;
                 }
             }
