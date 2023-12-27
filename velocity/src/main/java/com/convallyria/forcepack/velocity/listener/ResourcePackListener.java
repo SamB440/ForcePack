@@ -51,6 +51,8 @@ public class ResourcePackListener {
         final String serverName = currentServer.get().getServerInfo().getName();
         final ResourcePackInfo packInfo = event.getPackInfo(); // Returns null on < 1.20.3 clients, and if a UUID isn't provided I guess?
         final UUID id = packInfo == null ? null : packInfo.getId();
+        if (id != null) plugin.log(player.getUsername() + " sent response id '%s'", id.toString());
+
         if ((packInfo != null && packInfo.getOrigin() != ResourcePackInfo.Origin.PLUGIN_ON_PROXY) || !plugin.getPackHandler().isWaitingFor(player, id)) {
             plugin.log("Resource pack with URL %s and ID %s was sent from a downstream server! This is unsupported behaviour.", packInfo == null ? "(unknown: legacy)" : packInfo.getUrl(), id);
             return;
@@ -63,7 +65,7 @@ public class ResourcePackListener {
                 .filter(pack -> player.getProtocolVersion().getProtocol() < ProtocolVersion.MINECRAFT_1_20_3.getProtocol() || pack.getUUID().equals(id))
                 .findFirst().orElse(null);
         if (packByServer == null) {
-            plugin.log("%s does not have a resource pack, ignoring status %s.", serverName, status.toString());
+            plugin.log("%s does not have a resource pack matching %s, ignoring status %s.", serverName, id == null ? "null" : id.toString(), status.toString());
             return;
         }
 
@@ -130,22 +132,28 @@ public class ResourcePackListener {
         final boolean tryPrevent = plugin.getConfig().getBoolean("try-to-stop-fake-accept-hacks", true);
         if (!tryPrevent) return false;
 
+        //TODO 1.20.3+ detections
+
         final VelocityConfig actionsRoot = root.getConfig("actions");
+        final Long acceptTime = sentAccept.get(player.getUniqueId());
         if (status == PlayerResourcePackStatusEvent.Status.ACCEPTED) {
-            if (sentAccept.containsKey(player.getUniqueId()) && player.getProtocolVersion().getProtocol() < ProtocolVersion.MINECRAFT_1_20_3.getProtocol()) {
+            if (acceptTime != null && player.getProtocolVersion().getProtocol() < ProtocolVersion.MINECRAFT_1_20_3.getProtocol()) {
                 plugin.log("Kicked player " + player.getUsername() + " because they are sending fake resource pack statuses (accepted sent twice).");
                 final VelocityConfig actions = actionsRoot.getConfig("DECLINED");
                 return disconnectAction(player, actions);
             }
-            sentAccept.put(player.getUniqueId(), now);
+            if (acceptTime == null) sentAccept.put(player.getUniqueId(), now);
         } else if (status == PlayerResourcePackStatusEvent.Status.SUCCESSFUL) {
-            if (!sentAccept.containsKey(player.getUniqueId())) {
-                plugin.log("Kicked player " + player.getUsername() + " because they are sending fake resource pack statuses (order not maintained).");
-                final VelocityConfig actions = actionsRoot.getConfig("FAILED_DOWNLOAD");
-                return disconnectAction(player, actions);
+            if (acceptTime == null) {
+                if (player.getProtocolVersion().getProtocol() < ProtocolVersion.MINECRAFT_1_20_3.getProtocol()) {
+                    plugin.log("Kicked player " + player.getUsername() + " because they are sending fake resource pack statuses (order not maintained).");
+                    final VelocityConfig actions = actionsRoot.getConfig("FAILED_DOWNLOAD");
+                    return disconnectAction(player, actions);
+                }
+                return false;
             }
 
-            long time = now - sentAccept.remove(player.getUniqueId());
+            final long time = now - acceptTime;
             if (time <= 10) {
                 plugin.log("Kicked player " + player.getUsername() + " because they are sending fake resource pack statuses (sent too fast).");
                 final VelocityConfig actions = actionsRoot.getConfig("FAILED_DOWNLOAD");

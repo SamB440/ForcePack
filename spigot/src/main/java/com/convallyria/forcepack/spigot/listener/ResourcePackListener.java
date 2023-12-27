@@ -110,26 +110,30 @@ public class ResourcePackListener implements Listener {
 
     private boolean tryValidateHacks(Player player, ResourcePackStatus status, long now) {
         final boolean tryPrevent = getConfig().getBoolean("try-to-stop-fake-accept-hacks", true);
+        if (!tryPrevent) return false;
+
+        //TODO 1.20.3+ detections
+
         final Long acceptTime = sentAccept.get(player.getUniqueId());
         if (status == ResourcePackStatus.ACCEPTED) {
-            if (tryPrevent && acceptTime != null && plugin.getWaitingFor(player).size() <= 1) { //TODO can we fix this for 1.20.3+?
+            if (acceptTime != null && ProtocolUtil.getProtocolVersion(player) < 765) {
                 plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (accepted sent twice).");
                 ensureMainThread(() -> player.kickPlayer(Translations.DECLINED.get(player)));
                 return true;
             }
-            if (tryPrevent && acceptTime == null) sentAccept.put(player.getUniqueId(), now);
+            if (acceptTime == null) sentAccept.put(player.getUniqueId(), now);
         } else if (status == ResourcePackStatus.SUCCESSFULLY_LOADED) {
-            if (tryPrevent && acceptTime == null) {
-                plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (order not maintained).");
-                ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
-                return true;
+            if (acceptTime == null) {
+                if (ProtocolUtil.getProtocolVersion(player) < 765) {
+                    plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (order not maintained).");
+                    ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
+                    return true;
+                }
+                return false;
             }
 
-            // If a player is cheating and sends multiple status packets and tryPrevent is false, sentAccept may not contain the player
-            // See issue https://github.com/SamB440/ForcePack/issues/9
-            // Always set time to 11 if tryPrevent false to stop NullPointerException
-            long time = !tryPrevent ? 11 : now - acceptTime;
-            if (tryPrevent && time <= 10) {
+            final long time = now - acceptTime;
+            if (time <= 10) {
                 plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (sent too fast).");
                 ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
                 return true;
