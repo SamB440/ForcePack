@@ -174,6 +174,7 @@ public class ResourcePackListener {
     public void onQuit(DisconnectEvent event) {
         final Player player = event.getPlayer();
         sentAccept.remove(player.getUniqueId());
+        plugin.removePlayer(player);
     }
 
     @Subscribe(order = PostOrder.EARLY)
