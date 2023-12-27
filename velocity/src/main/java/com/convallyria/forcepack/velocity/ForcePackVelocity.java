@@ -492,15 +492,15 @@ public class ForcePackVelocity implements ForcePackAPI {
     public Optional<Set<ResourcePack>> getPacksByServerAndVersion(final String server, final ProtocolVersion version) {
         final int protocolVersion = version.getProtocol();
         final int packFormat = PackFormatResolver.getPackFormat(protocolVersion);
-        return searchForValidPacks(resourcePacks, server, packFormat).or(() -> searchForValidPacks(globalResourcePacks, server, packFormat));
+        return searchForValidPacks(resourcePacks, server, packFormat).or(() -> searchForValidPacks(globalResourcePacks, GLOBAL_SERVER_NAME, packFormat));
     }
 
     private Optional<Set<ResourcePack>> searchForValidPacks(Set<ResourcePack> packs, String serverName, int playerVersion) {
         Set<ResourcePack> validPacks = new HashSet<>();
         ResourcePack anyVersionPack = null;
         for (ResourcePack resourcePack : packs.stream().filter(pack -> {
-            boolean matches = pack.getServer().equals(serverName);
-            log("Filtering out %s: %s != %s", pack.getUUID().toString(), pack.getServer(), serverName);
+            boolean matches = pack.getServer().equals(serverName) || (serverName.equals(GLOBAL_SERVER_NAME) && pack.getServer().equals(GLOBAL_SERVER_NAME));
+            if (!matches) log("Filtering out %s: %s != %s", pack.getUUID().toString(), pack.getServer(), serverName);
             return matches;
         }).collect(Collectors.toList())) {
             log("Trying resource pack %s (%s)", resourcePack.getURL(), resourcePack.getVersion().toString());
