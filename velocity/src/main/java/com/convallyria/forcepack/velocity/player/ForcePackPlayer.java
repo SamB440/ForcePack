@@ -22,7 +22,7 @@ public class ForcePackPlayer {
 
     public List<ResourcePackInfo> getAppliedResourcePacks() {
         if (player.getProtocolVersion().getProtocol() < 765) {
-            return List.of(player.getAppliedResourcePack());
+            return player.getAppliedResourcePack() == null ? List.of() : List.of(player.getAppliedResourcePack());
         }
         return List.copyOf(appliedResourcePacks);
     }
