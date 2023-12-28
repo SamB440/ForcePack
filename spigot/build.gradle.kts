@@ -28,7 +28,6 @@ dependencies {
     implementation("org.bstats:bstats-bukkit:3.0.1")
     implementation("com.github.retrooper.packetevents:spigot:2.2.0") {
         exclude("net.kyori") // avoid conflicts
-        exclude("assets.mappings")
     }
 }
 
