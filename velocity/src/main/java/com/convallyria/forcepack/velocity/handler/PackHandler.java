@@ -4,6 +4,7 @@ import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
+import com.convallyria.forcepack.velocity.util.ReflectionHell;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
@@ -101,7 +102,7 @@ public final class PackHandler {
                 plugin.getOrCreatePlayer(player).getAppliedResourcePacks()
                         .stream().filter(pack -> forceApply || resourcePacks.stream().noneMatch(pack2 -> pack2.getUUID().equals(pack.getId()))).forEach(toRemove -> {
                     plugin.log("Removing resource pack %s from %s", toRemove.getId(), player.getUsername());
-                    player.removeResourcePacks(toRemove.getId());
+                    ReflectionHell.removeResourcePack(toRemove.getId(), player);
                     plugin.getOrCreatePlayer(player).removeAppliedPack(toRemove);
                 });
             }
@@ -137,7 +138,7 @@ public final class PackHandler {
         }, () -> {
             // 1.20.3+ allows us to simply clear all their applied resource packs!
             if (protocol >= ProtocolVersion.MINECRAFT_1_20_3.getProtocol()) {
-                player.clearResourcePacks();
+                ReflectionHell.removeResourcePack(null, player);
                 plugin.getOrCreatePlayer(player).removeAppliedPacks();
                 return;
             }

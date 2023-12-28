@@ -234,6 +234,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
     @Override
     public void onDisable() {
+        PacketEvents.getAPI().terminate();
         if (webServer != null) webServer.shutdown();
         translator.close();
         if (this.adventure != null) {
