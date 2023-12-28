@@ -123,7 +123,7 @@ public final class PackHandler {
                     }
                 }
 
-                if (player.getAppliedResourcePacks().isEmpty()) {
+                if (plugin.getOrCreatePlayer(player).getAppliedResourcePacks().isEmpty()) {
                     plugin.log("Player %s doesn't have any applied resource packs!", player.getUsername());
                 }
 
