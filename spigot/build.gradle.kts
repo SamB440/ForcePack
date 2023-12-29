@@ -18,7 +18,7 @@ dependencies {
     compileOnly("com.viaversion:viaversion-api:4.9.2")
     compileOnly("com.github.LoneDev6:api-itemsadder:3.0.0")
 
-    implementation("net.kyori:adventure-platform-bukkit:4.3.1") {
+    implementation("net.kyori:adventure-platform-bukkit:4.3.2") {
         exclude("net.kyori", "adventure-api") // not up-to-date - use minimessage version
     }
     implementation("net.kyori:adventure-text-minimessage:4.15.0")
