@@ -63,7 +63,13 @@ public class ResourcePackListener implements Listener {
         // Only remove from waiting if they actually loaded the resource pack, rather than any status
         // Declined/failed is valid and should be allowed, server owner decides whether they get kicked
         if (status != ResourcePackStatus.ACCEPTED && status != ResourcePackStatus.DOWNLOADED) {
-            plugin.processWaitingResourcePack(player, id);
+            if (event.isProxy()) {
+                if (event.isProxyRemove()) {
+                    plugin.removeFromWaiting(player);
+                }
+            } else {
+                plugin.processWaitingResourcePack(player, id);
+            }
         }
 
         for (String cmd : getConfig().getStringList("Server.Actions." + status.name() + ".Commands")) {
