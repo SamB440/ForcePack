@@ -21,13 +21,15 @@ public class MultiVersionResourcePackStatusEvent extends Event {
     private final UUID id;
     private final ResourcePackStatus status;
     private final boolean proxy;
+    private final boolean proxyRemove;
 
-    public MultiVersionResourcePackStatusEvent(@NotNull final Player who, @NotNull UUID id, @NotNull ResourcePackStatus resourcePackStatus, boolean proxy) {
+    public MultiVersionResourcePackStatusEvent(@NotNull final Player who, @NotNull UUID id, @NotNull ResourcePackStatus resourcePackStatus, boolean proxy, boolean proxyRemove) {
         super(true);
         this.player = who;
         this.id = id;
         this.status = resourcePackStatus;
         this.proxy = proxy;
+        this.proxyRemove = proxyRemove;
     }
 
     /**
@@ -63,6 +65,14 @@ public class MultiVersionResourcePackStatusEvent extends Event {
      */
     public boolean isProxy() {
         return proxy;
+    }
+
+    /**
+     * Gets whether the proxy has indicated the player is no longer waiting.
+     * @return whether the proxy has requested the removal of the player from waiting
+     */
+    public boolean isProxyRemove() {
+        return proxyRemove;
     }
 
     @NotNull
