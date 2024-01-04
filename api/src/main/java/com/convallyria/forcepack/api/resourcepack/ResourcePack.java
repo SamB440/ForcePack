@@ -24,7 +24,7 @@ public abstract class ResourcePack implements IResourcePack {
 		this.server = server;
 		// This is the same method vanilla uses to generate a UUID from the server.properties url
 		// We add the hash and server though because we support cross-version and cross-server stuff
-		this.uuid = UUID.nameUUIDFromBytes((url + hash + server).getBytes(StandardCharsets.UTF_8));
+		this.uuid = UUID.nameUUIDFromBytes((url + hash).getBytes(StandardCharsets.UTF_8));
 		this.url = url;
 		this.hash = hash;
 		this.size = size;
@@ -69,15 +69,15 @@ public abstract class ResourcePack implements IResourcePack {
 	public abstract void setResourcePack(UUID uuid);
 
 	@Override
-	public int hashCode() {
-		return Objects.hash(uuid);
-	}
-
-	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (!(o instanceof ResourcePack)) return false;
 		ResourcePack that = (ResourcePack) o;
-		return Objects.equals(uuid, that.uuid);
+		return Objects.equals(uuid, that.uuid) && Objects.equals(getServer(), that.getServer());
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(uuid, getServer());
 	}
 }
