@@ -13,6 +13,7 @@ import com.velocitypowered.api.proxy.player.ResourcePackInfo;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import com.velocitypowered.api.scheduler.ScheduledTask;
 import com.velocitypowered.api.scheduler.Scheduler;
+import net.kyori.adventure.resource.ResourcePackStatus;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.nio.charset.StandardCharsets;
@@ -119,7 +120,8 @@ public final class PackHandler {
                     plugin.log("Checking applied pack %s on %s", applied.getId().toString(), player.getUsername());
                     if (Arrays.equals(applied.getHash(), pack.getHashSum())) {
                         plugin.log("Not applying already applied pack '" + pack.getUUID().toString() + "' to player " + player.getUsername() + ".");
-                        server.sendPluginMessage(FORCEPACK_STATUS_IDENTIFIER, (pack.getUUID().toString() + ";SUCCESSFULLY_LOADED").getBytes(StandardCharsets.UTF_8));
+                        server.sendPluginMessage(FORCEPACK_STATUS_IDENTIFIER, (pack.getUUID().toString() + ";SUCCESSFULLY_LOADED;true").getBytes(StandardCharsets.UTF_8));
+                        plugin.log("Sent player '%s' plugin message downstream to '%s' for status '%s'", player.getUsername(), serverInfo.getName(), ResourcePackStatus.SUCCESSFULLY_LOADED.name());
                         return false;
                     }
                 }
