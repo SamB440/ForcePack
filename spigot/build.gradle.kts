@@ -36,6 +36,7 @@ tasks {
         minimize {
             exclude(project(":webserver"))
         }
+        relocate("net.kyori.adventure", "com.convallyria.forcepack.spigot.libs.adventure")
         relocate("io.papermc.lib", "com.convallyria.forcepack.spigot.libs.paperlib")
         relocate("com.convallyria.languagy", "com.convallyria.forcepack.spigot.libs.languagy")
         relocate("org.bstats", "com.convallyria.forcepack.spigot.libs.bstats")
