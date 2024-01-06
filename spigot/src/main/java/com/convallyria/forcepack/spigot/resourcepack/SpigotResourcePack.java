@@ -53,14 +53,19 @@ public final class SpigotResourcePack extends ResourcePack {
                 try {
                     player.setResourcePack(getUUID(), url, getHashSum(), Translations.PROMPT_TEXT.get(player), spigotPlugin.getConfig().getBoolean("use-new-force-pack-screen", true));
                 } catch (NoSuchMethodError ignored2) { // Server is not up-to-date
-                    if (!hasWarned) {
-                        spigotPlugin.getLogger().warning("Your server is not up-to-date: cannot use new ResourcePack methods.");
-                        this.hasWarned = true;
-                    }
+                    try {
+                        spigotPlugin.log("Using non-UUID method");
+                        player.setResourcePack(url, getHashSum(), Translations.PROMPT_TEXT.get(player), spigotPlugin.getConfig().getBoolean("use-new-force-pack-screen", true));
+                    } catch (NoSuchMethodError ignored3) {
+                        if (!hasWarned) {
+                            spigotPlugin.getLogger().warning("Your server is not up-to-date: cannot use new ResourcePack methods.");
+                            this.hasWarned = true;
+                        }
 
-                    spigotPlugin.log("Had to fallback");
-                    // Fallback
-                    player.setResourcePack(url, getHashSum());
+                        spigotPlugin.log("Had to fallback");
+                        // Fallback
+                        player.setResourcePack(url, getHashSum());
+                    }
                 }
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
