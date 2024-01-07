@@ -199,7 +199,10 @@ public class ForcePackVelocity implements ForcePackAPI {
     }
 
     public void loadResourcePacks(@Nullable Player player) {
-        resourcePacks.clear(); // Clear for reloads
+        // Clear for reloads
+        resourcePacks.clear();
+        globalResourcePacks.clear();
+
         getWebServer().ifPresent(ForcePackWebServer::clearHostedPacks);
 
         this.checkUnload();
