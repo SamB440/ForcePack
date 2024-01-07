@@ -13,7 +13,7 @@ import com.convallyria.forcepack.velocity.command.Commands;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.convallyria.forcepack.velocity.handler.PackHandler;
 import com.convallyria.forcepack.velocity.listener.ResourcePackListener;
-import com.convallyria.forcepack.velocity.player.ForcePackPlayer;
+import com.convallyria.forcepack.velocity.player.AppliedPacksPlayer;
 import com.convallyria.forcepack.velocity.resourcepack.VelocityResourcePack;
 import com.convallyria.forcepack.velocity.schedule.VelocityScheduler;
 import com.convallyria.forcepack.webserver.ForcePackWebServer;
@@ -111,15 +111,15 @@ public class ForcePackVelocity implements ForcePackAPI {
      * @deprecated To be removed when Velocity finishes resource pack API
      */
     @Deprecated(forRemoval = true)
-    private final Map<UUID, ForcePackPlayer> players = new ConcurrentHashMap<>();
+    private final Map<UUID, AppliedPacksPlayer> players = new ConcurrentHashMap<>();
 
-    public ForcePackPlayer getOrCreatePlayer(Player player) {
-        ForcePackPlayer forcePackPlayer = players.get(player.getUniqueId());
-        if (forcePackPlayer == null) {
-            players.put(player.getUniqueId(), forcePackPlayer = new ForcePackPlayer(player));
-            return forcePackPlayer;
+    public AppliedPacksPlayer getOrCreatePlayer(Player player) {
+        AppliedPacksPlayer appliedPacksPlayer = players.get(player.getUniqueId());
+        if (appliedPacksPlayer == null) {
+            players.put(player.getUniqueId(), appliedPacksPlayer = new AppliedPacksPlayer(player));
+            return appliedPacksPlayer;
         }
-        return forcePackPlayer;
+        return appliedPacksPlayer;
     }
 
     public void removePlayer(Player player) {

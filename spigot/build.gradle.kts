@@ -16,19 +16,20 @@ dependencies {
         exclude("net.kyori") // avoid conflicts
     }
     compileOnly("com.viaversion:viaversion-api:4.9.2")
+    compileOnly("io.netty:netty-all:4.1.90.Final")
     compileOnly("com.github.LoneDev6:api-itemsadder:3.0.0")
 
     implementation("net.kyori:adventure-platform-bukkit:4.3.2") {
         exclude("net.kyori", "adventure-api") // not up-to-date - use minimessage version
     }
-    implementation("net.kyori:adventure-text-minimessage:4.15.0")
+    implementation("net.kyori:adventure-text-minimessage:4.15.0") {
+        exclude("net.kyori", "adventure-api")
+    }
     implementation("com.convallyria.languagy:api:3.0.3-SNAPSHOT") {
         exclude("com.convallyria.languagy.libs")
     }
     implementation("org.bstats:bstats-bukkit:3.0.1")
-    implementation("com.github.retrooper.packetevents:spigot:2.2.0") {
-        exclude("net.kyori") // avoid conflicts
-    }
+    implementation("com.github.retrooper.packetevents:spigot:2.2.0")
 }
 
 tasks {

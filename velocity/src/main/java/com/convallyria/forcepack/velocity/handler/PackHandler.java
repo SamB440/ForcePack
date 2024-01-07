@@ -1,9 +1,11 @@
 package com.convallyria.forcepack.velocity.handler;
 
+import com.convallyria.forcepack.api.player.ForcePackPlayer;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
+import com.convallyria.forcepack.velocity.player.ForcePackVelocityPlayer;
 import com.convallyria.forcepack.velocity.util.ReflectionHell;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
@@ -19,9 +21,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -32,7 +34,7 @@ public final class PackHandler {
     public static final MinecraftChannelIdentifier FORCEPACK_STATUS_IDENTIFIER = MinecraftChannelIdentifier.create("forcepack", "status");
 
     private final ForcePackVelocity plugin;
-    private final Map<UUID, Set<ResourcePack>> waiting;
+    private final Map<UUID, ForcePackPlayer> waiting;
 
     public PackHandler(final ForcePackVelocity plugin) {
         this.plugin = plugin;
@@ -47,12 +49,12 @@ public final class PackHandler {
             return;
         }
 
-        final Set<ResourcePack> newSet = waiting.computeIfPresent(playerId, (a, packs) -> {
-            packs.removeIf(pack -> pack.getUUID().equals(packId));
-            return packs;
+        final ForcePackPlayer newPlayer = waiting.computeIfPresent(playerId, (a, forcePackPlayer) -> {
+            forcePackPlayer.getWaitingPacks().removeIf(pack -> pack.getUUID().equals(packId));
+            return forcePackPlayer;
         });
 
-        if (newSet == null || newSet.isEmpty()) {
+        if (newPlayer == null || newPlayer.getWaitingPacks().isEmpty()) {
             removeFromWaiting(player);
         }
     }
@@ -69,25 +71,20 @@ public final class PackHandler {
             return true;
         }
 
-        final Set<ResourcePack> waitingPacks = waiting.get(player.getUniqueId());
+        final ForcePackPlayer forcePackPlayer = waiting.get(player.getUniqueId());
+        final Set<ResourcePack> waitingPacks = forcePackPlayer.getWaitingPacks();
         return waitingPacks.stream().anyMatch(pack -> pack.getUUID().equals(packId));
-    }
-
-    public Set<ResourcePack> getWaitingFor(Player player) {
-        return waiting.getOrDefault(player.getUniqueId(), Set.of());
     }
 
     public void removeFromWaiting(Player player) {
         waiting.remove(player.getUniqueId());
     }
 
-    public void addToWaiting(UUID uuid, @Nullable Set<ResourcePack> packs) {
-        waiting.compute(uuid, (a, existing) -> {
-            if (existing != null && packs != null) {
-                existing.addAll(packs);
-                return existing;
-            }
-            return packs == null ? null : new HashSet<>(packs);
+    public void addToWaiting(Player player, @Nullable Set<ResourcePack> packs) {
+        waiting.compute(player.getUniqueId(), (a, existing) -> {
+            ForcePackPlayer newPlayer = existing != null ? existing : new ForcePackVelocityPlayer(plugin, player);
+            newPlayer.getWaitingPacks().addAll(packs);
+            return newPlayer;
         });
     }
 
@@ -197,7 +194,11 @@ public final class PackHandler {
             builder.repeat(speed, TimeUnit.MILLISECONDS);
         }
 
-        addToWaiting(player.getUniqueId(), Set.of(resourcePack));
+        addToWaiting(player, Set.of(resourcePack));
         task.set(builder.schedule());
+    }
+
+    public Optional<ForcePackPlayer> getForcePackPlayer(Player player) {
+        return Optional.ofNullable(waiting.get(player.getUniqueId()));
     }
 }

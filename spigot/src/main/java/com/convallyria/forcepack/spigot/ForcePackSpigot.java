@@ -1,6 +1,7 @@
 package com.convallyria.forcepack.spigot;
 
 import com.convallyria.forcepack.api.ForcePackAPI;
+import com.convallyria.forcepack.api.player.ForcePackPlayer;
 import com.convallyria.forcepack.api.resourcepack.PackFormatResolver;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.resourcepack.ResourcePackVersion;
@@ -16,6 +17,7 @@ import com.convallyria.forcepack.spigot.listener.ExemptionListener;
 import com.convallyria.forcepack.spigot.listener.PacketListener;
 import com.convallyria.forcepack.spigot.listener.ResourcePackListener;
 import com.convallyria.forcepack.spigot.listener.VelocityMessageListener;
+import com.convallyria.forcepack.spigot.player.ForcePackSpigotPlayer;
 import com.convallyria.forcepack.spigot.resourcepack.SpigotResourcePack;
 import com.convallyria.forcepack.spigot.schedule.BukkitScheduler;
 import com.convallyria.forcepack.spigot.translation.Translations;
@@ -44,6 +46,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -108,7 +111,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         return scheduler;
     }
 
-    private final Map<UUID, Set<ResourcePack>> waiting = new HashMap<>();
+    private final Map<UUID, ForcePackPlayer> waiting = new HashMap<>();
 
     public void processWaitingResourcePack(Player player, UUID packId) {
         final UUID playerId = player.getUniqueId();
@@ -118,14 +121,19 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
             return;
         }
 
-        final Set<ResourcePack> newSet = waiting.computeIfPresent(playerId, (a, packs) -> {
+        final ForcePackPlayer newPlayer = waiting.computeIfPresent(playerId, (a, forcePackPlayer) -> {
+            final Set<ResourcePack> packs = forcePackPlayer.getWaitingPacks();
             packs.removeIf(pack -> pack.getUUID().equals(packId));
-            return packs;
+            return forcePackPlayer;
         });
 
-        if (newSet == null || newSet.isEmpty()) {
+        if (newPlayer == null || newPlayer.getWaitingPacks().isEmpty()) {
             removeFromWaiting(player);
         }
+    }
+
+    public Optional<ForcePackPlayer> getForcePackPlayer(Player player) {
+        return Optional.ofNullable(waiting.get(player.getUniqueId()));
     }
 
     public boolean isWaiting(Player player) {
@@ -140,12 +148,8 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
             return true;
         }
 
-        final Set<ResourcePack> waitingPacks = waiting.get(player.getUniqueId());
+        final Set<ResourcePack> waitingPacks = waiting.get(player.getUniqueId()).getWaitingPacks();
         return waitingPacks.stream().anyMatch(pack -> pack.getUUID().equals(packId));
-    }
-
-    public Set<ResourcePack> getWaitingFor(Player player) {
-        return waiting.getOrDefault(player.getUniqueId(), Set.of());
     }
 
     public void removeFromWaiting(Player player) {
@@ -154,11 +158,9 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
     public void addToWaiting(UUID uuid, @NonNull Set<ResourcePack> packs) {
         waiting.compute(uuid, (a, existing) -> {
-            if (existing != null) {
-                existing.addAll(packs);
-                return existing;
-            }
-            return new HashSet<>(packs);
+            ForcePackPlayer newPlayer = existing != null ? existing : new ForcePackSpigotPlayer(Bukkit.getPlayer(uuid));
+            newPlayer.getWaitingPacks().addAll(packs);
+            return newPlayer;
         });
     }
 

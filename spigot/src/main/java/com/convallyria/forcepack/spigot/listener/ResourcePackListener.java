@@ -1,6 +1,8 @@
 package com.convallyria.forcepack.spigot.listener;
 
+import com.convallyria.forcepack.api.check.SpoofCheck;
 import com.convallyria.forcepack.api.permission.Permissions;
+import com.convallyria.forcepack.api.player.ForcePackPlayer;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.schedule.PlatformScheduler;
 import com.convallyria.forcepack.api.utils.ClientVersion;
@@ -37,7 +39,6 @@ public class ResourcePackListener implements Listener {
 
     @EventHandler
     public void onStatus(MultiVersionResourcePackStatusEvent event) {
-        final long now = System.currentTimeMillis();
         final Player player = event.getPlayer();
         final UUID id = event.getID();
 
@@ -51,6 +52,8 @@ public class ResourcePackListener implements Listener {
 
         final ResourcePackStatus status = event.getStatus();
         plugin.log(player.getName() + " sent status: " + status);
+
+        if (!plugin.velocityMode && tryValidateHacks(player, event, status)) return;
 
         // If we did not set this resource pack, ignore
         if (!event.isProxy() && !plugin.isWaitingFor(player, id)) {
@@ -81,9 +84,11 @@ public class ResourcePackListener implements Listener {
 
         final boolean kick = getConfig().getBoolean("Server.Actions." + status.name() + ".kick");
 
-        if (tryValidateHacks(player, status, now)) return;
-
         switch (status) {
+            case ACCEPTED: {
+                sentAccept.put(player.getUniqueId(), System.currentTimeMillis());
+                break;
+            }
             case DECLINED: {
                 ensureMainThread(() -> {
                     if (kick) player.kickPlayer(Translations.DECLINED.get(player));
@@ -93,6 +98,9 @@ public class ResourcePackListener implements Listener {
                 sentAccept.remove(player.getUniqueId());
                 break;
             }
+            case DISCARDED:
+            case INVALID_URL:
+            case FAILED_RELOAD:
             case FAILED_DOWNLOAD: {
                 ensureMainThread(() -> {
                     if (kick) player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player));
@@ -114,38 +122,33 @@ public class ResourcePackListener implements Listener {
         }
     }
 
-    private boolean tryValidateHacks(Player player, ResourcePackStatus status, long now) {
+    private boolean tryValidateHacks(Player player, MultiVersionResourcePackStatusEvent event, ResourcePackStatus status) {
         final boolean tryPrevent = getConfig().getBoolean("try-to-stop-fake-accept-hacks", true);
         if (!tryPrevent) return false;
 
-        //TODO 1.20.3+ detections
+        final ForcePackPlayer forcePackPlayer = plugin.getForcePackPlayer(player).orElse(null);
+        if (forcePackPlayer == null) {
+            plugin.log("Not checking " + player.getName() + " because they are not in waiting.");
+            return false;
+        }
 
-        final Long acceptTime = sentAccept.get(player.getUniqueId());
-        if (status == ResourcePackStatus.ACCEPTED) {
-            if (acceptTime != null && ProtocolUtil.getProtocolVersion(player) < 765) {
-                plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (accepted sent twice).");
-                ensureMainThread(() -> player.kickPlayer(Translations.DECLINED.get(player)));
-                return true;
-            }
-            if (acceptTime == null) sentAccept.put(player.getUniqueId(), now);
-        } else if (status == ResourcePackStatus.SUCCESSFULLY_LOADED) {
-            if (acceptTime == null) {
-                if (ProtocolUtil.getProtocolVersion(player) < 765) {
-                    plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (order not maintained).");
-                    ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
-                    return true;
-                }
-                return false;
-            }
-
-            final long time = now - acceptTime;
-            if (time <= 10) {
-                plugin.log("Kicked player " + player.getName() + " because they are sending fake resource pack statuses (sent too fast).");
-                ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
+        boolean hasFailed = false;
+        for (SpoofCheck check : forcePackPlayer.getChecks()) {
+            final SpoofCheck.CheckStatus checkStatus = check.receiveStatus(status.name(), plugin::log);
+            hasFailed = checkStatus == SpoofCheck.CheckStatus.FAILED;
+            if (checkStatus == SpoofCheck.CheckStatus.CANCEL) {
+                plugin.log("Cancelling status " + status + " as a check requested it.");
+                event.setCancelled(true);
                 return true;
             }
         }
-        return false;
+
+        if (hasFailed) {
+            plugin.log("Kicking player " + player.getName() + " because they failed a check.");
+            ensureMainThread(() -> player.kickPlayer(Translations.DOWNLOAD_FAILED.get(player)));
+        }
+
+        return hasFailed;
     }
 
     @EventHandler

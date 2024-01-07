@@ -2,8 +2,10 @@ package com.convallyria.forcepack.api;
 
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.schedule.PlatformScheduler;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.Set;
+import java.util.UUID;
 
 public interface ForcePackAPI {
 

@@ -2,6 +2,7 @@ package com.convallyria.forcepack.spigot.event;
 
 import net.kyori.adventure.resource.ResourcePackStatus;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
@@ -13,7 +14,7 @@ import java.util.UUID;
 /**
  * Like {@link PlayerResourcePackStatusEvent} but helps with multiple version support
  */
-public class MultiVersionResourcePackStatusEvent extends Event {
+public class MultiVersionResourcePackStatusEvent extends Event implements Cancellable {
 
     private static final HandlerList HANDLER_LIST = new HandlerList();
 
@@ -22,6 +23,7 @@ public class MultiVersionResourcePackStatusEvent extends Event {
     private final ResourcePackStatus status;
     private final boolean proxy;
     private final boolean proxyRemove;
+    private boolean cancel;
 
     public MultiVersionResourcePackStatusEvent(@NotNull final Player who, @NotNull UUID id, @NotNull ResourcePackStatus resourcePackStatus, boolean proxy, boolean proxyRemove) {
         super(true);
@@ -73,6 +75,16 @@ public class MultiVersionResourcePackStatusEvent extends Event {
      */
     public boolean isProxyRemove() {
         return proxyRemove;
+    }
+
+    @Override
+    public boolean isCancelled() {
+        return cancel;
+    }
+
+    @Override
+    public void setCancelled(boolean cancel) {
+        this.cancel = cancel;
     }
 
     @NotNull

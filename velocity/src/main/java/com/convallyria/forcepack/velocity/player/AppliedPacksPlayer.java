@@ -10,12 +10,12 @@ import java.util.List;
  * @deprecated To be removed when Velocity finishes resource pack API
  */
 @Deprecated(forRemoval = true)
-public class ForcePackPlayer {
+public class AppliedPacksPlayer {
 
     private final Player player;
     private final List<ResourcePackInfo> appliedResourcePacks;
 
-    public ForcePackPlayer(Player player) {
+    public AppliedPacksPlayer(Player player) {
         this.player = player;
         this.appliedResourcePacks = new ArrayList<>();
     }

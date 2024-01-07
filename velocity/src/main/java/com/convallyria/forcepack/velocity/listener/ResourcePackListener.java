@@ -1,6 +1,8 @@
 package com.convallyria.forcepack.velocity.listener;
 
+import com.convallyria.forcepack.api.check.SpoofCheck;
 import com.convallyria.forcepack.api.permission.Permissions;
+import com.convallyria.forcepack.api.player.ForcePackPlayer;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
@@ -20,8 +22,6 @@ import com.velocitypowered.api.proxy.player.ResourcePackInfo;
 import net.kyori.adventure.text.Component;
 
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -29,7 +29,6 @@ import java.util.UUID;
 public class ResourcePackListener {
 
     private final ForcePackVelocity plugin;
-    private final Map<UUID, Long> sentAccept = new HashMap<>();
 
     public ResourcePackListener(final ForcePackVelocity plugin) {
         this.plugin = plugin;
@@ -37,7 +36,6 @@ public class ResourcePackListener {
 
     @Subscribe(order = PostOrder.EARLY)
     public void onPackStatus(PlayerResourcePackStatusEvent event) {
-        final long now = System.currentTimeMillis();
         final Player player = event.getPlayer();
         final Optional<ServerConnection> currentServer = player.getCurrentServer();
         if (currentServer.isEmpty()) {
@@ -94,7 +92,7 @@ public class ResourcePackListener {
 
         plugin.log(player.getUsername() + " sent status: " + event.getStatus());
 
-        if (tryValidateHacks(player, status, root, now)) return;
+        if (tryValidateHacks(player, status, root)) return;
 
         final VelocityConfig actions = root.getConfig("actions").getConfig(status.name());
         if (actions != null) {
@@ -115,8 +113,6 @@ public class ResourcePackListener {
             currentServer.get().sendPluginMessage(PackHandler.FORCEPACK_STATUS_IDENTIFIER, (packByServer.getUUID().toString() + ";" + name + ";" + !plugin.getPackHandler().isWaiting(player)).getBytes(StandardCharsets.UTF_8));
         }
 
-        if (status != PlayerResourcePackStatusEvent.Status.ACCEPTED) sentAccept.remove(player.getUniqueId());
-
         final String text = actions == null ? null : actions.getString("message");
         if (text == null) return;
 
@@ -128,38 +124,33 @@ public class ResourcePackListener {
         }
     }
 
-    private boolean tryValidateHacks(Player player, PlayerResourcePackStatusEvent.Status status, VelocityConfig root, long now) {
+    private boolean tryValidateHacks(Player player, PlayerResourcePackStatusEvent.Status status, VelocityConfig root) {
         final boolean tryPrevent = plugin.getConfig().getBoolean("try-to-stop-fake-accept-hacks", true);
         if (!tryPrevent) return false;
 
-        //TODO 1.20.3+ detections
+        final ForcePackPlayer forcePackPlayer = plugin.getPackHandler().getForcePackPlayer(player).orElse(null);
+        if (forcePackPlayer == null) {
+            plugin.log("Not checking " + player.getUsername() + " because they are not in waiting.");
+            return false;
+        }
 
-        final VelocityConfig actionsRoot = root.getConfig("actions");
-        final Long acceptTime = sentAccept.get(player.getUniqueId());
-        if (status == PlayerResourcePackStatusEvent.Status.ACCEPTED) {
-            if (acceptTime != null && player.getProtocolVersion().getProtocol() < ProtocolVersion.MINECRAFT_1_20_3.getProtocol()) {
-                plugin.log("Kicked player " + player.getUsername() + " because they are sending fake resource pack statuses (accepted sent twice).");
-                final VelocityConfig actions = actionsRoot.getConfig("DECLINED");
-                return disconnectAction(player, actions);
-            }
-            if (acceptTime == null) sentAccept.put(player.getUniqueId(), now);
-        } else if (status == PlayerResourcePackStatusEvent.Status.SUCCESSFUL) {
-            if (acceptTime == null) {
-                if (player.getProtocolVersion().getProtocol() < ProtocolVersion.MINECRAFT_1_20_3.getProtocol()) {
-                    plugin.log("Kicked player " + player.getUsername() + " because they are sending fake resource pack statuses (order not maintained).");
-                    final VelocityConfig actions = actionsRoot.getConfig("FAILED_DOWNLOAD");
-                    return disconnectAction(player, actions);
-                }
-                return false;
-            }
-
-            final long time = now - acceptTime;
-            if (time <= 10) {
-                plugin.log("Kicked player " + player.getUsername() + " because they are sending fake resource pack statuses (sent too fast).");
-                final VelocityConfig actions = actionsRoot.getConfig("FAILED_DOWNLOAD");
-                return disconnectAction(player, actions);
+        boolean hasFailed = false;
+        for (SpoofCheck check : forcePackPlayer.getChecks()) {
+            final SpoofCheck.CheckStatus checkStatus = check.receiveStatus(status.name(), plugin::log);
+            hasFailed = checkStatus == SpoofCheck.CheckStatus.FAILED;
+            if (checkStatus == SpoofCheck.CheckStatus.CANCEL) {
+                plugin.log("Cancelling status " + status + " as a check requested it.");
+                return true;
             }
         }
+
+        if (hasFailed) {
+            plugin.log("Kicking player " + player.getUsername() + " because they failed a check.");
+            final VelocityConfig actionsRoot = root.getConfig("actions");
+            final VelocityConfig actions = actionsRoot.getConfig("FAILED_DOWNLOAD");
+            return disconnectAction(player, actions);
+        }
+
         return false;
     }
 
@@ -173,7 +164,6 @@ public class ResourcePackListener {
     @Subscribe
     public void onQuit(DisconnectEvent event) {
         final Player player = event.getPlayer();
-        sentAccept.remove(player.getUniqueId());
         plugin.removePlayer(player);
     }
 
