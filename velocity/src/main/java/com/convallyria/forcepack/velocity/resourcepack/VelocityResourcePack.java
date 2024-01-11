@@ -73,7 +73,6 @@ public final class VelocityResourcePack extends ResourcePack {
 
         final ResourcePackInfo built = infoBuilder.build();
         player.sendResourcePackOffer(built);
-        velocityPlugin.getOrCreatePlayer(player).addAppliedPack(built);
         if (group != null) {
             velocityPlugin.log("Sending resource pack %s to %s", group, player.getUsername());
         } else {

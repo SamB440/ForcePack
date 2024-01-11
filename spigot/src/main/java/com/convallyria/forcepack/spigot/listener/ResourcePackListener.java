@@ -20,7 +20,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 
+import java.lang.reflect.Constructor;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -80,7 +82,10 @@ public class ResourcePackListener implements Listener {
         }
 
         // Don't execute kicks - handled by proxy
-        if (plugin.velocityMode) return;
+        if (plugin.velocityMode) {
+            plugin.getScheduler().executeOnMain(() -> this.callBukkitEvent(event));
+            return;
+        }
 
         final boolean kick = getConfig().getBoolean("Server.Actions." + status.name() + ".kick");
 
@@ -149,6 +154,48 @@ public class ResourcePackListener implements Listener {
         }
 
         return hasFailed;
+    }
+
+    private static final Constructor<PlayerResourcePackStatusEvent> LEGACY_CONSTRUCTOR;
+
+    static {
+        Constructor<PlayerResourcePackStatusEvent> constructor;
+        try {
+            constructor = PlayerResourcePackStatusEvent.class.getConstructor(Player.class, PlayerResourcePackStatusEvent.Status.class);
+        } catch (NoSuchMethodException ignored) {
+            // We are on a server version that uses resource pack UUIDs.
+            constructor = null;
+        }
+
+        LEGACY_CONSTRUCTOR = constructor;
+    }
+
+    private void callBukkitEvent(MultiVersionResourcePackStatusEvent event) {
+        // Velocity doesn't correctly pass things to the backend server
+        // Call bukkit event manually for other plugins to handle status events
+        PlayerResourcePackStatusEvent.Status bukkitStatus;
+        try {
+            bukkitStatus = PlayerResourcePackStatusEvent.Status.valueOf(event.getStatus().name());
+        } catch (IllegalArgumentException ignored) {
+            // The server version we are on doesn't support this status
+            return;
+        }
+
+        PlayerResourcePackStatusEvent bukkit;
+        try {
+            // Can the ID be null? I'm not sure, let's just pass a random ID to avoid errors if this happens.
+            // I doubt another plugin is using it anyway.
+            bukkit = new PlayerResourcePackStatusEvent(event.getPlayer(), event.getID() == null ? UUID.randomUUID() : event.getID(), bukkitStatus);
+        } catch (NoSuchMethodError ignored) {
+            // We are on a server version that doesn't have resource pack UUIDs.
+            try {
+                bukkit = LEGACY_CONSTRUCTOR.newInstance(event.getPlayer(), bukkitStatus);
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        Bukkit.getPluginManager().callEvent(bukkit);
     }
 
     @EventHandler
