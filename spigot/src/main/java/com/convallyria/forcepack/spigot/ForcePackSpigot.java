@@ -251,14 +251,6 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         resourcePacks.clear(); // Clear for reloads
         getWebServer().ifPresent(ForcePackWebServer::clearHostedPacks);
 
-        final int versionNumber = getVersionNumber();
-        getLogger().info("Detected server version: " + Bukkit.getBukkitVersion() + " (" + getVersionNumber() + ").");
-        if (versionNumber >= 18) {
-            getLogger().info("Using recent ResourcePack methods to show prompt text.");
-        } else {
-            getLogger().warning("Your server version does not support prompt text.");
-        }
-
         final ConfigurationSection packs = getConfig().getConfigurationSection("Server.packs");
         boolean success = true;
         for (String versionId : packs.getKeys(false)) {
@@ -478,8 +470,4 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         return getPlugin(ForcePackSpigot.class);
     }
 
-    public int getVersionNumber() {
-        String[] split = Bukkit.getBukkitVersion().split("-")[0].split("\\.");
-        return Integer.parseInt(split[1]);
-    }
 }
