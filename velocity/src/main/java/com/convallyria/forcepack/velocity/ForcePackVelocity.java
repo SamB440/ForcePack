@@ -468,6 +468,13 @@ public class ForcePackVelocity implements ForcePackAPI {
                     "Leaving this as default potentially sends a lot of requests to my personal web server, which isn't ideal!");
             getLogger().warn("ForcePack will still load and function like normally.");
         }
+
+        List<String> blacklisted = List.of("mediafire.com");
+        for (String blacklistedSite : blacklisted) {
+            if (url.contains(blacklistedSite)) {
+                getLogger().error("Invalid resource pack site used! '" + blacklistedSite + "' cannot be used for hosting resource packs!");
+            }
+        }
     }
 
     @Nullable
