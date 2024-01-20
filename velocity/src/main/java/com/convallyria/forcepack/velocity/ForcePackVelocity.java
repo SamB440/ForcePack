@@ -13,7 +13,6 @@ import com.convallyria.forcepack.velocity.command.Commands;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.convallyria.forcepack.velocity.handler.PackHandler;
 import com.convallyria.forcepack.velocity.listener.ResourcePackListener;
-import com.convallyria.forcepack.velocity.player.AppliedPacksPlayer;
 import com.convallyria.forcepack.velocity.resourcepack.VelocityResourcePack;
 import com.convallyria.forcepack.velocity.schedule.VelocityScheduler;
 import com.convallyria.forcepack.webserver.ForcePackWebServer;
@@ -53,8 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -106,25 +103,6 @@ public class ForcePackVelocity implements ForcePackAPI {
     private PackHandler packHandler;
     private final Set<ResourcePack> globalResourcePacks = new HashSet<>();
     private final Set<ResourcePack> resourcePacks = new HashSet<>();
-
-    /**
-     * @deprecated To be removed when Velocity finishes resource pack API
-     */
-    @Deprecated(forRemoval = true)
-    private final Map<UUID, AppliedPacksPlayer> players = new ConcurrentHashMap<>();
-
-    public AppliedPacksPlayer getOrCreatePlayer(Player player) {
-        AppliedPacksPlayer appliedPacksPlayer = players.get(player.getUniqueId());
-        if (appliedPacksPlayer == null) {
-            players.put(player.getUniqueId(), appliedPacksPlayer = new AppliedPacksPlayer(player));
-            return appliedPacksPlayer;
-        }
-        return appliedPacksPlayer;
-    }
-
-    public void removePlayer(Player player) {
-        players.remove(player.getUniqueId());
-    }
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {

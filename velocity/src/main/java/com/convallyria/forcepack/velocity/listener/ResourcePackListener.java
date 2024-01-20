@@ -106,9 +106,6 @@ public class ResourcePackListener {
 
         // Declined/failed is valid and should be allowed, server owner decides whether they get kicked
         if (status != PlayerResourcePackStatusEvent.Status.ACCEPTED && status != PlayerResourcePackStatusEvent.Status.DOWNLOADED && !kick) {
-            if (status == PlayerResourcePackStatusEvent.Status.SUCCESSFUL) {
-                plugin.getOrCreatePlayer(player).addAppliedPack(plugin.getServer().createResourcePackBuilder(packByServer.getURL()).setId(packByServer.getUUID()).setHash(packByServer.getHashSum()).build());
-            }
             plugin.log("Sent player '%s' plugin message downstream to '%s' for status '%s'", player.getUsername(), currentServer.get().getServerInfo().getName(), status.name());
             // No longer applying, remove them from the list
             plugin.getPackHandler().processWaitingResourcePack(player, packByServer.getUUID());
@@ -162,12 +159,6 @@ public class ResourcePackListener {
         if (text == null) return true;
         player.disconnect(plugin.getMiniMessage().deserialize(text));
         return true;
-    }
-
-    @Subscribe
-    public void onQuit(DisconnectEvent event) {
-        final Player player = event.getPlayer();
-        plugin.removePlayer(player);
     }
 
     @Subscribe(order = PostOrder.EARLY)

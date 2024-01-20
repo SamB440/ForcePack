@@ -6,7 +6,6 @@ import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.convallyria.forcepack.velocity.player.ForcePackVelocityPlayer;
-import com.convallyria.forcepack.velocity.util.ReflectionHell;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
@@ -16,6 +15,7 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 import com.velocitypowered.api.scheduler.ScheduledTask;
 import com.velocitypowered.api.scheduler.Scheduler;
 import net.kyori.adventure.resource.ResourcePackStatus;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.nio.charset.StandardCharsets;
@@ -80,7 +80,7 @@ public final class PackHandler {
         waiting.remove(player.getUniqueId());
     }
 
-    public void addToWaiting(Player player, @Nullable Set<ResourcePack> packs) {
+    public void addToWaiting(Player player, @NonNull Set<ResourcePack> packs) {
         waiting.compute(player.getUniqueId(), (a, existing) -> {
             ForcePackPlayer newPlayer = existing != null ? existing : new ForcePackVelocityPlayer(plugin, player);
             newPlayer.getWaitingPacks().addAll(packs);
@@ -97,11 +97,9 @@ public final class PackHandler {
             final boolean forceApply = protocol != ProtocolVersion.MINECRAFT_1_20_2.getProtocol() && plugin.getConfig().getBoolean("force-constant-download", false);
             if (protocol >= ProtocolVersion.MINECRAFT_1_20_3.getProtocol()) {
                 // Get all packs the player has applied and remove any not on this server!
-                plugin.getOrCreatePlayer(player).getAppliedResourcePacks()
-                        .stream().filter(pack -> forceApply || resourcePacks.stream().noneMatch(pack2 -> pack2.getUUID().equals(pack.getId()))).forEach(toRemove -> {
+                player.getAppliedResourcePacks().stream().filter(pack -> forceApply || resourcePacks.stream().noneMatch(pack2 -> pack2.getUUID().equals(pack.getId()))).forEach(toRemove -> {
                     plugin.log("Removing resource pack %s from %s", toRemove.getId(), player.getUsername());
-                    ReflectionHell.removeResourcePack(toRemove.getId(), player);
-                    plugin.getOrCreatePlayer(player).removeAppliedPack(toRemove);
+                    player.removeResourcePacks(toRemove.getId());
                 });
             }
 
@@ -113,7 +111,7 @@ public final class PackHandler {
                 if (forceApply) return true; // force = all packs are sent
 
                 // Check if they already have this ResourcePack applied.
-                for (ResourcePackInfo applied : plugin.getOrCreatePlayer(player).getAppliedResourcePacks()) {
+                for (ResourcePackInfo applied : player.getAppliedResourcePacks()) {
                     plugin.log("Checking applied pack %s on %s", applied.getId().toString(), player.getUsername());
                     if (Arrays.equals(applied.getHash(), pack.getHashSum())) {
                         plugin.log("Not applying already applied pack '" + pack.getUUID().toString() + "' to player " + player.getUsername() + ".");
@@ -123,7 +121,7 @@ public final class PackHandler {
                     }
                 }
 
-                if (plugin.getOrCreatePlayer(player).getAppliedResourcePacks().isEmpty()) {
+                if (player.getAppliedResourcePacks().isEmpty()) {
                     plugin.log("Player %s doesn't have any applied resource packs!", player.getUsername());
                 }
 
@@ -137,8 +135,7 @@ public final class PackHandler {
         }, () -> {
             // 1.20.3+ allows us to simply clear all their applied resource packs!
             if (protocol >= ProtocolVersion.MINECRAFT_1_20_3.getProtocol()) {
-                ReflectionHell.removeResourcePack(null, player);
-                plugin.getOrCreatePlayer(player).removeAppliedPacks();
+                player.clearResourcePacks();
                 return;
             }
 
