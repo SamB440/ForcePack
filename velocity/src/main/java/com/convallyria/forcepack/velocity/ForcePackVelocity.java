@@ -389,6 +389,10 @@ public class ForcePackVelocity implements ForcePackAPI {
         ResourcePackURLData data = this.tryGenerateHash(globalPack, url, hash, new AtomicInteger(0));
         if (data != null) hash = data.getUrlHash();
 
+        if (getConfig().getBoolean("enable-mc-164316-fix", false)) {
+            url = url + "#" + hash;
+        }
+
         ResourcePackVersion version = null;
         try {
             final int versionId = Integer.parseInt(id);
