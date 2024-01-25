@@ -239,18 +239,19 @@ public class ForcePackVelocity implements ForcePackAPI {
             hashes = List.of(resourcePack.getString("hash", ""));
         }
 
-        if (urls.size() != hashes.size()) {
+        final boolean generateHash = resourcePack.getBoolean("generate-hash", false);
+        if (!generateHash && urls.size() != hashes.size()) {
             getLogger().error("There are not the same amount of URLs and hashes! Please provide a hash for every resource pack URL! (" + id + ", " + name + ")");
         }
 
         for (int i = 0; i < urls.size(); i++) {
             final String url = urls.get(i);
-            final String hash = hashes.get(i);
+            final String hash = i >= hashes.size() ? null : hashes.get(i);
             this.handleRegister(rootServerConfig, resourcePack, name, id, typeName, url, hash, groups, verifyPacks, player);
         }
     }
 
-    private void handleRegister(VelocityConfig rootServerConfig, VelocityConfig resourcePack, String name, String id, String typeName, String url, String hash, boolean groups, boolean verifyPacks, @Nullable Player player) {
+    private void handleRegister(VelocityConfig rootServerConfig, VelocityConfig resourcePack, String name, String id, String typeName, String url, @Nullable String hash, boolean groups, boolean verifyPacks, @Nullable Player player) {
         final ConsoleCommandSource consoleSender = this.getServer().getConsoleCommandSource();
         if (url.isEmpty()) {
             logger.error("No URL found for " + name + ". Did you set up the config correctly?");
@@ -291,7 +292,7 @@ public class ForcePackVelocity implements ForcePackAPI {
 
                 consumer.accept(data.getSize());
 
-                if (!hash.equalsIgnoreCase(data.getUrlHash())) {
+                if (hash == null || !hash.equalsIgnoreCase(data.getUrlHash())) {
                     this.getLogger().error("-----------------------------------------------");
                     this.getLogger().error("Your hash does not match the URL file provided!");
                     this.getLogger().error("Target " + typeName + ": " + name + " (" + id + ")");
@@ -462,16 +463,16 @@ public class ForcePackVelocity implements ForcePackAPI {
     @Nullable
     private ResourcePackURLData tryGenerateHash(VelocityConfig resourcePack, String url, String hash, AtomicInteger sizeInMB) {
         if (resourcePack.getBoolean("generate-hash", false)) {
-            getLogger().info("Auto-generating ResourcePack hash.");
-            getLogger().info("Downloading ResourcePack for hash generation...");
+            getLogger().info("Auto-generating resource pack hash.");
+            getLogger().info("Downloading resource pack for hash generation...");
             try {
                 ResourcePackURLData data = HashingUtil.performPackCheck(url, hash);
-                getLogger().info("Size of ResourcePack: " + data.getSize() + " MB");
+                getLogger().info("Size of resource pack: " + data.getSize() + " MB");
                 sizeInMB.set(data.getSize());
-                getLogger().info("Auto-generated ResourcePack hash: " + data.getUrlHash());
+                getLogger().info("Auto-generated resource pack hash: " + data.getUrlHash());
                 return data;
             } catch (Exception e) {
-                getLogger().error("Unable to auto-generate ResourcePack hash, reverting to config setting", e);
+                getLogger().error("Unable to auto-generate resource pack hash, reverting to config setting", e);
             }
         }
         return null;

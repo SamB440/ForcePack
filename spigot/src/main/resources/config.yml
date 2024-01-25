@@ -58,7 +58,7 @@ Server:
       # To host a local file on the embedded webserver, change this to the relative path of the force pack folder prefixed by "forcepack://".
       # For example, placing your resource pack as "plugins/ForcePack/pack.zip", the url will just be "forcepack://pack.zip".
       # ONLY PLAYERS ON 1.20.3+ CAN RECEIVE MULTIPLE RESOURCE PACKS. The first URL/Hash pair will be taken for older client versions.
-      # URLs list and hashes list MUST BE THE SAME SIZE.
+      # URLs list and hashes list MUST BE THE SAME SIZE if generate-hash is disabled.
       urls: ["https://www.convallyria.com/files/BlankPack.zip"]
       # Whether to automatically generate the SHA-1 hash.
       # The hash setting will be ignored if this is true, however it will fall back to that if the generation fails.

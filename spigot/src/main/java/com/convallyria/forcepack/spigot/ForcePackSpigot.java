@@ -255,20 +255,21 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         for (String versionId : packs.getKeys(false)) {
             ResourcePackVersion version = versionId.equals("all") ? null : () -> Integer.parseInt(versionId);
             final ConfigurationSection packSection = packs.getConfigurationSection(versionId);
-            final List<String> urls = packSection.contains("urls", true)
+            final List<String> urls = packSection.isSet("urls")
                     ? packSection.getStringList("urls")
                     : List.of(packSection.getString("url", ""));
-            final List<String> hashes = packSection.contains("hashes", true)
+            final List<String> hashes = packSection.isSet("hashes")
                     ? packSection.getStringList("hashes")
                     : List.of(packSection.getString("hash", ""));
-            if (urls.size() != hashes.size()) {
+
+            final boolean generateHash = packSection.getBoolean("generate-hash");
+            if (!generateHash && urls.size() != hashes.size()) {
                 getLogger().severe("There are not the same amount of URLs and hashes! Please provide a hash for every resource pack URL!");
             }
 
-            final boolean generateHash = packSection.getBoolean("generate-hash");
             for (int i = 0; i < urls.size(); i++) {
                 String url = urls.get(i);
-                String hash = hashes.get(i);
+                String hash = i >= hashes.size() ? null : hashes.get(i);
                 success = success && checkPack(version, url, generateHash, hash);
             }
         }
@@ -278,7 +279,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         }
     }
 
-    private boolean checkPack(@Nullable ResourcePackVersion version, String url, boolean generateHash, String hash) {
+    private boolean checkPack(@Nullable ResourcePackVersion version, String url, boolean generateHash, @Nullable String hash) {
         if (url.startsWith("forcepack://")) { // Localhost
             log("Using local resource pack host for " + url);
             if (webServer == null) {
@@ -296,15 +297,15 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
         ResourcePackURLData data = null;
         if (generateHash) {
-            getLogger().info("Auto-generating ResourcePack hash.");
+            getLogger().info("Auto-generating resource pack hash.");
             try {
                 data = HashingUtil.performPackCheck(url, hash);
                 sizeMB.set(data.getSize());
                 hash = data.getUrlHash();
-                getLogger().info("Size of ResourcePack: " + sizeMB.get() + " MB");
-                getLogger().info("Auto-generated ResourcePack hash: " + hash);
+                getLogger().info("Size of resource pack: " + sizeMB.get() + " MB");
+                getLogger().info("Auto-generated resource pack hash: " + hash);
             } catch (Exception e) {
-                getLogger().log(Level.SEVERE, "Unable to auto-generate ResourcePack hash, reverting to config setting", e);
+                getLogger().log(Level.SEVERE, "Unable to auto-generate resource pack hash, reverting to config setting", e);
             }
         }
 
@@ -336,7 +337,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
                 consumer.accept(data.getSize());
 
-                if (!hash.equalsIgnoreCase(data.getUrlHash())) {
+                if (hash == null || !hash.equalsIgnoreCase(data.getUrlHash())) {
                     this.getLogger().severe("-----------------------------------------------");
                     this.getLogger().severe("Your hash does not match the URL file provided!");
                     this.getLogger().severe("The URL hash returned: " + data.getUrlHash());
