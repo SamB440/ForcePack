@@ -7,6 +7,15 @@ repositories {
     maven("https://repo.papermc.io/repository/maven-public/")
 }
 
+configurations {
+    all {
+        resolutionStrategy {
+            force("net.kyori:adventure-api:4.15.0")
+            force("net.kyori:adventure-bom:4.15.0")
+        }
+    }
+}
+
 dependencies {
     implementation(project(":api"))
     implementation(project(":folia"))
@@ -22,14 +31,12 @@ dependencies {
     implementation("net.kyori:adventure-platform-bukkit:4.3.2") {
         exclude("net.kyori", "adventure-api") // not up-to-date - use minimessage version
     }
-    implementation("net.kyori:adventure-text-minimessage:4.15.0") {
-        exclude("net.kyori", "adventure-api")
-    }
+    implementation("net.kyori:adventure-text-minimessage:4.15.0")
     implementation("com.convallyria.languagy:api:3.0.3-SNAPSHOT") {
         exclude("com.convallyria.languagy.libs")
     }
     implementation("org.bstats:bstats-bukkit:3.0.1")
-    implementation("com.github.retrooper.packetevents:spigot:2.2.0")
+    implementation(files("temp_libraries/packetevents-spigot-2.2.0.jar"))
 }
 
 tasks {
