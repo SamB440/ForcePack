@@ -42,7 +42,7 @@ You can find the Spigot resource at: https://www.spigotmc.org/resources/forcepac
 - Ability to set resource packs on a per-version basis
 - Local webserver resource pack hosting
 - Pack unloading for Velocity sub-servers without a resource pack
-- Prevents escaping out bypass for clients <= 1.12 (requires ViaVersion for Spigot)
+- Prevents escaping out bypass for clients <= 1.12
 - Run commands on pack statuses
 - RGB via MiniMessage support
 - Prevent failed downloads from bypassing the resource pack

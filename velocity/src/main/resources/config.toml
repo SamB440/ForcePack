@@ -56,11 +56,9 @@ delay-pack-sending-by = 0
 debug = false
 
 # This configures the web server for force pack.
-# See ItemsAdder tutorial, which is essentially the same: https://itemsadder.devs.beer/plugin-usage/resourcepack-hosting/resourcepack-self-hosting
+# See https://fortitude.islandearth.net/forcepack/configuration#self-hosting
 # Note that you can leave the IP as localhost unless it is not working, as in most cases the plugin can automatically resolve it.
-# Having this enabled allows:
-#  - The use of the "forcepack://" protocol in resource pack URL
-#  - Better user experience when fake accept hacks detection is enabled
+# Having this enabled allows the use of the "forcepack://" protocol in resource pack URL
 # Enabling this DOES NOT mean you are forced to use a localhost resource pack.
 # You need to make sure the port is open. Usually you can just add it via pterodactyl panel.
 [web-server]
