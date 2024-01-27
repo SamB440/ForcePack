@@ -15,6 +15,7 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientRe
 import io.github.retrooper.packetevents.injector.handlers.PacketEventsDecoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import net.kyori.adventure.resource.ResourcePackStatus;
@@ -72,10 +73,10 @@ public class PacketListener extends PacketListenerAbstract {
         if (pipeline.get("via-decoder") == null) return;
 
         // Remove the current decoder set by packetevents
-        pipeline.remove("pe-decoder-forcepack");
+        final ChannelHandler oldDecoder = pipeline.remove("pe-decoder-forcepack");
 
         // And add a replacement before viaversion
-        pipeline.addBefore("via-decoder", "pe-decoder-forcepack", new PacketEventsDecoder(user) {
+        pipeline.addBefore("via-decoder", "pe-decoder-forcepack", new PacketEventsDecoder((PacketEventsDecoder) oldDecoder) {
             // Override to change autoProtocolTranslation -> false, this makes the event always use the client version.
             @Override
             public void read(ChannelHandlerContext ctx, ByteBuf input, List<Object> out) throws Exception {
