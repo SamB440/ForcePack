@@ -10,12 +10,14 @@ import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.forcepack.spigot.event.ForcePackReloadEvent;
 import com.convallyria.forcepack.spigot.translation.Translations;
 import com.convallyria.forcepack.spigot.util.ProtocolUtil;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerResourcePackRemove;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.Set;
+import java.util.UUID;
 
 public class ForcePackCommand {
 
@@ -52,7 +54,7 @@ public class ForcePackCommand {
                 final Set<ResourcePack> resourcePacks = plugin.getPacksForVersion(player);
                 plugin.addToWaiting(player.getUniqueId(), resourcePacks);
                 if (ProtocolUtil.getProtocolVersion(player) >= 765) { // 1.20.3+
-                    player.removeResourcePacks();
+                    ProtocolUtil.sendPacketBypassingVia(player, new WrapperPlayServerResourcePackRemove((UUID) null));
                 }
                 resourcePacks.forEach(pack -> pack.setResourcePack(player.getUniqueId()));
             }
