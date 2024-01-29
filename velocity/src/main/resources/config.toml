@@ -95,7 +95,7 @@ debug = false
     generate-hash = false
     # The prompt message for clients on 1.17+.
     resourcepack.prompt = "<yellow>Please accept our resource pack to improve your experience."
-    # What servers should we exclude from unloading?
+    # What servers should we exclude from the global pack?
     exclude = [
         "exampleserver"
     ]
