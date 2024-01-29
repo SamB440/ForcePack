@@ -211,6 +211,7 @@ public class ForcePackVelocity implements ForcePackAPI {
         final String typeName = groups ? "group" : "server";
         VelocityConfig root = groups ? getConfig().getConfig("groups") : getConfig().getConfig("servers");
         for (String name : root.getKeys()) {
+            log("Checking %s - %s", typeName, name);
             final VelocityConfig serverConfig = root.getConfig(name);
             final Map<String, VelocityConfig> configs = new HashMap<>();
             // Add the default fallback
@@ -224,7 +225,14 @@ public class ForcePackVelocity implements ForcePackAPI {
                 }
             }
 
-            configs.forEach((id, config) -> this.registerResourcePack(serverConfig, config, id, name, typeName, groups, verifyPacks, player));
+            configs.forEach((id, config) -> {
+                if (config == null) {
+                    log("Invalid resource pack config found for %s. You probably forgot to rename something!", id);
+                    return;
+                }
+
+                this.registerResourcePack(serverConfig, config, id, name, typeName, groups, verifyPacks, player);
+            });
         }
     }
     
