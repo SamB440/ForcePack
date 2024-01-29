@@ -281,12 +281,13 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
     private boolean checkPack(@Nullable ResourcePackVersion version, String url, boolean generateHash, @Nullable String hash) {
         if (url.startsWith("forcepack://")) { // Localhost
-            log("Using local resource pack host for " + url);
+            final File generatedFilePath = new File(getDataFolder() + File.separator + url.replace("forcepack://", ""));
+            log("Using local resource pack host for " + url + " (" + generatedFilePath + ")");
             if (webServer == null) {
                 getLogger().severe("Unable to locally host resource pack '" + url + "' because the web server is not active!");
                 return false;
             }
-            webServer.addHostedPack(new File(getDataFolder() + File.separator + url.replace("forcepack://", "")));
+            webServer.addHostedPack(generatedFilePath);
             url = webServer.getHostedEndpoint(url);
         }
 

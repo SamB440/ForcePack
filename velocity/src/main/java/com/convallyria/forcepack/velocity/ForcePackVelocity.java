@@ -407,12 +407,13 @@ public class ForcePackVelocity implements ForcePackAPI {
 
     private String checkLocalHostUrl(String url) {
         if (url.startsWith("forcepack://")) { // Localhost
-            log("Using local resource pack host for " + url);
+            final File generatedFilePath = new File(getDataDirectory() + File.separator + url.replace("forcepack://", ""));
+            log("Using local resource pack host for " + url + " (" + generatedFilePath + ")");
             if (getWebServer().isEmpty()) {
                 getLogger().error("Unable to locally host resource pack '" + url + "' because the web server is not active!");
                 return url;
             }
-            webServer.addHostedPack(new File(getDataDirectory() + File.separator + url.replace("forcepack://", "")));
+            webServer.addHostedPack(generatedFilePath);
             url = webServer.getHostedEndpoint(url);
         }
         return url;
