@@ -442,16 +442,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
     }
 
     private void checkValidEnding(String url) {
-        List<String> validUrlEndings = Arrays.asList(".zip", "dl=1");
-        boolean hasEnding = false;
-        for (String validUrlEnding : validUrlEndings) {
-            if (url.endsWith(validUrlEnding)) {
-                hasEnding = true;
-                break;
-            }
-        }
-
-        if (!hasEnding) {
+        if (!isValidEnding(url)) {
             getLogger().severe("Your URL has an invalid or unknown format. " +
                     "URLs must have no redirects and use the .zip extension. If you are using Dropbox, change dl=0 to dl=1.");
             getLogger().severe("ForcePack will still load in the event this check is incorrect. Please make an issue or pull request if this is so.");
@@ -459,28 +450,16 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
     }
 
     private void checkForRehost(String url) {
-        List<String> warnForHost = List.of("convallyria.com");
-        boolean rehosted = true;
-        for (String host : warnForHost) {
-            if (url.contains(host)) {
-                rehosted = false;
-                break;
-            }
-        }
-
-        if (!rehosted) {
+        if (isDefaultHost(url)) {
             getLogger().warning(String.format("[%s] You are using a default resource pack provided by the plugin. ", url) +
                     " It's highly recommended you re-host this pack using the webserver or on a CDN such as https://mc-packs.net for faster load times. " +
                     "Leaving this as default potentially sends a lot of requests to my personal web server, which isn't ideal!");
             getLogger().warning("ForcePack will still load and function like normally.");
         }
 
-        List<String> blacklisted = List.of("mediafire.com");
-        for (String blacklistedSite : blacklisted) {
-            if (url.contains(blacklistedSite)) {
-                getLogger().severe("Invalid resource pack site used! '" + blacklistedSite + "' cannot be used for hosting resource packs!");
-            }
-        }
+        getBlacklistedSite(url).ifPresent(blacklistedSite -> {
+            getLogger().severe("Invalid resource pack site used! '" + blacklistedSite + "' cannot be used for hosting resource packs!");
+        });
     }
 
     private void performLegacyCheck() throws IOException {
