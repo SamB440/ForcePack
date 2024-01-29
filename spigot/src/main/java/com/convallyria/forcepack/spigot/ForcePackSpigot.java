@@ -87,6 +87,9 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
             if (version.isEmpty()) {
                 if (anyVersionPack == null) anyVersionPack = resourcePack; // Pick first all-version resource pack
                 validPacks.add(resourcePack); // This is still a valid pack that we want to apply.
+                if (protocolVersion < 765) { // If < 1.20.3, only one pack can be applied.
+                    break;
+                }
                 continue;
             }
 
