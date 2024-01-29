@@ -1,8 +1,10 @@
 package com.convallyria.forcepack.spigot.util;
 
 import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.netty.buffer.ByteBufHelper;
 import com.github.retrooper.packetevents.netty.channel.ChannelHelper;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.viaversion.viaversion.api.Via;
@@ -27,7 +29,9 @@ public class ProtocolUtil {
         if (!ChannelHelper.isOpen(channel)) return;
 
         // If ViaVersion is present in the pipeline
-        if (user.getClientVersion().toServerVersion() != PacketEvents.getAPI().getServerManager().getVersion()
+        if (user.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_20_3)
+                && PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_20_3)
+                && user.getClientVersion().toServerVersion() != PacketEvents.getAPI().getServerManager().getVersion()
                 && ChannelHelper.getPipelineHandler(channel, "via-encoder") != null) {
             // Allocate the buffer for the wrapper
             packet.buffer = ChannelHelper.pooledByteBuf(channel);
