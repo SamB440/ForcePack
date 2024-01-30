@@ -21,15 +21,10 @@ allprojects {
     }
 
     dependencies {
-        implementation("cloud.commandframework:cloud-paper:${properties["cloud_version"]}") {
+        implementation("org.incendo:cloud-annotations:${properties["cloud_version"]}") {
             exclude("org.checkerframework")
         }
-        implementation("cloud.commandframework:cloud-annotations:${properties["cloud_version"]}") {
-            exclude("org.checkerframework")
-        }
-        implementation("cloud.commandframework:cloud-velocity:${properties["cloud_version"]}") {
-            exclude("org.checkerframework")
-        }
+        annotationProcessor("org.incendo:cloud-annotations:${properties["cloud_version"]}")
     }
 
     repositories {
@@ -41,6 +36,7 @@ allprojects {
         maven("https://repo.codemc.io/repository/maven-releases/")
         maven("https://repo.codemc.org/repository/maven-snapshots/")
         maven("https://oss.sonatype.org/content/groups/public/")
+        maven("https://oss.sonatype.org/content/repositories/snapshots/")
     }
 
     tasks {

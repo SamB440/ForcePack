@@ -2,9 +2,11 @@ package com.convallyria.forcepack.spigot.listener;
 
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.forcepack.spigot.event.MultiVersionResourcePackStatusEvent;
+import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.netty.channel.ChannelHelper;
 import com.github.retrooper.packetevents.protocol.ConnectionState;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
@@ -64,8 +66,9 @@ public class PacketListener extends PacketListenerAbstract {
      * We need this because we require the UUID of a resource pack response on 1.20.3+ clients.
      */
     private void moveBeforeVia(User user) {
-        // We only need to do this for the client versions that send a UUID response
-        if (!user.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_20_3)) return;
+        // We only need to do this for the client versions that send a UUID response and where the server doesn't support it
+        if (!user.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_20_3)
+                || PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_20_3)) return;
 
         final Channel channel = (Channel) user.getChannel();
         final ChannelPipeline pipeline = channel.pipeline();

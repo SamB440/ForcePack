@@ -1,31 +1,23 @@
 package com.convallyria.forcepack.spigot.command;
 
-import cloud.commandframework.annotations.AnnotationParser;
-import cloud.commandframework.arguments.parser.ParserParameters;
-import cloud.commandframework.arguments.parser.StandardParameters;
-import cloud.commandframework.bukkit.CloudBukkitCapabilities;
-import cloud.commandframework.execution.CommandExecutionCoordinator;
-import cloud.commandframework.meta.CommandMeta;
-import cloud.commandframework.paper.PaperCommandManager;
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import org.bukkit.command.CommandSender;
-
-import java.util.function.Function;
+import org.incendo.cloud.SenderMapper;
+import org.incendo.cloud.annotations.AnnotationParser;
+import org.incendo.cloud.bukkit.CloudBukkitCapabilities;
+import org.incendo.cloud.execution.ExecutionCoordinator;
+import org.incendo.cloud.paper.PaperCommandManager;
 
 public class Commands {
 
     public Commands(ForcePackSpigot plugin) {
 
-        // This function maps the command sender type of our choice to the bukkit command sender.
-        final Function<CommandSender, CommandSender> mapperFunction = Function.identity();
-
         final PaperCommandManager<CommandSender> manager;
         try {
             manager = new PaperCommandManager<>(
                     plugin,
-                    CommandExecutionCoordinator.simpleCoordinator(),
-                    mapperFunction,
-                    mapperFunction
+                    ExecutionCoordinator.simpleCoordinator(),
+                    SenderMapper.identity()
             );
         } catch (Exception e) {
             plugin.getLogger().severe("Failed to initialize the command manager");
@@ -33,23 +25,15 @@ public class Commands {
             return;
         }
 
-        // Register Brigadier mappings
+        // Register brigadier or async completions
         if (manager.hasCapability(CloudBukkitCapabilities.NATIVE_BRIGADIER)) {
             manager.registerBrigadier();
-        }
-
-        // Register asynchronous completions
-        if (manager.hasCapability(CloudBukkitCapabilities.ASYNCHRONOUS_COMPLETION)) {
+        } else if (manager.hasCapability(CloudBukkitCapabilities.ASYNCHRONOUS_COMPLETION)) {
             manager.registerAsynchronousCompletions();
         }
 
         // This will allow you to decorate commands with descriptions
-        final Function<ParserParameters, CommandMeta> commandMetaFunction = parserParameters ->
-                CommandMeta.simple()
-                        .with(CommandMeta.DESCRIPTION, parserParameters.get(StandardParameters.DESCRIPTION, "No description"))
-                        .build();
-        final AnnotationParser<CommandSender> annotationParser = new AnnotationParser<>(manager, CommandSender.class, commandMetaFunction);
-
+        final AnnotationParser<CommandSender> annotationParser = new AnnotationParser<>(manager, CommandSender.class);
         annotationParser.parse(new ForcePackCommand(plugin));
     }
 }

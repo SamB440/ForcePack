@@ -28,6 +28,9 @@ dependencies {
     compileOnly("io.netty:netty-all:4.1.90.Final")
     compileOnly("com.github.LoneDev6:api-itemsadder:3.0.0")
 
+    implementation("org.incendo:cloud-paper:${properties["cloud_version"]}") {
+        exclude("org.checkerframework")
+    }
     implementation("net.kyori:adventure-platform-bukkit:4.3.2") {
         exclude("net.kyori", "adventure-api") // not up-to-date - use minimessage version
     }
