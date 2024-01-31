@@ -1,8 +1,5 @@
 package com.convallyria.forcepack.spigot.command;
 
-import cloud.commandframework.annotations.CommandDescription;
-import cloud.commandframework.annotations.CommandMethod;
-import cloud.commandframework.annotations.CommandPermission;
 import com.convallyria.forcepack.api.permission.Permissions;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.GeyserUtil;
@@ -15,6 +12,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.incendo.cloud.annotations.Command;
+import org.incendo.cloud.annotations.CommandDescription;
+import org.incendo.cloud.annotations.Permission;
 
 import java.util.Set;
 import java.util.UUID;
@@ -28,14 +28,14 @@ public class ForcePackCommand {
     }
 
     @CommandDescription("Default ForcePack command")
-    @CommandMethod("forcepack")
+    @Command("forcepack")
     public void onDefault(CommandSender sender) {
         sender.sendMessage(ChatColor.GREEN + "ForcePack by SamB440. Type /forcepack help for help.");
     }
 
     @CommandDescription("Reloads the plugin config along with the resource pack")
-    @CommandPermission(Permissions.RELOAD)
-    @CommandMethod("forcepack reload")
+    @Permission(Permissions.RELOAD)
+    @Command("forcepack reload")
     public void onReload(CommandSender sender) {
         sender.sendMessage(ChatColor.GREEN + "Reloading...");
         plugin.reloadConfig();

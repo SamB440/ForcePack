@@ -16,6 +16,10 @@ dependencies {
     compileOnly("com.electronwill.night-config:toml:3.6.6")
 
     implementation("org.bstats:bstats-velocity:3.0.1")
+
+    implementation("org.incendo:cloud-velocity:${properties["cloud_version"]}") {
+        exclude("org.checkerframework")
+    }
 }
 
 tasks.shadowJar {
