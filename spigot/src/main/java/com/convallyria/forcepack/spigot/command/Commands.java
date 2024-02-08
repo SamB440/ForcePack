@@ -25,11 +25,15 @@ public class Commands {
             return;
         }
 
-        // Register brigadier or async completions
-        if (manager.hasCapability(CloudBukkitCapabilities.NATIVE_BRIGADIER)) {
-            manager.registerBrigadier();
-        } else if (manager.hasCapability(CloudBukkitCapabilities.ASYNCHRONOUS_COMPLETION)) {
-            manager.registerAsynchronousCompletions();
+        try {
+            // Register brigadier or async completions
+            if (manager.hasCapability(CloudBukkitCapabilities.NATIVE_BRIGADIER)) {
+                manager.registerBrigadier();
+            } else if (manager.hasCapability(CloudBukkitCapabilities.ASYNCHRONOUS_COMPLETION)) {
+                manager.registerAsynchronousCompletions();
+            }
+        } catch (Exception e) {
+            plugin.getLogger().severe("Failed to register brigadier/asynchronous completions, your server software is lying about its capabilities!");
         }
 
         // This will allow you to decorate commands with descriptions
