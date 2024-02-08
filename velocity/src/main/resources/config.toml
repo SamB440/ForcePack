@@ -200,7 +200,7 @@ debug = false
         # Here you can specify a pack format version-specific resource pack.
         # Note that the "all" section above must be kept as a fallback.
         # You can do the same thing in the global resource pack and resource pack groups.
-        # See https://minecraft.fandom.com/wiki/Pack_format.
+        # See https://minecraft.wiki/w/Pack_format.
         # 222 is an example number.
         #[servers.example-server.version.222]
         #    resourcepack.url = "https://www.convallyria.com/files/BlankPack.zip"
