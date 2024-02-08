@@ -97,18 +97,7 @@ public final class PackHandler {
             final boolean forceApply = protocol != ProtocolVersion.MINECRAFT_1_20_2.getProtocol() && plugin.getConfig().getBoolean("force-constant-download", false);
             if (protocol >= ProtocolVersion.MINECRAFT_1_20_3.getProtocol()) {
                 // Get all packs the player has applied and remove any not on this server!
-                player.getAppliedResourcePacks().stream().filter(pack -> {
-                    if (pack == null) {
-                        plugin.log("ERROR in velocity API! Null resource pack in #getAppliedResourcePacks!");
-                    }
-
-                    return forceApply || resourcePacks.stream().noneMatch(pack2 -> {
-                        if (pack2 == null) {
-                            plugin.log("Second null check failed!");
-                        }
-                        return pack2.getUUID().equals(pack.getId());
-                    });
-                }).forEach(toRemove -> {
+                player.getAppliedResourcePacks().stream().filter(pack -> forceApply || resourcePacks.stream().noneMatch(pack2 -> pack2.getUUID().equals(pack.getId()))).forEach(toRemove -> {
                     plugin.log("Removing resource pack %s from %s", toRemove.getId(), player.getUsername());
                     player.removeResourcePacks(toRemove.getId());
                 });
@@ -147,12 +136,13 @@ public final class PackHandler {
             // 1.20.3+ allows us to simply clear all their applied resource packs!
             if (protocol >= ProtocolVersion.MINECRAFT_1_20_3.getProtocol()) {
                 player.clearResourcePacks();
+                plugin.log("Removing all resource packs from %s", player.getUsername());
                 return;
             }
 
             final ResourcePackInfo appliedResourcePack = player.getAppliedResourcePack();
             // This server doesn't have a pack set - send unload pack if enabled and if they already have one
-            if (appliedResourcePack == null) {
+            if (appliedResourcePack == null && protocol != ProtocolVersion.MINECRAFT_1_20_2.getProtocol()) {
                 plugin.log("%s doesn't have a resource pack applied, not sending unload.", player.getUsername());
                 return;
             }
@@ -172,7 +162,7 @@ public final class PackHandler {
                 for (ResourcePack empty : packs) {
                     // If their current applied resource pack is the unloaded one, don't send it again
                     // Checking URL rather than hash should be fine... it's simpler and should be unique.
-                    if (appliedResourcePack.getUrl().equals(empty.getURL())) return;
+                    if (appliedResourcePack != null && appliedResourcePack.getUrl().equals(empty.getURL())) return;
 
                     empty.setResourcePack(player.getUniqueId());
                 }
