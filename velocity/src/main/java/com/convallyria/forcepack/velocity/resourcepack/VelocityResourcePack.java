@@ -52,7 +52,7 @@ public final class VelocityResourcePack extends ResourcePack {
                 .setShouldForce(velocityPlugin.getConfig().getBoolean("use-new-force-pack-screen", true));
 
         final VelocityConfig serverConfig;
-        if (server.equals(ForcePackVelocity.GLOBAL_SERVER_NAME)) {
+        if (server.contains(ForcePackVelocity.GLOBAL_SERVER_NAME)) {
             serverConfig = velocityPlugin.getConfig().getConfig("global-pack");
             final List<String> excluded = serverConfig.getStringList("exclude");
             final Optional<ServerConnection> currentServer = player.getCurrentServer();

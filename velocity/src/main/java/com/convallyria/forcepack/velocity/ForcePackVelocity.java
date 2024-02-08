@@ -250,6 +250,7 @@ public class ForcePackVelocity implements ForcePackAPI {
         final boolean generateHash = resourcePack.getBoolean("generate-hash", false);
         if (!generateHash && urls.size() != hashes.size()) {
             getLogger().error("There are not the same amount of URLs and hashes! Please provide a hash for every resource pack URL! (" + id + ", " + name + ")");
+            getLogger().error("Hint: Enabling generate-hash will auto-generate missing hashes");
         }
 
         for (int i = 0; i < urls.size(); i++) {
@@ -366,34 +367,52 @@ public class ForcePackVelocity implements ForcePackAPI {
 
     private void checkGlobal() {
         final VelocityConfig globalPack = getConfig().getConfig("global-pack");
-        if (globalPack != null) {
-            final boolean enableGlobal = globalPack.getBoolean("enable");
-            if (enableGlobal) {
-                final Map<String, VelocityConfig> configs = new HashMap<>();
-                // Add the default fallback
-                configs.put("default", globalPack);
-                final VelocityConfig versionConfig = globalPack.getConfig("version");
-                if (versionConfig != null) {
-                    log("Detected versioned resource packs for global pack");
-                    for (String versionId : versionConfig.getKeys()) {
-                        configs.put(versionId, versionConfig.getConfig(versionId));
-                        log("Added version config %s for global pack", versionId);
-                    }
-                }
+        if (globalPack == null) return;
 
-                configs.forEach((id, config) -> this.registerGlobalResourcePack(config, id));
+        final boolean enableGlobal = globalPack.getBoolean("enable");
+        if (!enableGlobal) return;
+
+        final Map<String, VelocityConfig> configs = new HashMap<>();
+        // Add the default fallback
+        configs.put("default", globalPack);
+        final VelocityConfig versionConfig = globalPack.getConfig("version");
+        if (versionConfig != null) {
+            log("Detected versioned resource packs for global pack");
+            for (String versionId : versionConfig.getKeys()) {
+                configs.put(versionId, versionConfig.getConfig(versionId));
+                log("Added version config %s for global pack", versionId);
             }
         }
+
+        configs.forEach((id, config) -> {
+            List<String> urls = config.getStringList("urls");
+            if (urls.isEmpty()) {
+                urls = List.of(config.getString("url", ""));
+            }
+
+            List<String> hashes = config.getStringList("hashes");
+            if (hashes.isEmpty()) {
+                hashes = List.of(config.getString("hash", ""));
+            }
+
+            final boolean generateHash = config.getBoolean("generate-hash", false);
+            if (!generateHash && urls.size() != hashes.size()) {
+                getLogger().error("[global-pack] There are not the same amount of URLs and hashes! Please provide a hash for every resource pack URL! (" + id + ")");
+                getLogger().error("Hint: Enabling generate-hash will auto-generate missing hashes");
+            }
+
+            for (int i = 0; i < urls.size(); i++) {
+                final String url = urls.get(i);
+                final String hash = i >= hashes.size() ? null : hashes.get(i);
+                this.registerGlobalResourcePack(config, id, url, hash);
+            }
+        });
     }
 
-    private void registerGlobalResourcePack(VelocityConfig globalPack, String id) {
-        String url = globalPack.getString("url", "");
-
+    private void registerGlobalResourcePack(VelocityConfig globalPack, String id, String url, String hash) {
         url = this.checkLocalHostUrl(url);
         this.checkValidEnding(url);
         this.checkForRehost(url, "global-pack");
-
-        String hash = globalPack.getString("hash");
 
         ResourcePackURLData data = this.tryGenerateHash(globalPack, url, hash, new AtomicInteger(0));
         if (data != null) hash = data.getUrlHash();
@@ -408,7 +427,7 @@ public class ForcePackVelocity implements ForcePackAPI {
             version = () -> versionId;
         } catch (NumberFormatException ignored) {}
 
-        final VelocityResourcePack resourcePack = new VelocityResourcePack(this, GLOBAL_SERVER_NAME, url, hash, 0, null, version);
+        final VelocityResourcePack resourcePack = new VelocityResourcePack(this, GLOBAL_SERVER_NAME + "-" + url, url, hash, 0, null, version);
         resourcePacks.add(resourcePack);
         globalResourcePacks.add(resourcePack);
     }
@@ -523,7 +542,7 @@ public class ForcePackVelocity implements ForcePackAPI {
         Set<ResourcePack> validPacks = new HashSet<>();
         ResourcePack anyVersionPack = null;
         for (ResourcePack resourcePack : packs.stream().filter(pack -> {
-            boolean matches = pack.getServer().equals(serverName) || (serverName.equals(GLOBAL_SERVER_NAME) && pack.getServer().equals(GLOBAL_SERVER_NAME));
+            boolean matches = pack.getServer().equals(serverName) || (serverName.equals(GLOBAL_SERVER_NAME) && pack.getServer().contains(GLOBAL_SERVER_NAME));
             if (!matches) log("Filtering out %s: %s != %s", pack.getUUID().toString(), pack.getServer(), serverName);
             return matches;
         }).collect(Collectors.toList())) {

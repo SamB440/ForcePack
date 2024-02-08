@@ -75,7 +75,7 @@ public class ResourcePackListener {
         }
 
         final VelocityConfig root;
-        if (packByServer.getServer().equals(ForcePackVelocity.GLOBAL_SERVER_NAME)) {
+        if (packByServer.getServer().contains(ForcePackVelocity.GLOBAL_SERVER_NAME)) {
             root = plugin.getConfig().getConfig("global-pack");
         } else {
             if (packByServer instanceof VelocityResourcePack) {
