@@ -34,7 +34,6 @@ allprojects {
         maven("https://repo.viaversion.com")
         maven("https://repo.papermc.io/repository/maven-public/")
         maven("https://repo.codemc.io/repository/maven-releases/")
-        maven("https://repo.codemc.org/repository/maven-snapshots/")
         maven("https://oss.sonatype.org/content/groups/public/")
         maven("https://oss.sonatype.org/content/repositories/snapshots/")
     }

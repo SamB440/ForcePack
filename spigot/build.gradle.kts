@@ -25,7 +25,7 @@ dependencies {
         exclude("net.kyori") // avoid conflicts
     }
     compileOnly("com.viaversion:viaversion-api:4.9.2")
-    compileOnly("io.netty:netty-all:4.1.90.Final")
+    compileOnly("io.netty:netty-all:4.1.105.Final")
     compileOnly("com.github.LoneDev6:api-itemsadder:3.0.0")
 
     implementation("org.incendo:cloud-paper:${properties["cloud_version"]}") {
@@ -39,7 +39,7 @@ dependencies {
         exclude("com.convallyria.languagy.libs")
     }
     implementation("org.bstats:bstats-bukkit:3.0.1")
-    implementation(files("temp_libraries/packetevents-spigot-2.2.0.jar"))
+    implementation("com.github.retrooper.packetevents:spigot:2.2.0")
 }
 
 tasks {
@@ -47,7 +47,7 @@ tasks {
         minimize {
             exclude(project(":webserver"))
         }
-        relocate("net.kyori.adventure", "com.convallyria.forcepack.spigot.libs.adventure")
+        relocate("net.kyori", "com.convallyria.forcepack.spigot.libs.adventure")
         relocate("io.papermc.lib", "com.convallyria.forcepack.spigot.libs.paperlib")
         relocate("com.convallyria.languagy", "com.convallyria.forcepack.spigot.libs.languagy")
         relocate("org.bstats", "com.convallyria.forcepack.spigot.libs.bstats")
