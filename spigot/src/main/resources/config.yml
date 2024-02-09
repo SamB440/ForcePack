@@ -67,7 +67,7 @@ Server:
       hashes: ["118AFFFC54CDCD308702F81BA24E03223F15FE5F"]
     # Here you can specify a pack format version-specific resource pack. You would copy the section above, replacing "all" with the number.
     # Note that the "all" section must be kept as a fallback.
-    # See https://minecraft.fandom.com/wiki/Pack_format.
+    # See https://minecraft.wiki/w/Pack_format.
 
   Actions:
     # To disable commands, you can do Commands: []
