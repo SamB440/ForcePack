@@ -39,7 +39,7 @@ public final class SpigotResourcePack extends ResourcePack {
 
     private void runSetResourcePack(UUID uuid) {
         final Player player = Bukkit.getPlayer(uuid);
-        if (player == null) return;
+        if (player == null) return; // Either the player disconnected or this is an NPC
 
         spigotPlugin.getForcePackPlayer(player).ifPresent(forcePackPlayer -> {
             forcePackPlayer.getChecks().forEach(check -> check.sendPack(this));
