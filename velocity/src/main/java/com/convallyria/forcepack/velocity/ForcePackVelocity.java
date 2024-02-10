@@ -546,7 +546,7 @@ public class ForcePackVelocity implements ForcePackAPI {
             if (!matches) log("Filtering out %s: %s != %s", pack.getUUID().toString(), pack.getServer(), serverName);
             return matches;
         }).collect(Collectors.toList())) {
-            log("Trying resource pack %s (%s)", resourcePack.getURL(), resourcePack.getVersion().toString());
+            log("Trying resource pack %s (%s)", resourcePack.getURL(), resourcePack.getVersion().map(ResourcePackVersion::version).toString());
 
             final Optional<ResourcePackVersion> version = resourcePack.getVersion();
             if (version.isEmpty()) {
