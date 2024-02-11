@@ -40,6 +40,10 @@ public class ProtocolUtil {
         final Object channel = user.getChannel();
         if (!ChannelHelper.isOpen(channel)) return;
 
+        sendBypassingPacket(user, channel, packet);
+    }
+
+    private static void sendBypassingPacket(User user, Object channel, PacketWrapper<?> packet) {
         // If ViaVersion is present in the pipeline
         if (user.getClientVersion().isNewerThan(PacketEvents.getAPI().getServerManager().getVersion().toClientVersion())
                 && ChannelHelper.getPipelineHandler(channel, "via-encoder") != null) {

@@ -2,12 +2,12 @@ package com.convallyria.forcepack.spigot.listener;
 
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.forcepack.spigot.event.MultiVersionResourcePackStatusEvent;
+import com.convallyria.forcepack.spigot.event.PostPacketJoinGameEvent;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
-import com.github.retrooper.packetevents.netty.channel.ChannelHelper;
 import com.github.retrooper.packetevents.protocol.ConnectionState;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
@@ -45,6 +45,8 @@ public class PacketListener extends PacketListenerAbstract {
             }
 
             final Player player = (Player) event.getPlayer();
+            plugin.log("Received packet resource pack status from " + player.getName());
+
             final WrapperPlayClientResourcePackStatus.Result result = status.getResult();
             final UUID packId = status.getPackId();
             final MultiVersionResourcePackStatusEvent packEvent = new MultiVersionResourcePackStatusEvent(player, packId, ResourcePackStatus.valueOf(result.name()), false, false);
@@ -57,7 +59,10 @@ public class PacketListener extends PacketListenerAbstract {
     public void onPacketSend(PacketSendEvent event) {
         if (event.getPacketType() == PacketType.Play.Server.JOIN_GAME) {
             final User user = event.getUser();
-            ChannelHelper.runInEventLoop(user.getChannel(), () -> moveBeforeVia(user));
+            event.getTasksAfterSend().add(() -> {
+                moveBeforeVia(user);
+                Bukkit.getPluginManager().callEvent(new PostPacketJoinGameEvent((Player) event.getPlayer()));
+            });
         }
     }
 
@@ -72,6 +77,7 @@ public class PacketListener extends PacketListenerAbstract {
 
         final Channel channel = (Channel) user.getChannel();
         final ChannelPipeline pipeline = channel.pipeline();
+
         // If viaversion is present
         if (pipeline.get("via-decoder") == null) return;
 

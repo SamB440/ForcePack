@@ -63,7 +63,7 @@ import java.util.stream.Collectors;
 public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
     private Translator translator;
-    private PlatformScheduler scheduler;
+    private PlatformScheduler<?> scheduler;
     private final Map<ResourcePackVersion, Set<ResourcePack>> resourcePacks = new HashMap<>();
     public boolean velocityMode;
 
@@ -109,7 +109,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
     }
 
     @Override
-    public PlatformScheduler getScheduler() {
+    public PlatformScheduler<?> getScheduler() {
         return scheduler;
     }
 

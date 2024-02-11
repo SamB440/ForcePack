@@ -528,7 +528,7 @@ public class ForcePackVelocity implements ForcePackAPI {
     }
 
     @Override
-    public PlatformScheduler getScheduler() {
+    public PlatformScheduler<?> getScheduler() {
         return scheduler;
     }
 
