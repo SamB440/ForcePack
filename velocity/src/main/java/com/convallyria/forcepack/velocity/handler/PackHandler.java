@@ -162,7 +162,7 @@ public final class PackHandler {
                 for (ResourcePack empty : packs) {
                     // If their current applied resource pack is the unloaded one, don't send it again
                     // Checking URL rather than hash should be fine... it's simpler and should be unique.
-                    if (appliedResourcePack != null && appliedResourcePack.getUrl().equals(empty.getURL())) return;
+                    if (appliedResourcePack == null || appliedResourcePack.getUrl().equals(empty.getURL())) return;
 
                     empty.setResourcePack(player.getUniqueId());
                 }
