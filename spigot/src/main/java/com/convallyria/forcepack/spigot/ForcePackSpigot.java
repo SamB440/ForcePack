@@ -174,13 +174,15 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
     @Override
     public void onEnable() {
+        this.generateLang();
+        this.createConfig();
+
         PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
-        PacketEvents.getAPI().getSettings().debug(false).checkForUpdates(false);
+        PacketEvents.getAPI().getSettings().debug(debug()).checkForUpdates(false);
         PacketEvents.getAPI().load();
 
         GeyserUtil.isGeyserInstalledHere = Bukkit.getPluginManager().getPlugin("Geyser-Spigot") != null;
-        this.generateLang();
-        this.createConfig();
+
         this.adventure = BukkitAudiences.create(this);
         MiniMessage miniMessage = MiniMessage.miniMessage();
         this.velocityMode = getConfig().getBoolean("velocity-mode");
