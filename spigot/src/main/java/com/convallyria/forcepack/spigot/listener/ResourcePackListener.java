@@ -10,7 +10,6 @@ import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.forcepack.spigot.event.ForcePackReloadEvent;
 import com.convallyria.forcepack.spigot.event.MultiVersionResourcePackStatusEvent;
-import com.convallyria.forcepack.spigot.event.PostPacketJoinGameEvent;
 import com.convallyria.forcepack.spigot.translation.Translations;
 import com.convallyria.forcepack.spigot.util.ProtocolUtil;
 import net.kyori.adventure.resource.ResourcePackStatus;
@@ -19,6 +18,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 
@@ -199,7 +199,7 @@ public class ResourcePackListener implements Listener {
     }
 
     @EventHandler
-    public void onPlayerJoin(PostPacketJoinGameEvent event) {
+    public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
         boolean canBypass = player.hasPermission(Permissions.BYPASS) && getConfig().getBoolean("Server.bypass-permission");

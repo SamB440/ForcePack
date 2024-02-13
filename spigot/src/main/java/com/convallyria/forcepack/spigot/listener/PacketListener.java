@@ -2,7 +2,6 @@ package com.convallyria.forcepack.spigot.listener;
 
 import com.convallyria.forcepack.spigot.ForcePackSpigot;
 import com.convallyria.forcepack.spigot.event.MultiVersionResourcePackStatusEvent;
-import com.convallyria.forcepack.spigot.event.PostPacketJoinGameEvent;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
@@ -59,10 +58,7 @@ public class PacketListener extends PacketListenerAbstract {
     public void onPacketSend(PacketSendEvent event) {
         if (event.getPacketType() == PacketType.Play.Server.JOIN_GAME) {
             final User user = event.getUser();
-            event.getTasksAfterSend().add(() -> {
-                moveBeforeVia(user);
-                Bukkit.getPluginManager().callEvent(new PostPacketJoinGameEvent((Player) event.getPlayer()));
-            });
+            event.getTasksAfterSend().add(() -> moveBeforeVia(user));
         }
     }
 
