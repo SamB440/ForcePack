@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     implementation(project(":spigot", "shadow"))
+    implementation(project(":sponge", "shadow"))
     implementation(project(":velocity", "shadow"))
 }
 

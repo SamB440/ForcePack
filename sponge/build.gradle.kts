@@ -16,12 +16,14 @@ sponge {
 
     plugin("forcepack") {
         displayName("ForcePack")
+        description("Resource pack handling utilities and enforcement, with Velocity and multiple resource packs support. ")
         entrypoint("com.convallyria.forcepack.sponge.ForcePackSponge")
         links {
             homepage("https://github.com/SamB440/ForcePack")
             source("https://github.com/SamB440/ForcePack")
             issues("https://github.com/SamB440/ForcePack/issues")
         }
+        license("GPL-3")
 
         dependency("spongeapi") {
             loadOrder(PluginDependency.LoadOrder.AFTER)
