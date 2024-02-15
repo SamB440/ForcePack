@@ -1,7 +1,6 @@
 package com.convallyria.forcepack.sponge;
 
 import com.convallyria.forcepack.api.ForcePackAPI;
-import com.convallyria.forcepack.api.logger.ForcePackLogger;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.schedule.PlatformScheduler;
 import com.convallyria.forcepack.sponge.schedule.SpongeScheduler;
@@ -18,18 +17,20 @@ import java.util.Set;
 @Plugin("forcepack")
 public class ForcePackSponge implements ForcePackAPI {
 
-    @Inject
-    private PluginContainer pluginContainer;
+    private final PluginContainer pluginContainer;
+    private final Logger logger;
+    private final SpongeScheduler scheduler;
 
     @Inject
-    private Logger logger;
-
-    private SpongeScheduler scheduler;
+    public ForcePackSponge(PluginContainer pluginContainer, Logger logger) {
+        this.pluginContainer = pluginContainer;
+        this.logger = logger;
+        this.scheduler = new SpongeScheduler(this);
+    }
 
     @Listener
     public void onServerStart(final StartedEngineEvent<Server> event) {
 
-        this.scheduler = new SpongeScheduler(this);
     }
 
     public PluginContainer pluginContainer() {
@@ -42,7 +43,7 @@ public class ForcePackSponge implements ForcePackAPI {
     }
 
     @Override
-    public PlatformScheduler getScheduler() {
+    public PlatformScheduler<?> getScheduler() {
         return scheduler;
     }
 }
