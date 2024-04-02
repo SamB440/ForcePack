@@ -1,3 +1,5 @@
+import org.gradle.internal.impldep.org.junit.experimental.categories.Categories.CategoryFilter.exclude
+
 repositories {
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
     maven("https://repo.papermc.io/repository/maven-public/")
@@ -15,7 +17,7 @@ dependencies {
     annotationProcessor("com.velocitypowered:velocity-api:3.3.0-SNAPSHOT")
     compileOnly("com.electronwill.night-config:toml:3.6.6")
 
-    implementation("org.bstats:bstats-velocity:3.0.1")
+    implementation("org.bstats:bstats-velocity:3.0.2")
 
     implementation("org.incendo:cloud-velocity:${properties["cloud_version"]}") {
         exclude("org.checkerframework")

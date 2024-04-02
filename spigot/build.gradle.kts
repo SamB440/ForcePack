@@ -1,3 +1,5 @@
+import org.gradle.internal.impldep.org.junit.experimental.categories.Categories.CategoryFilter.exclude
+
 repositories {
     maven("https://erethon.de/repo/")
     maven("https://repo.convallyria.com/releases")
@@ -10,8 +12,8 @@ repositories {
 configurations {
     all {
         resolutionStrategy {
-            force("net.kyori:adventure-api:4.15.0")
-            force("net.kyori:adventure-bom:4.15.0")
+            force("net.kyori:adventure-api:4.16.0")
+            force("net.kyori:adventure-bom:4.16.0")
         }
     }
 }
@@ -34,12 +36,12 @@ dependencies {
     implementation("net.kyori:adventure-platform-bukkit:4.3.2") {
         exclude("net.kyori", "adventure-api") // not up-to-date - use minimessage version
     }
-    implementation("net.kyori:adventure-text-minimessage:4.15.0")
+    implementation("net.kyori:adventure-text-minimessage:4.16.0")
     implementation("com.convallyria.languagy:api:3.0.3-SNAPSHOT") {
         exclude("com.convallyria.languagy.libs")
     }
-    implementation("org.bstats:bstats-bukkit:3.0.1")
-    implementation("com.github.retrooper.packetevents:spigot:2.2.0")
+    implementation("org.bstats:bstats-bukkit:3.0.2")
+    implementation("com.github.retrooper.packetevents:spigot:${properties["packetevents_version"]}")
 }
 
 tasks {

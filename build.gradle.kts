@@ -1,3 +1,5 @@
+import org.gradle.internal.impldep.org.junit.experimental.categories.Categories.CategoryFilter.exclude
+
 plugins {
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("java")
@@ -49,8 +51,9 @@ allprojects {
 
         shadowJar {
             archiveClassifier.set("")
-            relocate("cloud.commandframework", "com.convallyria.forcepack.libs.commandframework")
+            relocate("org.incendo.cloud", "com.convallyria.forcepack.libs.cloud")
             relocate("io.leangen.geantyref", "com.convallyria.forcepack.libs.typetoken")
+            relocate("me.lucko.jarrelocator", "com.convallyria.forcepack.libs.relocator")
         }
 
         build {
