@@ -87,19 +87,19 @@ public class VelocityConfig {
     }
 
     public int getInt(String path) {
-        return config.getOrElse(path, -1);
+        return config.getIntOrElse(path, -1);
     }
 
     public int getInt(String path, int def) {
-        return config.getOrElse(path, def);
+        return config.getIntOrElse(path, def);
     }
 
     public long getLong(String path) {
-        return config.get(path);
+        return config.getLong(path);
     }
 
     public long getLong(String path, long def) {
-        return config.getOrElse(path, def);
+        return config.getLongOrElse(path, def);
     }
 
     public Collection<? extends String> getKeys() {
