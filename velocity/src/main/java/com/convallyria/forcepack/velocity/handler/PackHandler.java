@@ -4,7 +4,6 @@ import com.convallyria.forcepack.api.player.ForcePackPlayer;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.ClientVersion;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
-import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.convallyria.forcepack.velocity.player.ForcePackVelocityPlayer;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
@@ -17,6 +16,7 @@ import com.velocitypowered.api.scheduler.Scheduler;
 import net.kyori.adventure.resource.ResourcePackStatus;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.spongepowered.configurate.ConfigurationNode;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -94,7 +94,7 @@ public final class PackHandler {
         final ProtocolVersion protocolVersion = player.getProtocolVersion();
         final int protocol = protocolVersion.getProtocol();
         plugin.getPacksByServerAndVersion(serverInfo.getName(), protocolVersion).ifPresentOrElse(resourcePacks -> {
-            final boolean forceApply = protocol != ProtocolVersion.MINECRAFT_1_20_2.getProtocol() && plugin.getConfig().getBoolean("force-constant-download", false);
+            final boolean forceApply = protocol != ProtocolVersion.MINECRAFT_1_20_2.getProtocol() && plugin.getConfig().node("force-constant-download").getBoolean(false);
             if (protocol >= ProtocolVersion.MINECRAFT_1_20_3.getProtocol()) {
                 // Get all packs the player has applied and remove any not on this server!
                 player.getAppliedResourcePacks().stream().filter(pack -> forceApply || resourcePacks.stream().noneMatch(pack2 -> pack2.getUUID().equals(pack.getId()))).forEach(toRemove -> {
@@ -104,7 +104,7 @@ public final class PackHandler {
             }
 
             final int maxSize = ClientVersion.getMaxSizeForVersion(protocol);
-            final boolean forceSend = plugin.getConfig().getBoolean("force-invalid-size", false);
+            final boolean forceSend = plugin.getConfig().node("force-invalid-size").getBoolean(false);
 
             // Get all packs that need to be applied
             resourcePacks.stream().filter(pack -> {
@@ -147,14 +147,14 @@ public final class PackHandler {
                 return;
             }
 
-            final VelocityConfig unloadPack = plugin.getConfig().getConfig("unload-pack");
-            final boolean enableUnload = unloadPack.getBoolean("enable");
+            final ConfigurationNode unloadPack = plugin.getConfig().node("unload-pack");
+            final boolean enableUnload = unloadPack.node("enable").getBoolean();
             if (!enableUnload) {
                 plugin.log("Unload pack is disabled, not sending for server %s, user %s.", serverInfo.getName(), player.getUsername());
                 return;
             }
 
-            final List<String> excluded = unloadPack.getStringList("exclude");
+            final List<String> excluded = plugin.getStringListSafe(unloadPack.node("exclude"));
             if (excluded.contains(serverInfo.getName())) return;
 
             plugin.getPacksByServerAndVersion(ForcePackVelocity.EMPTY_SERVER_NAME, player.getProtocolVersion()).ifPresent(packs -> {
@@ -173,7 +173,7 @@ public final class PackHandler {
     private void runSetPackTask(Player player, ResourcePack resourcePack, int protocol) {
         // There is a bug in velocity when connecting to another server, where the prompt screen
         // will be forcefully closed by the server if we don't delay it for a second.
-        final boolean update = plugin.getConfig().getBoolean("update-gui", true);
+        final boolean update = plugin.getConfig().node("update-gui").getBoolean(true);
         AtomicReference<ScheduledTask> task = new AtomicReference<>();
         final Scheduler.TaskBuilder builder = plugin.getServer().getScheduler().buildTask(plugin, () -> {
             for (ResourcePackInfo appliedResourcePack : player.getAppliedResourcePacks()) {
@@ -188,7 +188,7 @@ public final class PackHandler {
         }).delay(1L, TimeUnit.SECONDS);
 
         if (update && protocol <= 340) { // Prevent escaping out for clients on <= 1.12
-            final long speed = plugin.getConfig().getLong("update-gui-speed", 1000);
+            final long speed = plugin.getConfig().node("update-gui-speed").getLong(1000);
             builder.repeat(speed, TimeUnit.MILLISECONDS);
         }
 

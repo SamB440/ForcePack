@@ -6,13 +6,11 @@ import com.convallyria.forcepack.api.player.ForcePackPlayer;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
-import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.convallyria.forcepack.velocity.handler.PackHandler;
 import com.convallyria.forcepack.velocity.resourcepack.VelocityResourcePack;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
-import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.PlayerResourcePackStatusEvent;
 import com.velocitypowered.api.event.player.ServerPostConnectEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
@@ -20,6 +18,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.player.ResourcePackInfo;
 import net.kyori.adventure.text.Component;
+import org.spongepowered.configurate.ConfigurationNode;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
@@ -67,26 +66,26 @@ public class ResourcePackListener {
             return;
         }
 
-        boolean geyser = plugin.getConfig().getBoolean("geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
-        boolean canBypass = player.hasPermission(Permissions.BYPASS) && plugin.getConfig().getBoolean("bypass-permission");
+        boolean geyser = plugin.getConfig().node("geyser").getBoolean() && GeyserUtil.isBedrockPlayer(player.getUniqueId());
+        boolean canBypass = player.hasPermission(Permissions.BYPASS) && plugin.getConfig().node("bypass-permission").getBoolean();
         if (canBypass || geyser) {
             plugin.log("Ignoring player " + player.getUsername() + " as they do not have permissions or are a geyser player.");
             return;
         }
 
-        final VelocityConfig root;
+        final ConfigurationNode root;
         if (packByServer.getServer().contains(ForcePackVelocity.GLOBAL_SERVER_NAME)) {
-            root = plugin.getConfig().getConfig("global-pack");
+            root = plugin.getConfig().node("global-pack");
         } else {
             if (packByServer instanceof VelocityResourcePack) {
                 VelocityResourcePack vrp = (VelocityResourcePack) packByServer;
                 if (vrp.getGroup() != null) {
-                    root = plugin.getConfig().getConfig("groups").getConfig(vrp.getGroup());
+                    root = plugin.getConfig().node("groups").node(vrp.getGroup());
                 } else {
-                    root = plugin.getConfig().getConfig("servers").getConfig(serverName);
+                    root = plugin.getConfig().node("servers").node(serverName);
                 }
             } else {
-                root = plugin.getConfig().getConfig("servers").getConfig(serverName);
+                root = plugin.getConfig().node("servers").node(serverName);
             }
         }
 
@@ -94,15 +93,15 @@ public class ResourcePackListener {
 
         if (tryValidateHacks(player, status, root)) return;
 
-        final VelocityConfig actions = root.getConfig("actions").getConfig(status.name());
+        final ConfigurationNode actions = root.node("actions").node(status.name());
         if (actions != null) {
-            for (String cmd : actions.getStringList("commands")) {
+            for (String cmd : plugin.getStringListSafe(actions.node("commands"))) {
                 final CommandSource console = plugin.getServer().getConsoleCommandSource();
                 plugin.getServer().getCommandManager().executeAsync(console, cmd.replace("[player]", player.getUsername()));
             }
         }
 
-        final boolean kick = actions != null && actions.getBoolean("kick");
+        final boolean kick = actions != null && actions.node("kick").getBoolean();
 
         // Declined/failed is valid and should be allowed, server owner decides whether they get kicked
         if (status != PlayerResourcePackStatusEvent.Status.ACCEPTED && status != PlayerResourcePackStatusEvent.Status.DOWNLOADED && !kick) {
@@ -113,7 +112,7 @@ public class ResourcePackListener {
             currentServer.get().sendPluginMessage(PackHandler.FORCEPACK_STATUS_IDENTIFIER, (packByServer.getUUID().toString() + ";" + name + ";" + !plugin.getPackHandler().isWaiting(player)).getBytes(StandardCharsets.UTF_8));
         }
 
-        final String text = actions == null ? null : actions.getString("message");
+        final String text = actions == null ? null : actions.node("message").getString();
         if (text == null) return;
 
         final Component component = plugin.getMiniMessage().deserialize(text);
@@ -124,8 +123,8 @@ public class ResourcePackListener {
         }
     }
 
-    private boolean tryValidateHacks(Player player, PlayerResourcePackStatusEvent.Status status, VelocityConfig root) {
-        final boolean tryPrevent = plugin.getConfig().getBoolean("try-to-stop-fake-accept-hacks", true);
+    private boolean tryValidateHacks(Player player, PlayerResourcePackStatusEvent.Status status, ConfigurationNode root) {
+        final boolean tryPrevent = plugin.getConfig().node("try-to-stop-fake-accept-hacks").getBoolean(true);
         if (!tryPrevent) return false;
 
         final ForcePackPlayer forcePackPlayer = plugin.getPackHandler().getForcePackPlayer(player).orElse(null);
@@ -146,16 +145,16 @@ public class ResourcePackListener {
 
         if (hasFailed) {
             plugin.log("Kicking player " + player.getUsername() + " because they failed a check.");
-            final VelocityConfig actionsRoot = root.getConfig("actions");
-            final VelocityConfig actions = actionsRoot.getConfig("FAILED_DOWNLOAD");
+            final ConfigurationNode actionsRoot = root.node("actions");
+            final ConfigurationNode actions = actionsRoot.node("FAILED_DOWNLOAD");
             return disconnectAction(player, actions);
         }
 
         return false;
     }
 
-    private boolean disconnectAction(Player player, VelocityConfig actions) {
-        final String text = actions.getString("message");
+    private boolean disconnectAction(Player player, ConfigurationNode actions) {
+        final String text = actions.node("message").getString();
         if (text == null) return true;
         player.disconnect(plugin.getMiniMessage().deserialize(text));
         return true;
@@ -167,8 +166,8 @@ public class ResourcePackListener {
         final Optional<ServerConnection> currentServer = player.getCurrentServer();
         if (currentServer.isEmpty()) return;
 
-        boolean geyser = plugin.getConfig().getBoolean("geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
-        boolean canBypass = player.hasPermission(Permissions.BYPASS) && plugin.getConfig().getBoolean("bypass-permission");
+        boolean geyser = plugin.getConfig().node("geyser").getBoolean() && GeyserUtil.isBedrockPlayer(player.getUniqueId());
+        boolean canBypass = player.hasPermission(Permissions.BYPASS) && plugin.getConfig().node("bypass-permission").getBoolean();
         plugin.log(player.getUsername() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
         if (!canBypass && !geyser) {
             plugin.getPackHandler().setPack(player, currentServer.get());

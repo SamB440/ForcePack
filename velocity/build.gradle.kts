@@ -15,7 +15,6 @@ dependencies {
 
     compileOnly("com.velocitypowered:velocity-api:3.3.0-SNAPSHOT")
     annotationProcessor("com.velocitypowered:velocity-api:3.3.0-SNAPSHOT")
-    compileOnly("com.electronwill.night-config:toml:3.6.6")
 
     implementation("org.bstats:bstats-velocity:3.0.2")
 

@@ -10,7 +10,6 @@ import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.api.utils.HashingUtil;
 import com.convallyria.forcepack.api.verification.ResourcePackURLData;
 import com.convallyria.forcepack.velocity.command.Commands;
-import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.convallyria.forcepack.velocity.handler.PackHandler;
 import com.convallyria.forcepack.velocity.listener.ResourcePackListener;
 import com.convallyria.forcepack.velocity.resourcepack.VelocityResourcePack;
@@ -39,11 +38,17 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bstats.velocity.Metrics;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
+import org.spongepowered.configurate.CommentedConfigurationNode;
+import org.spongepowered.configurate.ConfigurationNode;
+import org.spongepowered.configurate.loader.ConfigurationLoader;
+import org.spongepowered.configurate.serialize.SerializationException;
+import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -99,7 +104,7 @@ public class ForcePackVelocity implements ForcePackAPI {
         this.scheduler = new VelocityScheduler(this);
     }
 
-    private VelocityConfig config;
+    private ConfigurationNode config;
     private PackHandler packHandler;
     private final Set<ResourcePack> globalResourcePacks = new HashSet<>();
     private final Set<ResourcePack> resourcePacks = new HashSet<>();
@@ -110,16 +115,16 @@ public class ForcePackVelocity implements ForcePackAPI {
         GeyserUtil.isGeyserInstalledHere = server.getPluginManager().getPlugin("geyser").isPresent();
         this.reloadConfig();
 
-        final VelocityConfig webServerConfig = getConfig().getConfig("web-server");
-        if (webServerConfig != null && webServerConfig.getBoolean("enabled")) {
+        final ConfigurationNode webServerConfig = getConfig().node("web-server");
+        if (webServerConfig != null && webServerConfig.node("enabled").getBoolean()) {
             try {
                 getLogger().info("Enabling web server...");
                 getLogger().info("Downloading required dependencies, this might take a while! Subsequent startups will be faster.");
                 WebServerDependencyDownloader.download(this, getDataDirectory(), this::log);
                 getLogger().info("Finished downloading required dependencies.");
-                final String configIp = webServerConfig.getString("server-ip", "localhost");
+                final String configIp = webServerConfig.node("server-ip").getString("localhost");
                 final String serverIp = !configIp.equals("localhost") ? configIp : ForcePackWebServer.getIp();
-                this.webServer = new ForcePackWebServer(dataDirectory, serverIp, webServerConfig.getInt("port", 8080));
+                this.webServer = new ForcePackWebServer(dataDirectory, serverIp, webServerConfig.node("port").getInt(8080));
                 getLogger().info("Started web server.");
             } catch (IOException e) {
                 getLogger().error("Error starting web server: " + e.getMessage());
@@ -155,19 +160,25 @@ public class ForcePackVelocity implements ForcePackAPI {
 
     public void reloadConfig() {
         this.createConfig();
-        this.config = new VelocityConfig(this);
+        final File file = new File(dataDirectory + File.separator + "config.toml");
+        ConfigurationLoader<CommentedConfigurationNode> loader = YamlConfigurationLoader.builder().path(file.toPath()).build();
+        try {
+            config = loader.load();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void registerListeners() {
         final EventManager eventManager = server.getEventManager();
         eventManager.register(this, new ResourcePackListener(this));
 
-        if (!getConfig().getBoolean("disable-commands-until-loaded", false)) return;
+        if (!getConfig().node("disable-commands-until-loaded").getBoolean(false)) return;
         eventManager.register(this, CommandExecuteEvent.class, event -> {
             if (event.getCommandSource() instanceof Player) {
                 Player player = (Player) event.getCommandSource();
                 final String command = event.getCommand();
-                if (getConfig().getStringList("exclude-commands").contains(command)) return;
+                if (getStringListSafe(getConfig().node("exclude-commands")).contains(command)) return;
                 if (packHandler.isWaiting(player)) {
                     log("Stopping command '%s' because player has not loaded all their resource packs yet.", command);
                     event.setResult(CommandExecuteEvent.CommandResult.denied());
@@ -186,8 +197,8 @@ public class ForcePackVelocity implements ForcePackAPI {
         this.checkUnload();
         this.checkGlobal();
 
-        final boolean verifyPacks = getConfig().getBoolean("verify-resource-packs");
-        final VelocityConfig groups = getConfig().getConfig("groups");
+        final boolean verifyPacks = getConfig().node("verify-resource-packs").getBoolean();
+        final ConfigurationNode groups = getConfig().node("groups");
         if (groups != null) {
             addResourcePacks(player, "groups");
         }
@@ -206,21 +217,23 @@ public class ForcePackVelocity implements ForcePackAPI {
     }
 
     private void addResourcePacks(@Nullable Player player, String rootName) {
-        final boolean verifyPacks = getConfig().getBoolean("verify-resource-packs");
+        final boolean verifyPacks = getConfig().node("verify-resource-packs").getBoolean();
         final boolean groups = rootName.equals("groups");
         final String typeName = groups ? "group" : "server";
-        VelocityConfig root = groups ? getConfig().getConfig("groups") : getConfig().getConfig("servers");
-        for (String name : root.getKeys()) {
+        ConfigurationNode root = groups ? getConfig().node("groups") : getConfig().node("servers");
+        for (ConfigurationNode child : root.childrenList()) {
+            final String name = (String) child.key();
             log("Checking %s - %s", typeName, name);
-            final VelocityConfig serverConfig = root.getConfig(name);
-            final Map<String, VelocityConfig> configs = new HashMap<>();
+            final ConfigurationNode serverConfig = root.node(name);
+            final Map<String, ConfigurationNode> configs = new HashMap<>();
             // Add the default fallback
-            configs.put("default", serverConfig.getConfig("resourcepack"));
-            final VelocityConfig versionConfig = serverConfig.getConfig("version");
+            configs.put("default", serverConfig.node("resourcepack"));
+            final ConfigurationNode versionConfig = serverConfig.node("version");
             if (versionConfig != null) {
                 log("Detected versioned resource packs for %s", name);
-                for (String versionId : versionConfig.getKeys()) {
-                    configs.put(versionId, versionConfig.getConfig(versionId).getConfig("resourcepack"));
+                for (ConfigurationNode versionChild : versionConfig.childrenList()) {
+                    final String versionId = (String) versionChild.key();
+                    configs.put(versionId, versionChild.node("resourcepack"));
                     log("Added version config %s for %s", versionId, name);
                 }
             }
@@ -231,23 +244,27 @@ public class ForcePackVelocity implements ForcePackAPI {
                     return;
                 }
 
-                this.registerResourcePack(serverConfig, config, id, name, typeName, groups, verifyPacks, player);
+                try {
+                    this.registerResourcePack(serverConfig, config, id, name, typeName, groups, verifyPacks, player);
+                } catch (SerializationException e) {
+                    logger.error("Error loading resource pack '" + id + "'!", e);
+                }
             });
         }
     }
     
-    private void registerResourcePack(VelocityConfig rootServerConfig, VelocityConfig resourcePack, String id, String name, String typeName, boolean groups, boolean verifyPacks, @Nullable Player player) {
-        List<String> urls = resourcePack.getStringList("urls");
+    private void registerResourcePack(ConfigurationNode rootServerConfig, ConfigurationNode resourcePack, String id, String name, String typeName, boolean groups, boolean verifyPacks, @Nullable Player player) throws SerializationException {
+        List<String> urls = resourcePack.node("urls").getList(String.class, ArrayList::new);
         if (urls.isEmpty()) {
-           urls = List.of(resourcePack.getString("url", ""));
+           urls = List.of(resourcePack.node("url").getString(""));
         }
 
-        List<String> hashes = resourcePack.getStringList("hashes");
+        List<String> hashes = resourcePack.node("hashes").getList(String.class, ArrayList::new);
         if (hashes.isEmpty()) {
-            hashes = List.of(resourcePack.getString("hash", ""));
+            hashes = List.of(resourcePack.node("hash").getString(""));
         }
 
-        final boolean generateHash = resourcePack.getBoolean("generate-hash", false);
+        final boolean generateHash = resourcePack.node("generate-hash").getBoolean(false);
         if (!generateHash && urls.size() != hashes.size()) {
             getLogger().error("There are not the same amount of URLs and hashes! Please provide a hash for every resource pack URL! (" + id + ", " + name + ")");
             getLogger().error("Hint: Enabling generate-hash will auto-generate missing hashes");
@@ -260,7 +277,7 @@ public class ForcePackVelocity implements ForcePackAPI {
         }
     }
 
-    private void handleRegister(VelocityConfig rootServerConfig, VelocityConfig resourcePack, String name, String id, String typeName, String url, @Nullable String hash, boolean groups, boolean verifyPacks, @Nullable Player player) {
+    private void handleRegister(ConfigurationNode rootServerConfig, ConfigurationNode resourcePack, String name, String id, String typeName, String url, @Nullable String hash, boolean groups, boolean verifyPacks, @Nullable Player player) throws SerializationException {
         final ConsoleCommandSource consoleSender = this.getServer().getConsoleCommandSource();
         if (url.isEmpty()) {
             logger.error("No URL found for " + name + ". Did you set up the config correctly?");
@@ -275,7 +292,7 @@ public class ForcePackVelocity implements ForcePackAPI {
         ResourcePackURLData data = this.tryGenerateHash(resourcePack, url, hash, sizeInMB);
         if (data != null) hash = data.getUrlHash();
 
-        if (getConfig().getBoolean("enable-mc-164316-fix", false)) {
+        if (getConfig().node("enable-mc-164316-fix").getBoolean(false)) {
             url = url + "#" + hash;
         }
 
@@ -327,8 +344,8 @@ public class ForcePackVelocity implements ForcePackAPI {
         } catch (NumberFormatException ignored) {}
 
         if (groups) {
-            final boolean exact = rootServerConfig.getBoolean("exact-match");
-            for (String serverName : rootServerConfig.getStringList("servers")) {
+            final boolean exact = rootServerConfig.node("exact-match").getBoolean();
+            for (String serverName : rootServerConfig.node("servers").getList(String.class, ArrayList::new)) {
                 for (RegisteredServer registeredServer : server.getAllServers()) {
                     final String serverInfoName = registeredServer.getServerInfo().getName();
                     final boolean matches = exact ?
@@ -346,16 +363,16 @@ public class ForcePackVelocity implements ForcePackAPI {
     }
 
     private void checkUnload() {
-        final VelocityConfig unloadPack = getConfig().getConfig("unload-pack");
-        final boolean enableUnload = unloadPack.getBoolean("enable");
+        final ConfigurationNode unloadPack = getConfig().node("unload-pack");
+        final boolean enableUnload = unloadPack.node("enable").getBoolean();
         if (enableUnload) {
-            String url = unloadPack.getString("url", "");
+            String url = unloadPack.node("url").getString("");
 
             url = this.checkLocalHostUrl(url);
             this.checkValidEnding(url);
             this.checkForRehost(url, "unload-pack");
 
-            String hash = unloadPack.getString("hash");
+            String hash = unloadPack.node("hash").getString();
 
             ResourcePackURLData data = this.tryGenerateHash(unloadPack, url, hash, new AtomicInteger(0));
             if (data != null) hash = data.getUrlHash();
@@ -366,36 +383,37 @@ public class ForcePackVelocity implements ForcePackAPI {
     }
 
     private void checkGlobal() {
-        final VelocityConfig globalPack = getConfig().getConfig("global-pack");
+        final ConfigurationNode globalPack = getConfig().node("global-pack");
         if (globalPack == null) return;
 
-        final boolean enableGlobal = globalPack.getBoolean("enable");
+        final boolean enableGlobal = globalPack.node("enable").getBoolean();
         if (!enableGlobal) return;
 
-        final Map<String, VelocityConfig> configs = new HashMap<>();
+        final Map<String, ConfigurationNode> configs = new HashMap<>();
         // Add the default fallback
         configs.put("default", globalPack);
-        final VelocityConfig versionConfig = globalPack.getConfig("version");
+        final ConfigurationNode versionConfig = globalPack.node("version");
         if (versionConfig != null) {
             log("Detected versioned resource packs for global pack");
-            for (String versionId : versionConfig.getKeys()) {
-                configs.put(versionId, versionConfig.getConfig(versionId));
+            for (ConfigurationNode versionChild : versionConfig.childrenList()) {
+                final String versionId = (String) versionChild.key();
+                configs.put(versionId, versionConfig.node(versionId));
                 log("Added version config %s for global pack", versionId);
             }
         }
 
         configs.forEach((id, config) -> {
-            List<String> urls = config.getStringList("urls");
+            List<String> urls = getStringListSafe(config.node("urls"));
             if (urls.isEmpty()) {
-                urls = List.of(config.getString("url", ""));
+                urls = List.of(config.node("url").getString(""));
             }
 
-            List<String> hashes = config.getStringList("hashes");
+            List<String> hashes = getStringListSafe(config.node("hashes"));
             if (hashes.isEmpty()) {
-                hashes = List.of(config.getString("hash", ""));
+                hashes = List.of(config.node("hash").getString(""));
             }
 
-            final boolean generateHash = config.getBoolean("generate-hash", false);
+            final boolean generateHash = config.node("generate-hash").getBoolean(false);
             if (!generateHash && urls.size() != hashes.size()) {
                 getLogger().error("[global-pack] There are not the same amount of URLs and hashes! Please provide a hash for every resource pack URL! (" + id + ")");
                 getLogger().error("Hint: Enabling generate-hash will auto-generate missing hashes");
@@ -409,7 +427,7 @@ public class ForcePackVelocity implements ForcePackAPI {
         });
     }
 
-    private void registerGlobalResourcePack(VelocityConfig globalPack, String id, String url, String hash) {
+    private void registerGlobalResourcePack(ConfigurationNode globalPack, String id, String url, String hash) {
         url = this.checkLocalHostUrl(url);
         this.checkValidEnding(url);
         this.checkForRehost(url, "global-pack");
@@ -417,7 +435,7 @@ public class ForcePackVelocity implements ForcePackAPI {
         ResourcePackURLData data = this.tryGenerateHash(globalPack, url, hash, new AtomicInteger(0));
         if (data != null) hash = data.getUrlHash();
 
-        if (getConfig().getBoolean("enable-mc-164316-fix", false)) {
+        if (getConfig().node("enable-mc-164316-fix").getBoolean(false)) {
             url = url + "#" + hash;
         }
 
@@ -489,8 +507,8 @@ public class ForcePackVelocity implements ForcePackAPI {
     }
 
     @Nullable
-    private ResourcePackURLData tryGenerateHash(VelocityConfig resourcePack, String url, String hash, AtomicInteger sizeInMB) {
-        if (resourcePack.getBoolean("generate-hash", false)) {
+    private ResourcePackURLData tryGenerateHash(ConfigurationNode resourcePack, String url, String hash, AtomicInteger sizeInMB) {
+        if (resourcePack.node("generate-hash").getBoolean(false)) {
             getLogger().info("Auto-generating resource pack hash.");
             getLogger().info("Downloading resource pack for hash generation...");
             try {
@@ -518,7 +536,7 @@ public class ForcePackVelocity implements ForcePackAPI {
         return dataDirectory;
     }
 
-    public VelocityConfig getConfig() {
+    public ConfigurationNode getConfig() {
         return config;
     }
 
@@ -582,6 +600,15 @@ public class ForcePackVelocity implements ForcePackAPI {
     }
 
     public void log(String info, Object... format) {
-        if (this.getConfig().getBoolean("debug")) this.getLogger().info(String.format(info, format));
+        if (this.getConfig().node("debug").getBoolean()) this.getLogger().info(String.format(info, format));
+    }
+
+    public List<String> getStringListSafe(ConfigurationNode node) {
+        try {
+            return node.getList(String.class, ArrayList::new);
+        } catch (SerializationException e) {
+            logger.error("Error loading config value '" + node.key() + "'!", e);
+        }
+        return List.of();
     }
 }

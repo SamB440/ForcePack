@@ -3,12 +3,12 @@ package com.convallyria.forcepack.velocity.resourcepack;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.resourcepack.ResourcePackVersion;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
-import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.player.ResourcePackInfo;
 import net.kyori.adventure.text.Component;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.spongepowered.configurate.ConfigurationNode;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +33,7 @@ public final class VelocityResourcePack extends ResourcePack {
 
     @Override
     public void setResourcePack(UUID uuid) {
-        final int delay = velocityPlugin.getConfig().getInt("delay-pack-sending-by");
+        final int delay = velocityPlugin.getConfig().node("delay-pack-sending-by").getInt();
         if (delay > 0) {
             velocityPlugin.getScheduler().executeDelayed(() -> runSetResourcePack(uuid), delay);
         } else {
@@ -49,12 +49,12 @@ public final class VelocityResourcePack extends ResourcePack {
                 .createResourcePackBuilder(getURL())
                 .setHash(getHashSum())
                 .setId(this.uuid)
-                .setShouldForce(velocityPlugin.getConfig().getBoolean("use-new-force-pack-screen", true));
+                .setShouldForce(velocityPlugin.getConfig().node("use-new-force-pack-screen").getBoolean(true));
 
-        final VelocityConfig serverConfig;
+        final ConfigurationNode serverConfig;
         if (server.contains(ForcePackVelocity.GLOBAL_SERVER_NAME)) {
-            serverConfig = velocityPlugin.getConfig().getConfig("global-pack");
-            final List<String> excluded = serverConfig.getStringList("exclude");
+            serverConfig = velocityPlugin.getConfig().node("global-pack");
+            final List<String> excluded = velocityPlugin.getStringListSafe(serverConfig.node("exclude"));
             final Optional<ServerConnection> currentServer = player.getCurrentServer();
             if (currentServer.isPresent()) {
                 if (excluded.contains(currentServer.get().getServerInfo().getName())) return;
@@ -62,11 +62,11 @@ public final class VelocityResourcePack extends ResourcePack {
                 velocityPlugin.log("Unable to check global resource pack exclusion list as player is not in a server!?");
             }
         } else {
-            serverConfig = velocityPlugin.getConfig().getConfig("servers").getConfig(server);
+            serverConfig = velocityPlugin.getConfig().node("servers").node(server);
         }
 
         if (serverConfig != null) {
-            final String promptText = serverConfig.getConfig("resourcepack").getString("prompt");
+            final String promptText = serverConfig.node("resourcepack").node("prompt").getString();
             final Component promptComponent = velocityPlugin.getMiniMessage().deserialize(promptText);
             infoBuilder.setPrompt(promptComponent);
         }
