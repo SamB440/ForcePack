@@ -122,7 +122,7 @@ public class ForcePackVelocity implements ForcePackAPI {
                 this.webServer = new ForcePackWebServer(dataDirectory, serverIp, webServerConfig.getInt("port", 8080));
                 getLogger().info("Started web server.");
             } catch (IOException e) {
-                getLogger().error("Error starting web server: " + e.getMessage());
+                getLogger().error("Error starting web server: {}", e.getMessage());
                 getLogger().error("It is highly likely you need to open a port or change it in the config. Please see the config for further information.");
                 return;
             }
@@ -195,7 +195,7 @@ public class ForcePackVelocity implements ForcePackAPI {
         addResourcePacks(player, "servers");
 
         if (!verifyPacks) {
-            logger.info("Loaded " + resourcePacks.size() + " resource packs without verification.");
+            logger.info("Loaded {} resource packs without verification.", resourcePacks.size());
             return;
         }
 
@@ -249,7 +249,7 @@ public class ForcePackVelocity implements ForcePackAPI {
 
         final boolean generateHash = resourcePack.getBoolean("generate-hash", false);
         if (!generateHash && urls.size() != hashes.size()) {
-            getLogger().error("There are not the same amount of URLs and hashes! Please provide a hash for every resource pack URL! (" + id + ", " + name + ")");
+            getLogger().error("There are not the same amount of URLs and hashes! Please provide a hash for every resource pack URL! ({}, {})", id, name);
             getLogger().error("Hint: Enabling generate-hash will auto-generate missing hashes");
         }
 
@@ -263,7 +263,7 @@ public class ForcePackVelocity implements ForcePackAPI {
     private void handleRegister(VelocityConfig rootServerConfig, VelocityConfig resourcePack, String name, String id, String typeName, String url, @Nullable String hash, boolean groups, boolean verifyPacks, @Nullable Player player) {
         final ConsoleCommandSource consoleSender = this.getServer().getConsoleCommandSource();
         if (url.isEmpty()) {
-            logger.error("No URL found for " + name + ". Did you set up the config correctly?");
+            logger.error("No URL found for {}. Did you set up the config correctly?", name);
         }
 
         AtomicInteger sizeInMB = new AtomicInteger();
@@ -282,13 +282,13 @@ public class ForcePackVelocity implements ForcePackAPI {
         if (verifyPacks) {
             try {
                 Consumer<Integer> consumer = (size) -> {
-                    getLogger().info("Performing version size check for " + name + " (" + id + ")...");
+                    getLogger().info("Performing version size check for {} ({})...", name, id);
                     for (ClientVersion clientVersion : ClientVersion.values()) {
                         String sizeStr = clientVersion.getDisplay() + " (" + clientVersion.getMaxSizeMB() + " MB): ";
                         if (clientVersion.getMaxSizeMB() < size) {
-                            logger.info(sizeStr + "Unsupported.");
+                            logger.info("{}Unsupported.", sizeStr);
                         } else {
-                            logger.info(sizeStr + "Supported.");
+                            logger.info("{}Supported.", sizeStr);
                         }
                     }
 
@@ -304,9 +304,9 @@ public class ForcePackVelocity implements ForcePackAPI {
                 if (hash == null || !hash.equalsIgnoreCase(data.getUrlHash())) {
                     this.getLogger().error("-----------------------------------------------");
                     this.getLogger().error("Your hash does not match the URL file provided!");
-                    this.getLogger().error("Target " + typeName + ": " + name + " (" + id + ")");
-                    this.getLogger().error("The URL hash returned: " + data.getUrlHash());
-                    this.getLogger().error("Your config hash returned: " + data.getConfigHash());
+                    this.getLogger().error("Target {}: {} ({})", typeName, name, id);
+                    this.getLogger().error("The URL hash returned: {}", data.getUrlHash());
+                    this.getLogger().error("Your config hash returned: {}", data.getConfigHash());
                     this.getLogger().error("Please provide a correct SHA-1 hash!");
                     this.getLogger().error("-----------------------------------------------");
                     return;
@@ -397,7 +397,7 @@ public class ForcePackVelocity implements ForcePackAPI {
 
             final boolean generateHash = config.getBoolean("generate-hash", false);
             if (!generateHash && urls.size() != hashes.size()) {
-                getLogger().error("[global-pack] There are not the same amount of URLs and hashes! Please provide a hash for every resource pack URL! (" + id + ")");
+                getLogger().error("[global-pack] There are not the same amount of URLs and hashes! Please provide a hash for every resource pack URL! ({})", id);
                 getLogger().error("Hint: Enabling generate-hash will auto-generate missing hashes");
             }
 
@@ -437,7 +437,7 @@ public class ForcePackVelocity implements ForcePackAPI {
             final File generatedFilePath = new File(getDataDirectory() + File.separator + url.replace("forcepack://", ""));
             log("Using local resource pack host for " + url + " (" + generatedFilePath + ")");
             if (getWebServer().isEmpty()) {
-                getLogger().error("Unable to locally host resource pack '" + url + "' because the web server is not active!");
+                getLogger().error("Unable to locally host resource pack '{}' because the web server is not active!", url);
                 return url;
             }
             webServer.addHostedPack(generatedFilePath);
@@ -474,16 +474,16 @@ public class ForcePackVelocity implements ForcePackAPI {
         }
 
         if (!rehosted) {
-            getLogger().warn(String.format("[%s] You are using a default resource pack provided by the plugin. ", section) +
+            getLogger().warn("[{}] You are using a default resource pack provided by the plugin. " +
                     " It's highly recommended you re-host this pack using the webserver or on a CDN such as https://mc-packs.net for faster load times. " +
-                    "Leaving this as default potentially sends a lot of requests to my personal web server, which isn't ideal!");
+                    "Leaving this as default potentially sends a lot of requests to my personal web server, which isn't ideal!", section);
             getLogger().warn("ForcePack will still load and function like normally.");
         }
 
         List<String> blacklisted = List.of("mediafire.com");
         for (String blacklistedSite : blacklisted) {
             if (url.contains(blacklistedSite)) {
-                getLogger().error("Invalid resource pack site used! '" + blacklistedSite + "' cannot be used for hosting resource packs!");
+                getLogger().error("Invalid resource pack site used! '{}' cannot be used for hosting resource packs!", blacklistedSite);
             }
         }
     }
@@ -495,9 +495,9 @@ public class ForcePackVelocity implements ForcePackAPI {
             getLogger().info("Downloading resource pack for hash generation...");
             try {
                 ResourcePackURLData data = HashingUtil.performPackCheck(url, hash);
-                getLogger().info("Size of resource pack: " + data.getSize() + " MB");
+                getLogger().info("Size of resource pack: {} MB", data.getSize());
                 sizeInMB.set(data.getSize());
-                getLogger().info("Auto-generated resource pack hash: " + data.getUrlHash());
+                getLogger().info("Auto-generated resource pack hash: {}", data.getUrlHash());
                 return data;
             } catch (Exception e) {
                 getLogger().error("Unable to auto-generate resource pack hash, reverting to config setting", e);
