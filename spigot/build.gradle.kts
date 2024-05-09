@@ -1,5 +1,3 @@
-import org.gradle.internal.impldep.org.junit.experimental.categories.Categories.CategoryFilter.exclude
-
 repositories {
     maven("https://erethon.de/repo/")
     maven("https://repo.convallyria.com/releases")
@@ -23,7 +21,7 @@ dependencies {
     implementation(project(":folia"))
     implementation(project(":webserver", "shadow"))
 
-    compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT") {
+    compileOnly("io.papermc.paper:paper-api:1.20.6-R0.1-SNAPSHOT") {
         exclude("net.kyori") // avoid conflicts
     }
     compileOnly("com.viaversion:viaversion-api:4.9.2")
@@ -33,10 +31,10 @@ dependencies {
     implementation("org.incendo:cloud-paper:${properties["cloud_version"]}") {
         exclude("org.checkerframework")
     }
-    implementation("net.kyori:adventure-platform-bukkit:4.3.2") {
+    implementation("net.kyori:adventure-platform-bukkit:4.3.3-SNAPSHOT") {
         exclude("net.kyori", "adventure-api") // not up-to-date - use minimessage version
     }
-    implementation("net.kyori:adventure-text-minimessage:4.16.0")
+    implementation("net.kyori:adventure-text-minimessage:4.17.0")
     implementation("com.convallyria.languagy:api:3.0.3-SNAPSHOT") {
         exclude("com.convallyria.languagy.libs")
     }
@@ -55,7 +53,7 @@ tasks {
         relocate("org.bstats", "com.convallyria.forcepack.spigot.libs.bstats")
         relocate("com.github.retrooper.packetevents", "com.convallyria.forcepack.spigot.libs.pe-api")
         relocate("io.github.retrooper.packetevents", "com.convallyria.forcepack.spigot.libs.pe-impl")
-        exclude("**/assets/mappings/") // We don't need these
+//        exclude("**/assets/mappings/") // We don't need these TODO pls fix Krishna
     }
 
     processResources {

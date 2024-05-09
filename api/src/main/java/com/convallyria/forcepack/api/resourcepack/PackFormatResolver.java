@@ -4,6 +4,8 @@ public final class PackFormatResolver {
 
     public static int getPackFormat(int protocol) {
         switch (protocol) {
+            case 766: // 1.20.5+
+                return 32;
             case 765: // 1.20.3-1.20.4
                 return 22;
             case 764: // 1.20.2

@@ -1,7 +1,5 @@
-import org.gradle.internal.impldep.org.junit.experimental.categories.Categories.CategoryFilter.exclude
-
 plugins {
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("io.github.goooler.shadow") version "8.1.7"
     id("java")
 }
 
@@ -10,15 +8,28 @@ dependencies {
     implementation(project(":velocity", "shadow"))
 }
 
+tasks {
+    shadowJar {
+        archiveClassifier.set("")
+        relocate("org.incendo.cloud", "com.convallyria.forcepack.libs.cloud")
+        relocate("io.leangen.geantyref", "com.convallyria.forcepack.libs.typetoken")
+        relocate("me.lucko.jarrelocator", "com.convallyria.forcepack.libs.relocator")
+    }
+
+    build {
+        dependsOn(shadowJar)
+    }
+}
+
 allprojects {
     group = "com.convallyria.forcepack"
     version = "1.3.4"
 
-    apply(plugin = "com.github.johnrengelman.shadow")
+    apply(plugin = "io.github.goooler.shadow")
     apply(plugin = "java")
 
     java {
-        toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+        toolchain.languageVersion.set(JavaLanguageVersion.of(21))
         disableAutoTargetJvm()
     }
 
@@ -38,6 +49,7 @@ allprojects {
         maven("https://repo.codemc.io/repository/maven-releases/")
         maven("https://oss.sonatype.org/content/groups/public/")
         maven("https://oss.sonatype.org/content/repositories/snapshots/")
+        maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
     }
 
     tasks {
@@ -47,17 +59,6 @@ allprojects {
             testLogging {
                 events("passed", "skipped", "failed")
             }
-        }
-
-        shadowJar {
-            archiveClassifier.set("")
-            relocate("org.incendo.cloud", "com.convallyria.forcepack.libs.cloud")
-            relocate("io.leangen.geantyref", "com.convallyria.forcepack.libs.typetoken")
-            relocate("me.lucko.jarrelocator", "com.convallyria.forcepack.libs.relocator")
-        }
-
-        build {
-            dependsOn(shadowJar)
         }
 
         compileJava {
