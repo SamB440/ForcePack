@@ -236,6 +236,12 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         } else {
             run.run();
         }
+
+        if (GeyserUtil.isGeyserInstalledHere && !getConfig().getBoolean("Server.geyser")) {
+            getLogger().warning("Geyser is installed but Geyser support is not enabled.");
+        } else if (!GeyserUtil.isGeyserInstalledHere && getConfig().getBoolean("Server.geyser")) {
+            getLogger().warning("Geyser is not installed but Geyser support is enabled.");
+        }
     }
 
     @Override
