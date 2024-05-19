@@ -1,10 +1,6 @@
 repositories {
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
     maven("https://repo.papermc.io/repository/maven-public/")
-
-    maven {
-        url = uri("https://repo.codemc.io/repository/maven-releases/")
-    }
 }
 
 dependencies {

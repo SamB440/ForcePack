@@ -6,15 +6,15 @@ import org.incendo.cloud.SenderMapper;
 import org.incendo.cloud.annotations.AnnotationParser;
 import org.incendo.cloud.bukkit.CloudBukkitCapabilities;
 import org.incendo.cloud.execution.ExecutionCoordinator;
-import org.incendo.cloud.paper.PaperCommandManager;
+import org.incendo.cloud.paper.LegacyPaperCommandManager;
 
 public class Commands {
 
     public Commands(ForcePackSpigot plugin) {
 
-        final PaperCommandManager<CommandSender> manager;
+        final LegacyPaperCommandManager<CommandSender> manager;
         try {
-            manager = new PaperCommandManager<>(
+            manager = new LegacyPaperCommandManager<>(
                     plugin,
                     ExecutionCoordinator.simpleCoordinator(),
                     SenderMapper.identity()
