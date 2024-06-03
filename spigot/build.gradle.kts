@@ -1,3 +1,5 @@
+import org.gradle.internal.impldep.org.junit.experimental.categories.Categories.CategoryFilter.exclude
+
 repositories {
     maven("https://erethon.de/repo/")
     maven("https://repo.convallyria.com/releases")
@@ -32,7 +34,7 @@ dependencies {
     implementation("org.incendo:cloud-paper:${properties["cloud_version"]}") {
         exclude("org.checkerframework")
     }
-    implementation("net.kyori:adventure-platform-bukkit:4.3.3-SNAPSHOT") {
+    implementation("net.kyori:adventure-platform-bukkit:4.3.3") {
         exclude("net.kyori", "adventure-api") // not up-to-date - use minimessage version
     }
     implementation("net.kyori:adventure-text-minimessage:4.17.0")
