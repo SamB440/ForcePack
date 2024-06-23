@@ -42,7 +42,7 @@ dependencies {
         exclude("com.convallyria.languagy.libs")
     }
     implementation("org.bstats:bstats-bukkit:3.0.2")
-    implementation("com.github.retrooper.packetevents:spigot:${properties["packetevents_version"]}")
+    implementation("com.github.retrooper:packetevents-spigot:${properties["packetevents_version"]}")
 }
 
 tasks {

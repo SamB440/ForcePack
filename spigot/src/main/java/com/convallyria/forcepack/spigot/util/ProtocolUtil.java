@@ -13,10 +13,19 @@ import org.bukkit.entity.Player;
 public class ProtocolUtil {
 
     public static int getProtocolVersion(Player player) {
-        final boolean viaversion = Bukkit.getPluginManager().isPluginEnabled("ViaVersion");
-        return viaversion
-                ? Via.getAPI().getPlayerVersion(player)
-                : PacketEvents.getAPI().getPlayerManager().getUser(player).getClientVersion().getProtocolVersion();
+        if(Bukkit.getPluginManager().isPluginEnabled("ViaVersion")) {
+            return Via.getAPI().getPlayerVersion(player);
+        }
+
+        final User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
+
+        // PacketEvents will not create users for fake online players
+        // so we can safely assume that if the user is null, the player is fake
+        if(user == null) {
+            return -1;
+        }
+
+        return user.getClientVersion().getProtocolVersion();
     }
 
     private static boolean warnedBadPlugin;
