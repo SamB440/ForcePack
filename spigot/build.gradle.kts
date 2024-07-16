@@ -1,5 +1,3 @@
-import org.gradle.internal.impldep.org.junit.experimental.categories.Categories.CategoryFilter.exclude
-
 repositories {
     maven("https://erethon.de/repo/")
     maven("https://repo.convallyria.com/releases")
@@ -13,8 +11,8 @@ repositories {
 configurations {
     all {
         resolutionStrategy {
-            force("net.kyori:adventure-api:4.16.0")
-            force("net.kyori:adventure-bom:4.16.0")
+            force("net.kyori:adventure-api:4.17.0")
+            force("net.kyori:adventure-bom:4.17.0")
         }
     }
 }
@@ -24,7 +22,7 @@ dependencies {
     implementation(project(":folia"))
     implementation(project(":webserver", "shadow"))
 
-    compileOnly("io.papermc.paper:paper-api:1.20.6-R0.1-SNAPSHOT") {
+    compileOnly("io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT") {
         exclude("net.kyori") // avoid conflicts
     }
     compileOnly("com.viaversion:viaversion-api:4.9.2")
@@ -42,7 +40,7 @@ dependencies {
         exclude("com.convallyria.languagy.libs")
     }
     implementation("org.bstats:bstats-bukkit:3.0.2")
-    implementation("com.github.retrooper.packetevents:spigot:${properties["packetevents_version"]}")
+    implementation("com.github.retrooper:packetevents-spigot:${properties["packetevents_version"]}")
 }
 
 tasks {

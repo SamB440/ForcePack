@@ -1,5 +1,5 @@
 plugins {
-    id("io.github.goooler.shadow") version "8.1.7"
+    id("io.github.goooler.shadow") version "8.1.8"
     id("java")
 }
 
@@ -23,7 +23,7 @@ tasks {
 
 allprojects {
     group = "com.convallyria.forcepack"
-    version = "1.3.4"
+    version = "1.3.5"
 
     apply(plugin = "io.github.goooler.shadow")
     apply(plugin = "java")
