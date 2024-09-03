@@ -13,7 +13,7 @@ dependencies {
 
     implementation("org.bstats:bstats-velocity:3.0.2")
 
-    implementation("org.incendo:cloud-velocity:${properties["cloud_version"]}") {
+    implementation("org.incendo:cloud-velocity:2.0.0-beta.9") {
         exclude("org.checkerframework")
     }
 }

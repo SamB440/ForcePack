@@ -10,7 +10,7 @@ dependencies {
     compileOnly(project(":api"))
     compileOnly("com.google.guava:guava:32.1.3-jre")
 
-    runtimeDownload("io.javalin:javalin:6.1.3")
+    runtimeDownload("io.javalin:javalin:6.3.0")
 
     implementation("dev.vankka:dependencydownload-runtime:1.3.1")
 }

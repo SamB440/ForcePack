@@ -22,17 +22,17 @@ dependencies {
     implementation(project(":folia"))
     implementation(project(":webserver", "shadow"))
 
-    compileOnly("io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT") {
+    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT") {
         exclude("net.kyori") // avoid conflicts
     }
     compileOnly("com.viaversion:viaversion-api:4.9.2")
     compileOnly("io.netty:netty-all:4.1.105.Final")
     compileOnly("com.github.LoneDev6:api-itemsadder:3.0.0")
 
-    implementation("org.incendo:cloud-paper:${properties["cloud_version"]}") {
+    implementation("org.incendo:cloud-paper:2.0.0-beta.9") {
         exclude("org.checkerframework")
     }
-    implementation("net.kyori:adventure-platform-bukkit:4.3.3") {
+    implementation("net.kyori:adventure-platform-bukkit:4.3.4") {
         exclude("net.kyori", "adventure-api") // not up-to-date - use minimessage version
     }
     implementation("net.kyori:adventure-text-minimessage:4.17.0")
