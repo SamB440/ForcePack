@@ -80,9 +80,12 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         final int protocolVersion = ProtocolUtil.getProtocolVersion(player);
         final int packFormat = PackFormatResolver.getPackFormat(protocolVersion);
 
+        log("Searching for a resource pack with pack version " + packFormat);
+
         ResourcePack anyVersionPack = null;
         Set<ResourcePack> validPacks = new HashSet<>();
         for (ResourcePack resourcePack : getResourcePacks()) {
+            log("Trying resource pack " + resourcePack.getURL() + " (" + resourcePack.getVersion().map(ResourcePackVersion::version) + ")");
             final Optional<ResourcePackVersion> version = resourcePack.getVersion();
             if (version.isEmpty()) {
                 if (anyVersionPack == null) anyVersionPack = resourcePack; // Pick first all-version resource pack
@@ -95,6 +98,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
             if (version.get().version() == packFormat) {
                 validPacks.add(resourcePack);
+                log("Added resource pack " + resourcePack.getURL());
                 if (protocolVersion < 765) { // If < 1.20.3, only one pack can be applied.
                     break;
                 }
@@ -102,9 +106,14 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         }
 
         if (!validPacks.isEmpty()) {
+            log("Found multiple valid resource packs (" + validPacks.size() + ")");
+            for (ResourcePack validPack : validPacks) {
+                log("Chosen resource pack " + validPack.getURL());
+            }
             return validPacks;
         }
 
+        log("Chosen resource pack is " + (anyVersionPack == null ? "null" : anyVersionPack.getURL()));
         return anyVersionPack == null ? Set.of() : Set.of(anyVersionPack);
     }
 

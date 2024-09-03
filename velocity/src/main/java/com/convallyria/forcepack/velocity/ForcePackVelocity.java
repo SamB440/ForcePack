@@ -539,6 +539,7 @@ public class ForcePackVelocity implements ForcePackAPI {
     }
 
     private Optional<Set<ResourcePack>> searchForValidPacks(Set<ResourcePack> packs, String serverName, final ProtocolVersion protocolVersion, int packVersion) {
+        log("Searching for a resource pack with pack version %d", packVersion);
         Set<ResourcePack> validPacks = new HashSet<>();
         ResourcePack anyVersionPack = null;
         for (ResourcePack resourcePack : packs.stream().filter(pack -> {
@@ -557,6 +558,7 @@ public class ForcePackVelocity implements ForcePackAPI {
 
             if (version.get().version() == packVersion) {
                 validPacks.add(resourcePack);
+                log("Added resource pack %s", resourcePack.getURL());
                 if (protocolVersion.getProtocol() < 765) { // If < 1.20.3, only one pack can be applied.
                     break;
                 }
@@ -564,9 +566,14 @@ public class ForcePackVelocity implements ForcePackAPI {
         }
 
         if (!validPacks.isEmpty()) {
+            log("Found multiple valid resource packs (%d)", validPacks.size());
+            for (ResourcePack validPack : validPacks) {
+                log("Chosen resource pack %s", validPack.getURL());
+            }
             return Optional.of(validPacks);
         }
 
+        log("Chosen resource pack is %s", anyVersionPack == null ? "null" : anyVersionPack.getURL());
         return anyVersionPack == null ? Optional.empty() : Optional.of(Set.of(anyVersionPack));
     }
 
