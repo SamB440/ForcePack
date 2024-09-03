@@ -23,7 +23,7 @@ tasks {
 
 allprojects {
     group = "com.convallyria.forcepack"
-    version = "1.3.5"
+    version = "1.3.6"
 
     apply(plugin = "io.github.goooler.shadow")
     apply(plugin = "java")
