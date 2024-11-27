@@ -29,7 +29,7 @@ dependencies {
     compileOnly("io.netty:netty-all:4.1.105.Final")
     compileOnly("com.github.LoneDev6:api-itemsadder:3.0.0")
 
-    implementation("org.incendo:cloud-paper:2.0.0-beta.9") {
+    implementation("org.incendo:cloud-paper:2.0.0-beta.10") {
         exclude("org.checkerframework")
     }
     implementation("net.kyori:adventure-platform-bukkit:4.3.4") {
