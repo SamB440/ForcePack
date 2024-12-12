@@ -22,7 +22,7 @@ dependencies {
     implementation(project(":folia"))
     implementation(project(":webserver", "shadow"))
 
-    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT") {
+    compileOnly("io.papermc.paper:paper-api:1.21.3-R0.1-SNAPSHOT") {
         exclude("net.kyori") // avoid conflicts
     }
     compileOnly("com.viaversion:viaversion-api:4.9.2")
@@ -52,8 +52,8 @@ tasks {
         relocate("io.papermc.lib", "com.convallyria.forcepack.spigot.libs.paperlib")
         relocate("com.convallyria.languagy", "com.convallyria.forcepack.spigot.libs.languagy")
         relocate("org.bstats", "com.convallyria.forcepack.spigot.libs.bstats")
-        relocate("com.github.retrooper.packetevents", "com.convallyria.forcepack.spigot.libs.pe-api")
-        relocate("io.github.retrooper.packetevents", "com.convallyria.forcepack.spigot.libs.pe-impl")
+        relocate("com.github.retrooper.packetevents", "com.convallyria.forcepack.spigot.libs.pe.api")
+        relocate("io.github.retrooper.packetevents", "com.convallyria.forcepack.spigot.libs.pe.impl")
 //        exclude("**/assets/mappings/") // We don't need these TODO pls fix Krishna
     }
 

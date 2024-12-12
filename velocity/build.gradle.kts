@@ -7,8 +7,8 @@ dependencies {
     implementation(project(":api"))
     implementation(project(":webserver", "shadow"))
 
-    compileOnly("com.velocitypowered:velocity-api:3.3.0-SNAPSHOT")
-    annotationProcessor("com.velocitypowered:velocity-api:3.3.0-SNAPSHOT")
+    compileOnly("com.velocitypowered:velocity-api:3.4.0-SNAPSHOT")
+    annotationProcessor("com.velocitypowered:velocity-api:3.4.0-SNAPSHOT")
     compileOnly("com.electronwill.night-config:toml:3.8.0")
 
     implementation("org.bstats:bstats-velocity:3.0.2")
