@@ -187,7 +187,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         this.createConfig();
 
         PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
-        PacketEvents.getAPI().getSettings().debug(debug()).checkForUpdates(false);
+        PacketEvents.getAPI().getSettings().debug(debug()).preViaInjection(true).checkForUpdates(false);
         PacketEvents.getAPI().load();
 
         GeyserUtil.isGeyserInstalledHere = Bukkit.getPluginManager().getPlugin("Geyser-Spigot") != null;

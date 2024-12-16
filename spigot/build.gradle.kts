@@ -1,9 +1,14 @@
 repositories {
     maven("https://erethon.de/repo/")
     maven("https://repo.convallyria.com/releases")
+    maven("https://repo.convallyria.com/snapshots")
     maven("https://repo.viaversion.com")
     maven("https://repo.dmulloy2.net/repository/public/")
-    maven("https://jitpack.io")
+    maven("https://jitpack.io") {
+        content {
+            includeGroup("com.github.LoneDev6")
+        }
+    }
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://repo.codemc.io/repository/maven-snapshots/")
 }
@@ -27,7 +32,7 @@ dependencies {
     }
     compileOnly("com.viaversion:viaversion-api:4.9.2")
     compileOnly("io.netty:netty-all:4.1.105.Final")
-    compileOnly("com.github.LoneDev6:api-itemsadder:3.0.0")
+    compileOnly("com.github.LoneDev6:api-itemsadder:3.6.1")
 
     implementation("org.incendo:cloud-paper:2.0.0-beta.10") {
         exclude("org.checkerframework")
@@ -40,7 +45,7 @@ dependencies {
         exclude("com.convallyria.languagy.libs")
     }
     implementation("org.bstats:bstats-bukkit:3.0.2")
-    implementation("com.github.retrooper:packetevents-spigot:${properties["packetevents_version"]}")
+    implementation("com.github.GrimAnticheat.PacketEvents:packetevents-spigot:2.0-SNAPSHOT")
 }
 
 tasks {
