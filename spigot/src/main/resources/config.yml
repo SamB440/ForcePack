@@ -46,10 +46,14 @@ delay-pack-sending-by: 0
 # Having this enabled allows the use of the "forcepack://" protocol in resource pack URL
 # Enabling this DOES NOT mean you are forced to use a localhost resource pack.
 # You need to make sure the port is open. Usually you can just add it via pterodactyl panel.
+# protocol define protocol to use on resource pack url (you need to use "forcepack://" in urls)
+# port-on-url define if the server port must be used (set false when this service is behind a web proxy)
 web-server:
   enabled: false
+  protocol: "http://"
   server-ip: localhost
   port: 8080
+  port-on-url: true
 
 Server:
   packs:

@@ -61,8 +61,8 @@ debug = false
 # Having this enabled allows the use of the "forcepack://" protocol in resource pack URL
 # Enabling this DOES NOT mean you are forced to use a localhost resource pack.
 # You need to make sure the port is open. Usually you can just add it via pterodactyl panel.
-# protocol define what protocol will be used on the resource pack url (you still need to use "forcepack://" in url settings)
-# port-on-url define if the server port must be used on the resource pack url (set true when this service is behind a web proxy)
+# protocol define protocol to use on resource pack url (you need to use "forcepack://" in urls)
+# port-on-url define if the server port must be used (set false when this service is behind a web proxy)
 [web-server]
     enabled = false
     protocol = "http://"
