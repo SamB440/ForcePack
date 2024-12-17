@@ -119,7 +119,7 @@ public class ForcePackVelocity implements ForcePackAPI {
                 getLogger().info("Finished downloading required dependencies.");
                 final String configIp = webServerConfig.getString("server-ip", "localhost");
                 final String serverIp = !configIp.equals("localhost") ? configIp : ForcePackWebServer.getIp();
-                this.webServer = new ForcePackWebServer(dataDirectory, serverIp, webServerConfig.getInt("port", 8080));
+                this.webServer = new ForcePackWebServer(dataDirectory, webServerConfig.getString("protocol", "http://"), serverIp, webServerConfig.getInt("port", 8080), webServerConfig.getBoolean("port-on-url", true));
                 getLogger().info("Started web server.");
             } catch (IOException e) {
                 getLogger().error("Error starting web server: {}", e.getMessage());

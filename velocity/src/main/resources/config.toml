@@ -61,10 +61,14 @@ debug = false
 # Having this enabled allows the use of the "forcepack://" protocol in resource pack URL
 # Enabling this DOES NOT mean you are forced to use a localhost resource pack.
 # You need to make sure the port is open. Usually you can just add it via pterodactyl panel.
+# protocol define what protocol will be used on the resource pack url (you still need to use "forcepack://" in url settings)
+# port-on-url define if the server port must be used on the resource pack url (set true when this service is behind a web proxy)
 [web-server]
     enabled = false
+    protocol = "http://"
     server-ip = "localhost"
     port = 8080
+    port-on-url = true
 
 [unload-pack]
     # Whether to send an empty resource pack when joining a server without one configured, and the player has one applied

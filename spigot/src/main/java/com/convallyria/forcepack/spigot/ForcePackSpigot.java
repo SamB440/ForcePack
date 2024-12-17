@@ -219,7 +219,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
                     getLogger().info("Finished downloading required dependencies.");
                     final String configIp = getConfig().getString("web-server.server-ip", "localhost");
                     final String serverIp = !configIp.equals("localhost") ? configIp : !Bukkit.getIp().isEmpty() ? Bukkit.getIp() : ForcePackWebServer.getIp();
-                    this.webServer = new ForcePackWebServer(this.getDataFolder().toPath(), serverIp, getConfig().getInt("web-server.port", 8080));
+                    this.webServer = new ForcePackWebServer(this.getDataFolder().toPath(), getConfig().getString("protocol", "http://"), serverIp, getConfig().getInt("port", 8080), getConfig().getBoolean("port-on-url", true));
                     getLogger().info("Started web server.");
                 } catch (IOException e) {
                     getLogger().severe("Error starting web server: " + e.getMessage());
