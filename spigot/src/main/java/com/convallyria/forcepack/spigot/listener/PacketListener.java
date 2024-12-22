@@ -28,15 +28,15 @@ public class PacketListener extends PacketListenerAbstract {
     @Override
     public void onPacketReceive(PacketReceiveEvent event) {
         if (event.getPacketType() == PacketType.Play.Client.RESOURCE_PACK_STATUS) {
-            WrapperPlayClientResourcePackStatus status = new WrapperPlayClientResourcePackStatus(event);
-            if (event.getPlayer() == null) {
+            final Player player = Bukkit.getPlayer(event.getUser().getUUID());
+            if (player == null) {
                 plugin.getLogger().warning("Unable to get player for resource pack status!?!? " + event.getUser() + ", " + event.getPlayer());
                 return;
             }
 
-            final Player player = event.getPlayer();
-            plugin.log("Received packet resource pack status from " + player.getName());
+            plugin.log("Received packet resource pack status from " + player.getName() + " (version: " + event.getServerVersion().getReleaseName() + ")");
 
+            final WrapperPlayClientResourcePackStatus status = new WrapperPlayClientResourcePackStatus(event);
             final WrapperPlayClientResourcePackStatus.Result result = status.getResult();
             final UUID packId = status.getPackId();
             final MultiVersionResourcePackStatusEvent packEvent = new MultiVersionResourcePackStatusEvent(player, packId, ResourcePackStatus.valueOf(result.name()), false, false);
