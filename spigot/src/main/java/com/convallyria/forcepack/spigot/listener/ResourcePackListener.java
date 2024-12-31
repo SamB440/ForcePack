@@ -230,7 +230,7 @@ public class ResourcePackListener implements Listener {
             final boolean forceSend = getConfig().getBoolean("Server.force-invalid-size");
             if (!forceSend && pack.getSize() > maxSize) {
                 if (plugin.debug()) plugin.getLogger().info(String.format("Not sending pack to %s because of excessive size for version %d (%dMB, %dMB).", player.getName(), version, pack.getSize(), maxSize));
-                return;
+                continue;
             }
 
             plugin.getScheduler().executeOnMain(() -> this.runSetPackTask(player, pack, version));
