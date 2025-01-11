@@ -2,15 +2,11 @@ package com.convallyria.forcepack.sponge.resourcepack;
 
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.resourcepack.ResourcePackVersion;
-import com.convallyria.forcepack.spigot.ForcePackSpigot;
-import com.convallyria.forcepack.spigot.translation.Translations;
-import com.convallyria.forcepack.spigot.util.ProtocolUtil;
 import com.convallyria.forcepack.sponge.ForcePackSponge;
+import com.convallyria.forcepack.sponge.util.ProtocolUtil;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerResourcePackSend;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
@@ -32,7 +28,7 @@ public final class SpongeResourcePack extends ResourcePack {
 
     @Override
     public void setResourcePack(UUID uuid) {
-        final int delay = spigotPlugin.getConfig().getInt("delay-pack-sending-by", 0);
+        final int delay = spongePlugin.getConfig().node("delay-pack-sending-by").getInt(0);
         if (delay > 0) {
             plugin.getScheduler().executeDelayed(() -> runSetResourcePack(uuid), delay);
         } else {
@@ -44,13 +40,13 @@ public final class SpongeResourcePack extends ResourcePack {
         final ServerPlayer player = Sponge.server().player(uuid).orElse(null);
         if (player == null) return; // Either the player disconnected or this is an NPC
 
-        spigotPlugin.getForcePackPlayer(player).ifPresent(forcePackPlayer -> {
+        spongePlugin.getForcePackPlayer(player).ifPresent(forcePackPlayer -> {
             forcePackPlayer.getChecks().forEach(check -> check.sendPack(this));
         });
 
         WrapperPlayServerResourcePackSend send = new WrapperPlayServerResourcePackSend(getUUID(), url, getHash(),
-                spigotPlugin.getConfig().getBoolean("use-new-force-pack-screen", true),
-                Component.join(JoinConfiguration.newlines(), Translations.PROMPT_TEXT.getProper(player)));
+                spongePlugin.getConfig().node("use-new-force-pack-screen").getBoolean(true),
+                Component.join(JoinConfiguration.newlines(), Component.translatable("forcepack.prompt_text")));
 
         ProtocolUtil.sendPacketBypassingVia(player, send);
     }

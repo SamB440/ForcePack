@@ -3,15 +3,16 @@ import org.spongepowered.plugin.metadata.model.PluginDependency
 
 plugins {
     `java-library`
-    id("org.spongepowered.gradle.plugin") version "2.1.1"
+    id("buildlogic.java-platform-conventions")
+    id("org.spongepowered.gradle.plugin") version "2.2.0"
 }
 
 sponge {
-    apiVersion("11.0.0-SNAPSHOT")
+    apiVersion("12.0.0-SNAPSHOT")
     license("GPL-3.0")
     loader {
         name(PluginLoaders.JAVA_PLAIN)
-        version("1.3.3")
+        version("1.3.71")
     }
 
     plugin("forcepack") {
@@ -32,10 +33,43 @@ sponge {
     }
 }
 
+repositories {
+    repositories {
+        maven("https://repo.convallyria.com/releases")
+        maven("https://repo.convallyria.com/snapshots")
+        maven("https://repo.viaversion.com")
+    }
+}
+
 dependencies {
     implementation(project(":api"))
-    implementation(project(":folia"))
     implementation(project(":webserver", "shadow"))
+    // TODO use grim fork
+    implementation("com.github.retrooper:packetevents-sponge:2.7.0")
+    implementation("org.bstats:bstats-sponge:3.0.2")
+    implementation("org.incendo:cloud-sponge:2.0.0-SNAPSHOT") {
+        exclude("org.checkerframework")
+        exclude("io.leangen.geantyref")
+    }
+
+    compileOnly("com.google.guava:guava:33.4.0-jre")
+    compileOnly("com.viaversion:viaversion-api:4.9.2")
+}
+
+tasks {
+    shadowJar {
+        minimize {
+            exclude(project(":webserver"))
+        }
+        mergeServiceFiles()
+        relocate("org.bstats", "com.convallyria.forcepack.sponge.libs.bstats")
+        relocate("com.github.retrooper.packetevents", "com.convallyria.forcepack.sponge.libs.pe.api")
+        relocate("io.github.retrooper.packetevents", "com.convallyria.forcepack.sponge.libs.pe.impl")
+        relocate("net.kyori.adventure.nbt", "com.convallyria.forcepack.sponge.libs.adventure.nbt")
+        relocate("net.kyori.examination", "com.convallyria.forcepack.sponge.libs.adventure.ex")
+        relocate("org.glassfish.jaxb", "com.convallyria.forcepack.libs.jaxb")
+        relocate("org.objectweb.asm", "com.convallyria.forcepack.libs.asm")
+    }
 }
 
 // Make sure all tasks which produce archives (jar, sources jar, javadoc jar, etc) produce more consistent output
