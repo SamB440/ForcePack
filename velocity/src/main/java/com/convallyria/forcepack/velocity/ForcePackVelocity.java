@@ -44,7 +44,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -237,7 +236,7 @@ public class ForcePackVelocity implements ForcePackAPI {
             });
         }
     }
-    
+
     private void registerResourcePack(VelocityConfig rootServerConfig, VelocityConfig resourcePack, String id, String name, String typeName, boolean groups, boolean verifyPacks, @Nullable Player player) {
         List<String> urls = resourcePack.getStringList("urls");
         if (urls.isEmpty()) {

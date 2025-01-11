@@ -1,3 +1,7 @@
+plugins {
+    id("buildlogic.java-platform-conventions")
+}
+
 repositories {
     maven("https://erethon.de/repo/")
     maven("https://repo.convallyria.com/releases")
@@ -53,12 +57,12 @@ tasks {
         minimize {
             exclude(project(":webserver"))
         }
+        mergeServiceFiles()
         relocate("net.kyori", "com.convallyria.forcepack.spigot.libs.adventure")
         relocate("io.papermc.lib", "com.convallyria.forcepack.spigot.libs.paperlib")
         relocate("com.convallyria.languagy", "com.convallyria.forcepack.spigot.libs.languagy")
         relocate("org.bstats", "com.convallyria.forcepack.spigot.libs.bstats")
-        relocate("com.github.retrooper.packetevents", "com.convallyria.forcepack.spigot.libs.pe.api")
-        relocate("io.github.retrooper.packetevents", "com.convallyria.forcepack.spigot.libs.pe.impl")
+
 //        exclude("**/assets/mappings/") // We don't need these TODO pls fix Krishna
     }
 

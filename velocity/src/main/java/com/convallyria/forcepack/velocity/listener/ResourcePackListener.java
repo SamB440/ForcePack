@@ -12,7 +12,6 @@ import com.convallyria.forcepack.velocity.resourcepack.VelocityResourcePack;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
-import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.PlayerResourcePackStatusEvent;
 import com.velocitypowered.api.event.player.ServerPostConnectEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
@@ -115,7 +114,11 @@ public class ResourcePackListener {
             // No longer applying, remove them from the list
             plugin.getPackHandler().processWaitingResourcePack(player, packByServer.getUUID());
             final String name = status == PlayerResourcePackStatusEvent.Status.SUCCESSFUL ? "SUCCESSFULLY_LOADED" : status.name();
-            currentServer.get().sendPluginMessage(PackHandler.FORCEPACK_STATUS_IDENTIFIER, (packByServer.getUUID().toString() + ";" + name + ";" + !plugin.getPackHandler().isWaiting(player)).getBytes(StandardCharsets.UTF_8));
+            final boolean waiting = plugin.getPackHandler().isWaiting(player);
+            currentServer.get().sendPluginMessage(PackHandler.FORCEPACK_STATUS_IDENTIFIER, (packByServer.getUUID().toString() + ";" + name + ";" + !waiting).getBytes(StandardCharsets.UTF_8));
+            plugin.getPackHandler().getForcePackPlayer(player).ifPresentOrElse(forcePackPlayer -> {
+                plugin.log("Current packs we are waiting for: %s", forcePackPlayer.getWaitingPacks());
+            }, () -> plugin.log("Waiting for? %s", waiting));
         }
 
         final String text = actions == null ? null : actions.getString("message");

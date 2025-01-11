@@ -1,3 +1,7 @@
+plugins {
+    id("buildlogic.java-platform-conventions")
+}
+
 repositories {
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
     maven("https://repo.papermc.io/repository/maven-public/")
@@ -22,5 +26,8 @@ tasks.shadowJar {
     minimize {
         exclude(project(":webserver"))
     }
+    mergeServiceFiles()
     relocate("org.bstats", "com.convallyria.forcepack.velocity.libs.bstats")
+    relocate("org.glassfish.jaxb", "com.convallyria.forcepack.libs.jaxb")
+    relocate("org.objectweb.asm", "com.convallyria.forcepack.libs.asm")
 }
