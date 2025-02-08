@@ -1,6 +1,3 @@
-import gradle.kotlin.dsl.accessors._3e4367e61b26e4e7d88385c6269c7b89.annotationProcessor
-import gradle.kotlin.dsl.accessors._3e4367e61b26e4e7d88385c6269c7b89.implementation
-
 plugins {
     id("buildlogic.java-common-conventions")
 }
