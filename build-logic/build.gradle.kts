@@ -16,6 +16,6 @@ repositories {
 }
 
 dependencies {
-    implementation("com.gradleup.shadow:shadow-gradle-plugin:9.0.0-beta4")
-    implementation("com.diffplug.spotless:spotless-plugin-gradle:6.25.0")
+    implementation("com.gradleup.shadow:shadow-gradle-plugin:9.0.0-beta7")
+    implementation("com.diffplug.spotless:spotless-plugin-gradle:7.0.2")
 }
