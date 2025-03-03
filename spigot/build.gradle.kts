@@ -16,8 +16,8 @@ repositories {
 configurations {
     all {
         resolutionStrategy {
-            force("net.kyori:adventure-api:4.17.0")
-            force("net.kyori:adventure-bom:4.17.0")
+            force("net.kyori:adventure-api:4.19.0")
+            force("net.kyori:adventure-bom:4.19.0")
         }
     }
 }
@@ -40,7 +40,7 @@ dependencies {
     implementation("net.kyori:adventure-platform-bukkit:4.3.4") {
         exclude("net.kyori", "adventure-api") // not up-to-date - use minimessage version
     }
-    implementation("net.kyori:adventure-text-minimessage:4.17.0")
+    implementation("net.kyori:adventure-text-minimessage:4.19.0")
     implementation("com.convallyria.languagy:api:3.0.3-SNAPSHOT") {
         exclude("com.convallyria.languagy.libs")
     }
