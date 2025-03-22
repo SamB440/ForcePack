@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
 @Plugin(
         id = "forcepack",
         name = "ForcePack",
-        version = "1.3.71",
+        version = "1.3.72",
         description = "Force players to use your server resource pack.",
         url = "https://www.convallyria.com",
         dependencies = {
@@ -322,9 +322,18 @@ public class ForcePackVelocity implements ForcePackAPI {
 
         ResourcePackVersion version = null;
         try {
-            final int versionId = Integer.parseInt(id);
-            version = () -> versionId;
-        } catch (NumberFormatException ignored) {}
+            // One version?
+            final int fixedVersion = Integer.parseInt(id);
+            version = ResourcePackVersion.of(fixedVersion, fixedVersion);
+        } catch (NumberFormatException ignored) {
+            try {
+                // Version range?
+                final String[] ranged = id.split("-");
+                final int min = Integer.parseInt(ranged[0]);
+                final int max = Integer.parseInt(ranged[1]);
+                version = ResourcePackVersion.of(min, max);
+            } catch (NumberFormatException | IndexOutOfBoundsException ignored2) {}
+        }
 
         if (groups) {
             final boolean exact = rootServerConfig.getBoolean("exact-match");
@@ -423,9 +432,18 @@ public class ForcePackVelocity implements ForcePackAPI {
 
         ResourcePackVersion version = null;
         try {
-            final int versionId = Integer.parseInt(id);
-            version = () -> versionId;
-        } catch (NumberFormatException ignored) {}
+            // One version?
+            final int fixedVersion = Integer.parseInt(id);
+            version = ResourcePackVersion.of(fixedVersion, fixedVersion);
+        } catch (NumberFormatException ignored) {
+            try {
+                // Version range?
+                final String[] ranged = id.split("-");
+                final int min = Integer.parseInt(ranged[0]);
+                final int max = Integer.parseInt(ranged[1]);
+                version = ResourcePackVersion.of(min, max);
+            } catch (NumberFormatException | IndexOutOfBoundsException ignored2) {}
+        }
 
         final VelocityResourcePack resourcePack = new VelocityResourcePack(this, GLOBAL_SERVER_NAME + "-" + url, url, hash, 0, null, version);
         resourcePacks.add(resourcePack);
@@ -547,16 +565,16 @@ public class ForcePackVelocity implements ForcePackAPI {
             if (!matches) log("Filtering out %s: %s != %s", pack.getUUID().toString(), pack.getServer(), serverName);
             return matches;
         }).collect(Collectors.toList())) {
-            log("Trying resource pack %s (%s)", resourcePack.getURL(), resourcePack.getVersion().map(ResourcePackVersion::version).toString());
-
             final Optional<ResourcePackVersion> version = resourcePack.getVersion();
+            log("Trying resource pack %s (%s)", resourcePack.getURL(), version.isEmpty() ? version.toString() : version.get().toString());
+
             if (version.isEmpty()) {
                 if (anyVersionPack == null) anyVersionPack = resourcePack; // Pick first all-version resource pack
                 validPacks.add(resourcePack); // This is still a valid pack that we want to apply.
                 continue;
             }
 
-            if (version.get().version() == packVersion) {
+            if (version.get().inVersion(packVersion)) {
                 validPacks.add(resourcePack);
                 log("Added resource pack %s", resourcePack.getURL());
                 if (protocolVersion.getProtocol() < 765) { // If < 1.20.3, only one pack can be applied.

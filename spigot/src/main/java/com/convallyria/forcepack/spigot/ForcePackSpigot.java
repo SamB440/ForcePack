@@ -85,18 +85,16 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         ResourcePack anyVersionPack = null;
         Set<ResourcePack> validPacks = new HashSet<>();
         for (ResourcePack resourcePack : getResourcePacks()) {
-            log("Trying resource pack " + resourcePack.getURL() + " (" + resourcePack.getVersion().map(ResourcePackVersion::version) + ")");
             final Optional<ResourcePackVersion> version = resourcePack.getVersion();
+            log("Trying resource pack " + resourcePack.getURL() + " (" + (version.isEmpty() ? version.toString() : version.get().toString()) + ")");
+
             if (version.isEmpty()) {
                 if (anyVersionPack == null) anyVersionPack = resourcePack; // Pick first all-version resource pack
                 validPacks.add(resourcePack); // This is still a valid pack that we want to apply.
-                if (protocolVersion < 765) { // If < 1.20.3, only one pack can be applied.
-                    break;
-                }
                 continue;
             }
 
-            if (version.get().version() == packFormat) {
+            if (version.get().inVersion(packFormat)) {
                 validPacks.add(resourcePack);
                 log("Added resource pack " + resourcePack.getURL());
                 if (protocolVersion < 765) { // If < 1.20.3, only one pack can be applied.
@@ -273,7 +271,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         final ConfigurationSection packs = getConfig().getConfigurationSection("Server.packs");
         boolean success = true;
         for (String versionId : packs.getKeys(false)) {
-            ResourcePackVersion version = versionId.equals("all") ? null : () -> Integer.parseInt(versionId);
+            ResourcePackVersion version = getVersionFromId(versionId);
             final ConfigurationSection packSection = packs.getConfigurationSection(versionId);
             final List<String> urls = packSection.isSet("urls")
                     ? packSection.getStringList("urls")
@@ -297,6 +295,28 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         if (!success) {
             getLogger().severe("Unable to load all resource packs correctly.");
         }
+    }
+
+    private ResourcePackVersion getVersionFromId(String versionId) {
+        if (versionId.equals("all")) {
+            return null;
+        }
+
+        try {
+            // One version?
+            final int fixedVersion = Integer.parseInt(versionId);
+            return ResourcePackVersion.of(fixedVersion, fixedVersion);
+        } catch (NumberFormatException ignored) {
+            try {
+                // Version range?
+                final String[] ranged = versionId.split("-");
+                final int min = Integer.parseInt(ranged[0]);
+                final int max = Integer.parseInt(ranged[1]);
+                return ResourcePackVersion.of(min, max);
+            } catch (NumberFormatException | IndexOutOfBoundsException ignored2) {}
+        }
+
+        throw new IllegalArgumentException("Invalid version id: " + versionId);
     }
 
     private boolean checkPack(@Nullable ResourcePackVersion version, String url, boolean generateHash, @Nullable String hash) {
