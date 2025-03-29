@@ -52,6 +52,11 @@ public class ResourcePackListener implements Listener {
             return;
         }
 
+        if (plugin.temporaryExemptedPlayers.remove(player.getUniqueId())) {
+            plugin.log("Ignoring player " + player.getName() + " as they do not have permissions or are a geyser player.");
+            return;
+        }
+
         final ResourcePackStatus status = event.getStatus();
         plugin.log(player.getName() + " sent status: " + status);
 

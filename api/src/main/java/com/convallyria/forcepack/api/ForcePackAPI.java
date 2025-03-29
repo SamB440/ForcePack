@@ -4,6 +4,7 @@ import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.schedule.PlatformScheduler;
 
 import java.util.Set;
+import java.util.UUID;
 
 public interface ForcePackAPI {
 
@@ -20,4 +21,10 @@ public interface ForcePackAPI {
      * @return the scheduler for this server platform
      */
     PlatformScheduler<?> getScheduler();
+
+    /**
+     * @param uuid The UUID of the player to exempt the next resource pack send from.
+     * @return true if the player was successfully exempted, false if they were already on the exemption list.
+     */
+    boolean exemptNextResourcePackSend(UUID uuid);
 }
