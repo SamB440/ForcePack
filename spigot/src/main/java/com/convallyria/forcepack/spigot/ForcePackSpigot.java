@@ -69,6 +69,8 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
     private BukkitAudiences adventure;
 
+    public final Set<UUID> temporaryExemptedPlayers = new HashSet<>();
+
     @Override
     public Set<ResourcePack> getResourcePacks() {
         return resourcePacks.values().stream()
@@ -118,6 +120,11 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
     @Override
     public PlatformScheduler<?> getScheduler() {
         return scheduler;
+    }
+
+    @Override
+    public boolean exemptNextResourcePackSend(UUID uuid) {
+        return temporaryExemptedPlayers.add(uuid);
     }
 
     private final Map<UUID, ForcePackPlayer> waiting = new HashMap<>();
