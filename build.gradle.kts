@@ -1,7 +1,6 @@
 plugins {
     id("io.github.goooler.shadow") version "8.1.8"
     id("java")
-    `maven-publish`
 }
 
 dependencies {
@@ -19,20 +18,6 @@ tasks {
 
     build {
         dependsOn(shadowJar)
-    }
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            groupId = "com.convallyria.forcepack"
-            artifactId = "ForcePack"
-            version = "1.3.72"
-            artifact(file("C:/Users/Tom/IdeaProjects/ForcePack/build/libs/ForcePack-1.3.72.jar"))
-        }
-    }
-    repositories {
-        mavenLocal()
     }
 }
 
