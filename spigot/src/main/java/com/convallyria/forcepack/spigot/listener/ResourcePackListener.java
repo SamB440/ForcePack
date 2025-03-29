@@ -53,7 +53,7 @@ public class ResourcePackListener implements Listener {
         }
 
         if (plugin.temporaryExemptedPlayers.remove(player.getUniqueId())) {
-            plugin.log("Ignoring player " + player.getName() + " as they do not have permissions or are a geyser player.");
+            plugin.log("Ignoring player " + player.getName() + " as they have a one-off exemption.");
             return;
         }
 
