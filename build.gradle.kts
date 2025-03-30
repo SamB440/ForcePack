@@ -1,5 +1,5 @@
 plugins {
-    id("io.github.goooler.shadow") version "8.1.8"
+    id("com.gradleup.shadow") version "9.0.0-beta11"
     id("java")
 }
 
@@ -25,7 +25,7 @@ allprojects {
     group = "com.convallyria.forcepack"
     version = "1.3.72"
 
-    apply(plugin = "io.github.goooler.shadow")
+    apply(plugin = "com.gradleup.shadow")
     apply(plugin = "java")
 
     java {
