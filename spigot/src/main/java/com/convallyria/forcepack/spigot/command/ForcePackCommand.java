@@ -13,8 +13,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.incendo.cloud.annotations.Argument;
 import org.incendo.cloud.annotations.Command;
 import org.incendo.cloud.annotations.CommandDescription;
+import org.incendo.cloud.annotations.Default;
 import org.incendo.cloud.annotations.Permission;
 
 import java.util.Set;
@@ -36,14 +38,15 @@ public class ForcePackCommand {
 
     @CommandDescription("Reloads the plugin config along with the resource pack")
     @Permission(Permissions.RELOAD)
-    @Command("forcepack reload")
-    public void onReload(CommandSender sender) {
+    @Command("forcepack reload [send]")
+    public void onReload(CommandSender sender,
+                         @Argument(description = "Whether to send the updated resource pack to players") @Default("true") boolean send) {
         sender.sendMessage(ChatColor.GREEN + "Reloading...");
         plugin.reloadConfig();
         plugin.reload();
         PacketEvents.getAPI().getSettings().debug(plugin.debug());
         Bukkit.getPluginManager().callEvent(new ForcePackReloadEvent());
-        if (!plugin.velocityMode) {
+        if (!plugin.velocityMode && send) {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (plugin.isWaiting(player)) continue;
                 boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());

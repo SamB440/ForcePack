@@ -166,12 +166,6 @@ public class ResourcePackListener {
         final Player player = event.getPlayer();
         final Optional<ServerConnection> currentServer = player.getCurrentServer();
         if (currentServer.isEmpty()) return;
-
-        boolean geyser = plugin.getConfig().getBoolean("geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
-        boolean canBypass = player.hasPermission(Permissions.BYPASS) && plugin.getConfig().getBoolean("bypass-permission");
-        plugin.log(player.getUsername() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
-        if (!canBypass && !geyser) {
-            plugin.getPackHandler().setPack(player, currentServer.get());
-        }
+        plugin.getPackHandler().setPack(player, currentServer.get());
     }
 }

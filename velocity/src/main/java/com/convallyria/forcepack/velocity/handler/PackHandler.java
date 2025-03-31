@@ -1,8 +1,10 @@
 package com.convallyria.forcepack.velocity.handler;
 
+import com.convallyria.forcepack.api.permission.Permissions;
 import com.convallyria.forcepack.api.player.ForcePackPlayer;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.utils.ClientVersion;
+import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.convallyria.forcepack.velocity.player.ForcePackVelocityPlayer;
@@ -89,6 +91,14 @@ public final class PackHandler {
     }
 
     public void setPack(final Player player, final ServerConnection server) {
+        boolean geyser = plugin.getConfig().getBoolean("geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
+        boolean canBypass = player.hasPermission(Permissions.BYPASS) && plugin.getConfig().getBoolean("bypass-permission");
+        plugin.log(player.getUsername() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
+        if (canBypass || geyser) {
+            // Player is exempt from resource packs
+            return;
+        }
+
         // Find whether the config contains this server
         final ServerInfo serverInfo = server.getServerInfo();
         final ProtocolVersion protocolVersion = player.getProtocolVersion();
