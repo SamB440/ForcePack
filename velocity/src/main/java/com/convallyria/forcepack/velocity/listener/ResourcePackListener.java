@@ -75,7 +75,7 @@ public class ResourcePackListener {
         }
 
         if (plugin.temporaryExemptedPlayers.remove(player.getUniqueId())) {
-            plugin.log("Ignoring player " + player.getUsername() + " as they has a one-off exemption.");
+            plugin.log("Ignoring player " + player.getUsername() + " as they have a one-off exemption.");
             return;
         }
 
@@ -178,5 +178,10 @@ public class ResourcePackListener {
         if (!canBypass && !geyser) {
             plugin.getPackHandler().setPack(player, currentServer.get());
         }
+    }
+
+    @Subscribe(order = PostOrder.LATE)
+    public void onQuit(DisconnectEvent event) {
+        plugin.temporaryExemptedPlayers.remove(event.getPlayer().getUniqueId());
     }
 }

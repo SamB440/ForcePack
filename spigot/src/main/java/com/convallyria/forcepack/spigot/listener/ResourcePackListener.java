@@ -281,6 +281,7 @@ public class ResourcePackListener implements Listener {
         Player player = pqe.getPlayer();
         plugin.removeFromWaiting(player);
         sentAccept.remove(player.getUniqueId());
+        plugin.temporaryExemptedPlayers.remove(player.getUniqueId());
     }
 
     private void ensureMainThread(Runnable runnable) {
