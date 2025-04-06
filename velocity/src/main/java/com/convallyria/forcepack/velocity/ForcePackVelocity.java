@@ -52,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -87,6 +88,7 @@ public class ForcePackVelocity implements ForcePackAPI {
     public Optional<ForcePackWebServer> getWebServer() {
         return Optional.ofNullable(webServer);
     }
+    public final Set<UUID> temporaryExemptedPlayers = new HashSet<>();
 
     @Inject
     public ForcePackVelocity(PluginContainer container, ProxyServer server, Logger logger, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory, CommandManager commandManager) {
@@ -548,6 +550,11 @@ public class ForcePackVelocity implements ForcePackAPI {
     @Override
     public PlatformScheduler<?> getScheduler() {
         return scheduler;
+    }
+
+    @Override
+    public boolean exemptNextResourcePackSend(UUID uuid) {
+        return temporaryExemptedPlayers.add(uuid);
     }
 
     public Optional<Set<ResourcePack>> getPacksByServerAndVersion(final String server, final ProtocolVersion version) {

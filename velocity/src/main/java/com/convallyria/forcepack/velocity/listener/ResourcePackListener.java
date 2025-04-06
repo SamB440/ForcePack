@@ -74,6 +74,11 @@ public class ResourcePackListener {
             return;
         }
 
+        if (plugin.temporaryExemptedPlayers.remove(player.getUniqueId())) {
+            plugin.log("Ignoring player " + player.getUsername() + " as they have a one-off exemption.");
+            return;
+        }
+
         final VelocityConfig root;
         if (packByServer.getServer().contains(ForcePackVelocity.GLOBAL_SERVER_NAME)) {
             root = plugin.getConfig().getConfig("global-pack");
@@ -167,5 +172,10 @@ public class ResourcePackListener {
         final Optional<ServerConnection> currentServer = player.getCurrentServer();
         if (currentServer.isEmpty()) return;
         plugin.getPackHandler().setPack(player, currentServer.get());
+    }
+
+    @Subscribe(order = PostOrder.LATE)
+    public void onQuit(DisconnectEvent event) {
+        plugin.temporaryExemptedPlayers.remove(event.getPlayer().getUniqueId());
     }
 }

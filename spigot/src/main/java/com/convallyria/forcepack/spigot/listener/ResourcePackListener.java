@@ -52,6 +52,11 @@ public class ResourcePackListener implements Listener {
             return;
         }
 
+        if (plugin.temporaryExemptedPlayers.remove(player.getUniqueId())) {
+            plugin.log("Ignoring player " + player.getName() + " as they have a one-off exemption.");
+            return;
+        }
+
         final ResourcePackStatus status = event.getStatus();
         plugin.log(player.getName() + " sent status: " + status);
 
@@ -276,6 +281,7 @@ public class ResourcePackListener implements Listener {
         Player player = pqe.getPlayer();
         plugin.removeFromWaiting(player);
         sentAccept.remove(player.getUniqueId());
+        plugin.temporaryExemptedPlayers.remove(player.getUniqueId());
     }
 
     private void ensureMainThread(Runnable runnable) {
