@@ -40,7 +40,7 @@ public class ForcePackCommand {
     @Permission(Permissions.RELOAD)
     @Command("forcepack reload [send]")
     public void onReload(CommandSender sender,
-                         @Argument(description = "Whether to send the updated resource pack to players") @Default("true") boolean send) {
+                         @Argument(value = "send", description = "Whether to send the updated resource pack to players") @Default("true") boolean send) {
         sender.sendMessage(ChatColor.GREEN + "Reloading...");
         plugin.reloadConfig();
         plugin.reload();

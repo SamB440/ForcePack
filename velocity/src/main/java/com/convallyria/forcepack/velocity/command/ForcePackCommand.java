@@ -33,7 +33,7 @@ public class ForcePackCommand {
     @Permission(Permissions.RELOAD)
     @Command("vforcepack|velocityforcepack reload [send]")
     public void onReload(CommandSource commandSource,
-                         @Argument(description = "Whether to send the updated resource pack to players") @Default("true") boolean send) {
+                         @Argument(value = "send", description = "Whether to send the updated resource pack to players") @Default("true") boolean send) {
         final CommandSource source = plugin.getServer().getConsoleCommandSource();
         final UUID possibleUUID = commandSource.pointers().getOrDefault(Identity.UUID, null);
         final Player sender = possibleUUID == null ? null : plugin.getServer().getPlayer(possibleUUID).orElse(null);
