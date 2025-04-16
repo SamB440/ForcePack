@@ -61,6 +61,11 @@ public class ResourcePackListener {
             return;
         }
 
+        if (plugin.temporaryExemptedPlayers.remove(player.uniqueId())) {
+            plugin.log("Ignoring player " + player.name() + " as they have a one-off exemption.");
+            return;
+        }
+
         final ResourcePackStatus status = event.getStatus();
         plugin.log(player.name() + " sent status: " + status);
 
@@ -255,7 +260,7 @@ public class ResourcePackListener {
             final int maxSize = ClientVersion.getMaxSizeForVersion(version);
             final boolean forceSend = getConfig().node("Server", "force-invalid-size").getBoolean();
             if (!forceSend && pack.getSize() > maxSize) {
-                if (plugin.debug()) plugin.getLogger().info(String.format("Not sending pack to %s because of excessive size for version %d (%dMB, %dMB).", player.name(), version, pack.getSize(), maxSize));
+                if (plugin.debug()) plugin.getLogger().info("Not sending pack to {} because of excessive size for version {} ({}MB, {}MB).", player.name(), version, pack.getSize(), maxSize);
                 continue;
             }
 

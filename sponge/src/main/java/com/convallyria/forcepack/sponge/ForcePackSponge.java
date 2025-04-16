@@ -1,8 +1,8 @@
 package com.convallyria.forcepack.sponge;
 
 import com.convallyria.forcepack.api.ForcePackAPI;
+import com.convallyria.forcepack.api.ForcePackPlatform;
 import com.convallyria.forcepack.api.player.ForcePackPlayer;
-import com.convallyria.forcepack.api.resourcepack.PackFormatResolver;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.resourcepack.ResourcePackVersion;
 import com.convallyria.forcepack.api.schedule.PlatformScheduler;
@@ -77,12 +77,19 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Plugin("forcepack")
-public class ForcePackSponge implements ForcePackAPI {
+public class ForcePackSponge implements ForcePackPlatform {
 
     private final PluginContainer pluginContainer;
     private final Logger logger;
     private final Path configDir;
     private final SpongeScheduler scheduler;
+
+    public final Set<UUID> temporaryExemptedPlayers = new HashSet<>();
+
+    @Override
+    public boolean exemptNextResourcePackSend(UUID uuid) {
+        return temporaryExemptedPlayers.add(uuid);
+    }
 
     @Inject
     public ForcePackSponge(PluginContainer pluginContainer, Logger logger, @ConfigDir(sharedRoot = false) Path configDir, Metrics.Factory metrics) {
@@ -163,43 +170,7 @@ public class ForcePackSponge implements ForcePackAPI {
 
     public Set<ResourcePack> getPacksForVersion(ServerPlayer player) {
         final int protocolVersion = ProtocolUtil.getProtocolVersion(player);
-        final int packFormat = PackFormatResolver.getPackFormat(protocolVersion);
-
-        log("Searching for a resource pack with pack version " + packFormat);
-
-        ResourcePack anyVersionPack = null;
-        Set<ResourcePack> validPacks = new HashSet<>();
-        for (ResourcePack resourcePack : getResourcePacks()) {
-            log("Trying resource pack " + resourcePack.getURL() + " (" + resourcePack.getVersion().map(ResourcePackVersion::version) + ")");
-            final Optional<ResourcePackVersion> version = resourcePack.getVersion();
-            if (version.isEmpty()) {
-                if (anyVersionPack == null) anyVersionPack = resourcePack; // Pick first all-version resource pack
-                validPacks.add(resourcePack); // This is still a valid pack that we want to apply.
-                if (protocolVersion < 765) { // If < 1.20.3, only one pack can be applied.
-                    break;
-                }
-                continue;
-            }
-
-            if (version.get().version() == packFormat) {
-                validPacks.add(resourcePack);
-                log("Added resource pack " + resourcePack.getURL());
-                if (protocolVersion < 765) { // If < 1.20.3, only one pack can be applied.
-                    break;
-                }
-            }
-        }
-
-        if (!validPacks.isEmpty()) {
-            log("Found multiple valid resource packs (" + validPacks.size() + ")");
-            for (ResourcePack validPack : validPacks) {
-                log("Chosen resource pack " + validPack.getURL());
-            }
-            return validPacks;
-        }
-
-        log("Chosen resource pack is " + (anyVersionPack == null ? "null" : anyVersionPack.getURL()));
-        return anyVersionPack == null ? Set.of() : Set.of(anyVersionPack);
+        return getPacksForVersion(protocolVersion);
     }
 
     private final Map<UUID, ForcePackPlayer> waiting = new HashMap<>();
@@ -272,7 +243,7 @@ public class ForcePackSponge implements ForcePackAPI {
         try {
             for (Object key : packs.childrenMap().keySet()) {
                 String versionId = key.toString();
-                ResourcePackVersion version = versionId.equals("all") ? null : () -> Integer.parseInt(versionId);
+                ResourcePackVersion version = getVersionFromId(versionId);
                 final ConfigurationNode packSection = packs.node(versionId);
                 final List<String> urls = packSection.hasChild("urls")
                         ? packSection.node("urls").getList(String.class, new ArrayList<>())
@@ -295,7 +266,6 @@ public class ForcePackSponge implements ForcePackAPI {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
 
         if (!success) {
             getLogger().error("Unable to load all resource packs correctly.");
@@ -534,8 +504,9 @@ public class ForcePackSponge implements ForcePackAPI {
         return getConfig().node("Server", "debug").getBoolean();
     }
 
-    public void log(String info) {
-        if (debug()) getLogger().info(info);
+    @Override
+    public void log(String info, Object... format) {
+        if (debug()) getLogger().info(String.format(info, format));
     }
 
     public Logger getLogger() {

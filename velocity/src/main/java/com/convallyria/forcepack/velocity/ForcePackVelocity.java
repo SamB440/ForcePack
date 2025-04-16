@@ -1,6 +1,6 @@
 package com.convallyria.forcepack.velocity;
 
-import com.convallyria.forcepack.api.ForcePackAPI;
+import com.convallyria.forcepack.api.ForcePackPlatform;
 import com.convallyria.forcepack.api.resourcepack.PackFormatResolver;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.resourcepack.ResourcePackVersion;
@@ -69,7 +69,7 @@ import java.util.stream.Collectors;
         },
         authors = {"SamB440"}
 )
-public class ForcePackVelocity implements ForcePackAPI {
+public class ForcePackVelocity implements ForcePackPlatform {
 
     public static final String EMPTY_SERVER_NAME = "ForcePack-Empty-Server";
     public static final String GLOBAL_SERVER_NAME = "ForcePack-Global-Server";
@@ -535,6 +535,11 @@ public class ForcePackVelocity implements ForcePackAPI {
         return temporaryExemptedPlayers.add(uuid);
     }
 
+    @Override
+    public Set<ResourcePack> getPacksForVersion(int protocolVersion) {
+        throw new IllegalStateException("Use getPacksByServerAndVersion for Velocity");
+    }
+
     public Optional<Set<ResourcePack>> getPacksByServerAndVersion(final String server, final ProtocolVersion version) {
         final int protocolVersion = version.getProtocol();
         final int packFormat = PackFormatResolver.getPackFormat(protocolVersion);
@@ -591,6 +596,7 @@ public class ForcePackVelocity implements ForcePackAPI {
         return this.miniMessage = MiniMessage.miniMessage();
     }
 
+    @Override
     public void log(String info, Object... format) {
         if (this.getConfig().getBoolean("debug")) this.getLogger().info(String.format(info, format));
     }

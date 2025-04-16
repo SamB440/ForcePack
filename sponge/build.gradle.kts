@@ -37,6 +37,7 @@ repositories {
     repositories {
         maven("https://repo.convallyria.com/releases")
         maven("https://repo.convallyria.com/snapshots")
+        maven("https://repo.codemc.io/repository/maven-snapshots/")
         maven("https://repo.viaversion.com")
     }
 }
@@ -45,7 +46,7 @@ dependencies {
     implementation(project(":api"))
     implementation(project(":webserver", "shadow"))
     // TODO use grim fork
-    implementation("com.github.retrooper:packetevents-sponge:2.7.0")
+    implementation("com.github.retrooper:packetevents-sponge:2.8.0-SNAPSHOT")
     implementation("org.bstats:bstats-sponge:3.0.2")
     implementation("org.incendo:cloud-sponge:2.0.0-SNAPSHOT") {
         exclude("org.checkerframework")
