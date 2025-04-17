@@ -27,6 +27,7 @@ tasks.shadowJar {
         exclude(project(":webserver"))
     }
     mergeServiceFiles()
+    relocate("io.leangen.geantyref", "forcepack.libs.geantyref")
     relocate("org.bstats", "com.convallyria.forcepack.velocity.libs.bstats")
     relocate("org.glassfish.jaxb", "com.convallyria.forcepack.libs.jaxb")
     relocate("org.objectweb.asm", "com.convallyria.forcepack.libs.asm")

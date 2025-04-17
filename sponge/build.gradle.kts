@@ -4,15 +4,14 @@ import org.spongepowered.plugin.metadata.model.PluginDependency
 plugins {
     `java-library`
     id("buildlogic.java-platform-conventions")
-    id("org.spongepowered.gradle.plugin") version "2.2.0"
+    id("org.spongepowered.gradle.plugin") version "2.3.0"
 }
 
 sponge {
-    apiVersion("12.0.0-SNAPSHOT")
-    license("GPL-3.0")
+    apiVersion("14.0.0-SNAPSHOT")
     loader {
         name(PluginLoaders.JAVA_PLAIN)
-        version("1.3.71")
+        version("1.0.0-SNAPSHOT")
     }
 
     plugin("forcepack") {
@@ -66,11 +65,7 @@ tasks {
         relocate("org.bstats", "forcepack.libs.bstats")
         relocate("net.kyori.adventure.nbt", "forcepack.libs.adventure.nbt")
         relocate("net.kyori.examination", "forcepack.libs.adventure.ex")
-    }
-}
 
-// Make sure all tasks which produce archives (jar, sources jar, javadoc jar, etc) produce more consistent output
-tasks.withType(AbstractArchiveTask::class).configureEach {
-    isReproducibleFileOrder = true
-    isPreserveFileTimestamps = false
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
 }

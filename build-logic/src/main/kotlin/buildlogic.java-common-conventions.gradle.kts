@@ -75,7 +75,6 @@ tasks {
         relocate("jakarta.activation", "forcepack.libs.jakarta.activation")
         relocate("com.sun.xml.txw2", "forcepack.libs.sun.xml")
         relocate("com.sun.istack", "forcepack.libs.sun.istack")
-        relocate("io.leangen.geantyref", "forcepack.libs.geantyref")
         relocate("com.github.retrooper.packetevents", "forcepack.libs.pe.api")
         relocate("io.github.retrooper.packetevents", "forcepack.libs.pe.impl")
     }
