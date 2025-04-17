@@ -65,8 +65,8 @@ tasks {
     }
 
     shadowJar {
-        archiveBaseName.set("forcepack-${project.name}")
-        archiveClassifier.set("")
+        archiveBaseName.set("forcepack")
+        archiveClassifier.set(project.name)
         mergeServiceFiles()
         relocate("me.lucko.jarrelocator", "forcepack.libs.relocator")
         relocate("org.glassfish.jaxb", "forcepack.libs.jaxb")

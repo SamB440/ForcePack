@@ -9,6 +9,7 @@ dependencies {
 
 tasks {
     shadowJar {
+        archiveClassifier.set("spigot-velocity")
         minimize {
             exclude(project(":webserver"))
             exclude(project(":velocity"))
