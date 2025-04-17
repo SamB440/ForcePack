@@ -10,8 +10,10 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerResourcePackRemove;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.incendo.cloud.annotations.Argument;
 import org.incendo.cloud.annotations.Command;
 import org.incendo.cloud.annotations.CommandDescription;
+import org.incendo.cloud.annotations.Default;
 import org.incendo.cloud.annotations.Permission;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandCause;
@@ -36,14 +38,15 @@ public class ForcePackCommand {
 
     @CommandDescription("Reloads the plugin config along with the resource pack")
     @Permission(Permissions.RELOAD)
-    @Command("forcepack reload")
-    public void onReload(CommandCause sender) {
+    @Command("forcepack reload [send]")
+    public void onReload(CommandCause sender,
+                         @Argument(value = "send", description = "Whether to send the updated resource pack to players") @Default("true") boolean send) {
         sender.sendMessage(Component.text("Reloading...", NamedTextColor.GREEN));
         plugin.reloadConfig();
         plugin.reload();
         PacketEvents.getAPI().getSettings().debug(plugin.debug());
         Sponge.eventManager().post(new ForcePackReloadEvent());
-        if (!plugin.getConfig().node("velocity-mode").getBoolean()) {
+        if (!plugin.getConfig().node("velocity-mode").getBoolean() && send) {
             for (ServerPlayer player : Sponge.server().onlinePlayers()) {
                 if (plugin.isWaiting(player)) continue;
                 boolean geyser = plugin.getConfig().node("Server", "geyser").getBoolean() && GeyserUtil.isBedrockPlayer(player.uniqueId());
