@@ -62,14 +62,10 @@ tasks {
         minimize {
             exclude(project(":webserver"))
         }
-        mergeServiceFiles()
-        relocate("org.bstats", "com.convallyria.forcepack.sponge.libs.bstats")
-        relocate("com.github.retrooper.packetevents", "com.convallyria.forcepack.sponge.libs.pe.api")
-        relocate("io.github.retrooper.packetevents", "com.convallyria.forcepack.sponge.libs.pe.impl")
-        relocate("net.kyori.adventure.nbt", "com.convallyria.forcepack.sponge.libs.adventure.nbt")
-        relocate("net.kyori.examination", "com.convallyria.forcepack.sponge.libs.adventure.ex")
-        relocate("org.glassfish.jaxb", "com.convallyria.forcepack.libs.jaxb")
-        relocate("org.objectweb.asm", "com.convallyria.forcepack.libs.asm")
+
+        relocate("org.bstats", "forcepack.libs.bstats")
+        relocate("net.kyori.adventure.nbt", "forcepack.libs.adventure.nbt")
+        relocate("net.kyori.examination", "forcepack.libs.adventure.ex")
     }
 }
 

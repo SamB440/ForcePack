@@ -16,7 +16,7 @@ spotless {
 
     kotlinGradle {
         endWithNewline()
-        indentWithSpaces(4)
+        leadingTabsToSpaces(4)
         trimTrailingWhitespace()
     }
 }
@@ -71,9 +71,12 @@ tasks {
         relocate("me.lucko.jarrelocator", "forcepack.libs.relocator")
         relocate("org.glassfish.jaxb", "forcepack.libs.jaxb")
         relocate("org.objectweb.asm", "forcepack.libs.asm")
-
-        val prefix = "forcepack.libs.${project.name}"
-        relocate("io.github.retrooper.packetevents", "${prefix}.pe.io")
-        relocate("com.github.retrooper.packetevents", "${prefix}.pe")
+        relocate("jakarta.xml.bind", "forcepack.libs.jakarta.xml.bind")
+        relocate("jakarta.activation", "forcepack.libs.jakarta.activation")
+        relocate("com.sun.xml.txw2", "forcepack.libs.sun.xml")
+        relocate("com.sun.istack", "forcepack.libs.sun.istack")
+        relocate("io.leangen.geantyref", "forcepack.libs.geantyref")
+        relocate("com.github.retrooper.packetevents", "forcepack.libs.pe.api")
+        relocate("io.github.retrooper.packetevents", "forcepack.libs.pe.impl")
     }
 }
