@@ -454,7 +454,7 @@ public class ForcePackSponge implements ForcePackPlatform {
 
 
     private void registerTranslations() {
-        final TranslationRegistry translationRegistry = TranslationRegistry.create(Key.key("battlegrounds", "translations"));
+        final TranslationRegistry translationRegistry = TranslationRegistry.create(Key.key("forcepack", "translations"));
         translationRegistry.defaultLocale(Locale.US);
 
         try {
@@ -474,7 +474,7 @@ public class ForcePackSponge implements ForcePackPlatform {
                                 .replace('_', '-');
                         final Locale locale = localeName.isEmpty() ? Locale.US : Locale.forLanguageTag(localeName);
 
-                        translationRegistry.registerAll(locale, ResourceBundle.getBundle("org/empirewar/battlegrounds/l10n/messages",
+                        translationRegistry.registerAll(locale, ResourceBundle.getBundle("com/convallyria/forcepack/sponge/l10n/messages",
                                 locale), false);
 
                         this.getLogger().info("Loaded translations for {}.", locale.getDisplayName());
@@ -482,7 +482,7 @@ public class ForcePackSponge implements ForcePackPlatform {
                 } catch (final IOException e) {
                     getLogger().warn("Encountered an I/O error whilst loading translations", e);
                 }
-            }, "org", "empirewar", "battlegrounds", "l10n");
+            }, "com", "convallyria", "forcepack", "sponge", "l10n");
         } catch (final IOException e) {
             getLogger().warn("Encountered an I/O error whilst loading translations", e);
             return;
