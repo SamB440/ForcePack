@@ -559,8 +559,7 @@ public class ForcePackVelocity implements ForcePackPlatform {
             log("Trying resource pack %s (%s)", resourcePack.getURL(), version.isEmpty() ? version.toString() : version.get().toString());
 
             if (version.isEmpty()) {
-                if (anyVersionPack == null) anyVersionPack = resourcePack; // Pick first all-version resource pack
-                validPacks.add(resourcePack); // This is still a valid pack that we want to apply.
+                anyVersionPack = resourcePack; // Pick first all-version resource pack
                 continue;
             }
 

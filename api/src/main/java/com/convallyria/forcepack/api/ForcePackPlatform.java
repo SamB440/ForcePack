@@ -93,8 +93,7 @@ public interface ForcePackPlatform extends ForcePackAPI {
             log("Trying resource pack " + resourcePack.getURL() + " (" + (version.isEmpty() ? version.toString() : version.get().toString()) + ")");
 
             if (version.isEmpty()) {
-                if (anyVersionPack == null) anyVersionPack = resourcePack; // Pick first all-version resource pack
-                validPacks.add(resourcePack); // This is still a valid pack that we want to apply.
+                anyVersionPack = resourcePack; // Pick the first all-version resource pack
                 continue;
             }
 
