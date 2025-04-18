@@ -27,4 +27,5 @@ public interface ForcePackAPI {
      * @return true if the player was successfully exempted, false if they were already on the exemption list.
      */
     boolean exemptNextResourcePackSend(UUID uuid);
+
 }

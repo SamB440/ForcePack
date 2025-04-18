@@ -1,6 +1,6 @@
 package com.convallyria.forcepack.velocity;
 
-import com.convallyria.forcepack.api.ForcePackAPI;
+import com.convallyria.forcepack.api.ForcePackPlatform;
 import com.convallyria.forcepack.api.resourcepack.PackFormatResolver;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.resourcepack.ResourcePackVersion;
@@ -44,7 +44,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -70,7 +69,7 @@ import java.util.stream.Collectors;
         },
         authors = {"SamB440"}
 )
-public class ForcePackVelocity implements ForcePackAPI {
+public class ForcePackVelocity implements ForcePackPlatform {
 
     public static final String EMPTY_SERVER_NAME = "ForcePack-Empty-Server";
     public static final String GLOBAL_SERVER_NAME = "ForcePack-Global-Server";
@@ -237,7 +236,7 @@ public class ForcePackVelocity implements ForcePackAPI {
             });
         }
     }
-    
+
     private void registerResourcePack(VelocityConfig rootServerConfig, VelocityConfig resourcePack, String id, String name, String typeName, boolean groups, boolean verifyPacks, @Nullable Player player) {
         List<String> urls = resourcePack.getStringList("urls");
         if (urls.isEmpty()) {
@@ -467,16 +466,7 @@ public class ForcePackVelocity implements ForcePackAPI {
     }
 
     private void checkValidEnding(String url) {
-        List<String> validUrlEndings = Arrays.asList(".zip", "dl=1");
-        boolean hasEnding = false;
-        for (String validUrlEnding : validUrlEndings) {
-            if (url.endsWith(validUrlEnding)) {
-                hasEnding = true;
-                break;
-            }
-        }
-
-        if (!hasEnding) {
+        if (!isValidEnding(url)) {
             getLogger().error("Your URL has an invalid or unknown format. " +
                     "URLs must have no redirects and use the .zip extension. If you are using Dropbox, change dl=0 to dl=1.");
             getLogger().error("ForcePack will still load in the event this check is incorrect. Please make an issue or pull request if this is so.");
@@ -484,28 +474,16 @@ public class ForcePackVelocity implements ForcePackAPI {
     }
 
     private void checkForRehost(String url, String section) {
-        List<String> warnForHost = List.of("convallyria.com");
-        boolean rehosted = true;
-        for (String host : warnForHost) {
-            if (url.contains(host)) {
-                rehosted = false;
-                break;
-            }
-        }
-
-        if (!rehosted) {
+        if (isDefaultHost(url)) {
             getLogger().warn("[{}] You are using a default resource pack provided by the plugin. " +
                     " It's highly recommended you re-host this pack using the webserver or on a CDN such as https://mc-packs.net for faster load times. " +
                     "Leaving this as default potentially sends a lot of requests to my personal web server, which isn't ideal!", section);
             getLogger().warn("ForcePack will still load and function like normally.");
         }
 
-        List<String> blacklisted = List.of("mediafire.com");
-        for (String blacklistedSite : blacklisted) {
-            if (url.contains(blacklistedSite)) {
-                getLogger().error("Invalid resource pack site used! '{}' cannot be used for hosting resource packs!", blacklistedSite);
-            }
-        }
+        getBlacklistedSite(url).ifPresent(blacklistedSite -> {
+            getLogger().error("Invalid resource pack site used! '{}' cannot be used for hosting resource packs!", blacklistedSite);
+        });
     }
 
     @Nullable
@@ -555,6 +533,11 @@ public class ForcePackVelocity implements ForcePackAPI {
     @Override
     public boolean exemptNextResourcePackSend(UUID uuid) {
         return temporaryExemptedPlayers.add(uuid);
+    }
+
+    @Override
+    public Set<ResourcePack> getPacksForVersion(int protocolVersion) {
+        throw new IllegalStateException("Use getPacksByServerAndVersion for Velocity");
     }
 
     public Optional<Set<ResourcePack>> getPacksByServerAndVersion(final String server, final ProtocolVersion version) {
@@ -613,6 +596,7 @@ public class ForcePackVelocity implements ForcePackAPI {
         return this.miniMessage = MiniMessage.miniMessage();
     }
 
+    @Override
     public void log(String info, Object... format) {
         if (this.getConfig().getBoolean("debug")) this.getLogger().info(String.format(info, format));
     }

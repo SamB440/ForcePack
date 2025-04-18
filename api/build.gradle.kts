@@ -1,7 +1,7 @@
 plugins {
+    id("buildlogic.java-common-conventions")
     `maven-publish`
 }
-
 
 repositories {
     maven("https://repo.opencollab.dev/main/")

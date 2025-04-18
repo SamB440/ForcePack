@@ -1,4 +1,5 @@
 plugins {
+    id("buildlogic.java-common-conventions")
     id("dev.vankka.dependencydownload.plugin") version "1.3.1"
 }
 

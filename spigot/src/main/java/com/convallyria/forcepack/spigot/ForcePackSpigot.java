@@ -1,8 +1,8 @@
 package com.convallyria.forcepack.spigot;
 
 import com.convallyria.forcepack.api.ForcePackAPI;
+import com.convallyria.forcepack.api.ForcePackPlatform;
 import com.convallyria.forcepack.api.player.ForcePackPlayer;
-import com.convallyria.forcepack.api.resourcepack.PackFormatResolver;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.resourcepack.ResourcePackVersion;
 import com.convallyria.forcepack.api.schedule.PlatformScheduler;
@@ -45,7 +45,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -60,7 +59,7 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
+public final class ForcePackSpigot extends JavaPlugin implements ForcePackPlatform {
 
     private Translator translator;
     private PlatformScheduler<?> scheduler;
@@ -80,41 +79,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
 
     public Set<ResourcePack> getPacksForVersion(Player player) {
         final int protocolVersion = ProtocolUtil.getProtocolVersion(player);
-        final int packFormat = PackFormatResolver.getPackFormat(protocolVersion);
-
-        log("Searching for a resource pack with pack version " + packFormat);
-
-        ResourcePack anyVersionPack = null;
-        Set<ResourcePack> validPacks = new HashSet<>();
-        for (ResourcePack resourcePack : getResourcePacks()) {
-            final Optional<ResourcePackVersion> version = resourcePack.getVersion();
-            log("Trying resource pack " + resourcePack.getURL() + " (" + (version.isEmpty() ? version.toString() : version.get().toString()) + ")");
-
-            if (version.isEmpty()) {
-                if (anyVersionPack == null) anyVersionPack = resourcePack; // Pick first all-version resource pack
-                validPacks.add(resourcePack); // This is still a valid pack that we want to apply.
-                continue;
-            }
-
-            if (version.get().inVersion(packFormat)) {
-                validPacks.add(resourcePack);
-                log("Added resource pack " + resourcePack.getURL());
-                if (protocolVersion < 765) { // If < 1.20.3, only one pack can be applied.
-                    break;
-                }
-            }
-        }
-
-        if (!validPacks.isEmpty()) {
-            log("Found multiple valid resource packs (" + validPacks.size() + ")");
-            for (ResourcePack validPack : validPacks) {
-                log("Chosen resource pack " + validPack.getURL());
-            }
-            return validPacks;
-        }
-
-        log("Chosen resource pack is " + (anyVersionPack == null ? "null" : anyVersionPack.getURL()));
-        return anyVersionPack == null ? Set.of() : Set.of(anyVersionPack);
+        return getPacksForVersion(protocolVersion);
     }
 
     @Override
@@ -304,28 +269,6 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         }
     }
 
-    private ResourcePackVersion getVersionFromId(String versionId) {
-        if (versionId.equals("all")) {
-            return null;
-        }
-
-        try {
-            // One version?
-            final int fixedVersion = Integer.parseInt(versionId);
-            return ResourcePackVersion.of(fixedVersion, fixedVersion);
-        } catch (NumberFormatException ignored) {
-            try {
-                // Version range?
-                final String[] ranged = versionId.split("-");
-                final int min = Integer.parseInt(ranged[0]);
-                final int max = Integer.parseInt(ranged[1]);
-                return ResourcePackVersion.of(min, max);
-            } catch (NumberFormatException | IndexOutOfBoundsException ignored2) {}
-        }
-
-        throw new IllegalArgumentException("Invalid version id: " + versionId);
-    }
-
     private boolean checkPack(@Nullable ResourcePackVersion version, String url, boolean generateHash, @Nullable String hash) {
         if (url.startsWith("forcepack://")) { // Localhost
             final File generatedFilePath = new File(getDataFolder() + File.separator + url.replace("forcepack://", ""));
@@ -442,16 +385,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
     }
 
     private void checkValidEnding(String url) {
-        List<String> validUrlEndings = Arrays.asList(".zip", "dl=1");
-        boolean hasEnding = false;
-        for (String validUrlEnding : validUrlEndings) {
-            if (url.endsWith(validUrlEnding)) {
-                hasEnding = true;
-                break;
-            }
-        }
-
-        if (!hasEnding) {
+        if (!isValidEnding(url)) {
             getLogger().severe("Your URL has an invalid or unknown format. " +
                     "URLs must have no redirects and use the .zip extension. If you are using Dropbox, change dl=0 to dl=1.");
             getLogger().severe("ForcePack will still load in the event this check is incorrect. Please make an issue or pull request if this is so.");
@@ -459,28 +393,16 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
     }
 
     private void checkForRehost(String url) {
-        List<String> warnForHost = List.of("convallyria.com");
-        boolean rehosted = true;
-        for (String host : warnForHost) {
-            if (url.contains(host)) {
-                rehosted = false;
-                break;
-            }
-        }
-
-        if (!rehosted) {
+        if (isDefaultHost(url)) {
             getLogger().warning(String.format("[%s] You are using a default resource pack provided by the plugin. ", url) +
                     " It's highly recommended you re-host this pack using the webserver or on a CDN such as https://mc-packs.net for faster load times. " +
                     "Leaving this as default potentially sends a lot of requests to my personal web server, which isn't ideal!");
             getLogger().warning("ForcePack will still load and function like normally.");
         }
 
-        List<String> blacklisted = List.of("mediafire.com");
-        for (String blacklistedSite : blacklisted) {
-            if (url.contains(blacklistedSite)) {
-                getLogger().severe("Invalid resource pack site used! '" + blacklistedSite + "' cannot be used for hosting resource packs!");
-            }
-        }
+        getBlacklistedSite(url).ifPresent(blacklistedSite -> {
+            getLogger().severe("Invalid resource pack site used! '" + blacklistedSite + "' cannot be used for hosting resource packs!");
+        });
     }
 
     private void performLegacyCheck() throws IOException {
@@ -536,8 +458,9 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackAPI {
         return getConfig().getBoolean("Server.debug");
     }
 
-    public void log(String info) {
-        if (debug()) getLogger().info(info);
+    @Override
+    public void log(String info, Object... format) {
+        if (debug()) getLogger().info(String.format(info, format));
     }
 
     public static ForcePackAPI getAPI() {

@@ -1,5 +1,5 @@
-java {
-    disableAutoTargetJvm()
+plugins {
+    id("buildlogic.java-common-conventions")
 }
 
 repositories {
