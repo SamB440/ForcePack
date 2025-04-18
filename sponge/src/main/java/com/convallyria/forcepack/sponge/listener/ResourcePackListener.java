@@ -17,6 +17,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.command.exception.CommandException;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.event.Cause;
 import org.spongepowered.api.event.EventContext;
@@ -94,8 +95,13 @@ public class ResourcePackListener {
 
         try {
             for (String cmd : getConfig().node("Server", "Actions", status.name(), "Commands").getList(String.class, new ArrayList<>())) {
-                // TODO
-//                ensureMainThread(() -> Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("[player]", player.getName())));
+                ensureMainThread(() -> {
+                    try {
+                        Sponge.server().commandManager().process(cmd.replace("[player]", player.name()));
+                    } catch (CommandException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
             }
         } catch (SerializationException e) {
             throw new RuntimeException(e);
