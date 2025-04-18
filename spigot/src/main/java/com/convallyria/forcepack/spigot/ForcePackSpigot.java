@@ -202,7 +202,7 @@ public final class ForcePackSpigot extends JavaPlugin implements ForcePackPlatfo
 
             new Metrics(this, 13677);
 
-            this.getLogger().info("[ForcePack] Enabled!");
+            this.getLogger().info("Completed loading resource packs.");
         };
 
         if (getConfig().getBoolean("await-items-adder-host") && Bukkit.getPluginManager().getPlugin("ItemsAdder") != null) {

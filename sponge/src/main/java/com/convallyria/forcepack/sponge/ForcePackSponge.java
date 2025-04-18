@@ -152,7 +152,7 @@ public class ForcePackSponge implements ForcePackPlatform {
 
             reload();
 
-            this.getLogger().info("[ForcePack] Enabled!");
+            this.getLogger().info("Completed loading resource packs.");
         };
 
         if (getConfig().node("load-last").getBoolean()) {
