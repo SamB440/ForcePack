@@ -65,6 +65,10 @@ tasks {
     }
 
     shadowJar {
+        // Stupid shadow includes plugin.yml from shaded dependencies like packetevents, overwriting my own.
+        // Don't allow this. Also useful for the combined spigot-velocity jar.
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
         archiveBaseName.set("forcepack")
         archiveClassifier.set(project.name)
         mergeServiceFiles()

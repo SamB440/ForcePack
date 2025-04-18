@@ -54,6 +54,11 @@ dependencies {
 
 tasks {
     shadowJar {
+        // Avoid Paper remapping our jar, packetevents will use the correct namespace
+        manifest {
+            attributes["paperweight-mappings-namespace"] = "mojang"
+        }
+
         minimize {
             exclude(project(":webserver"))
         }

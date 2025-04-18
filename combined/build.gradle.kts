@@ -8,6 +8,7 @@ dependencies {
 }
 
 tasks {
+
     shadowJar {
         archiveClassifier.set("spigot-velocity")
         minimize {
@@ -15,7 +16,5 @@ tasks {
             exclude(project(":velocity"))
             exclude(project(":spigot"))
         }
-
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 }
