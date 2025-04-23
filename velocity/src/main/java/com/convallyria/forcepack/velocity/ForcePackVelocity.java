@@ -574,13 +574,13 @@ public class ForcePackVelocity implements ForcePackPlatform {
         }
 
         if (!validPacks.isEmpty()) {
-            log("Found multiple valid resource packs (%d)", validPacks.size());
+            log("Found valid resource packs (%d)", validPacks.size());
             // If we found version-specific resource packs, use those instead of the fallback
             if (hasVersionOverride) {
                 validPacks = validPacks.stream().filter(pack -> pack.getVersion().isPresent()).collect(Collectors.toSet());
             }
 
-            log("Found multiple valid resource packs (filtered to: %d)", validPacks.size());
+            log("Found valid resource packs (filtered to: %d)", validPacks.size());
 
             for (ResourcePack validPack : validPacks) {
                 log("Chosen resource pack %s", validPack.getURL());
