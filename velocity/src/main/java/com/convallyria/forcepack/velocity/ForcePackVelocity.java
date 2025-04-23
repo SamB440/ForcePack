@@ -548,8 +548,9 @@ public class ForcePackVelocity implements ForcePackPlatform {
 
     private Optional<Set<ResourcePack>> searchForValidPacks(Set<ResourcePack> packs, String serverName, final ProtocolVersion protocolVersion, int packVersion) {
         log("Searching for a resource pack with pack version %d", packVersion);
-        Set<ResourcePack> validPacks = new HashSet<>();
-        ResourcePack anyVersionPack = null;
+
+        Set<ResourcePack> validPacks = new HashSet<>(packs.size());
+        boolean hasVersionOverride = false;
         for (ResourcePack resourcePack : packs.stream().filter(pack -> {
             boolean matches = pack.getServer().equals(serverName) || (serverName.equals(GLOBAL_SERVER_NAME) && pack.getServer().contains(GLOBAL_SERVER_NAME));
             if (!matches) log("Filtering out %s: %s != %s", pack.getUUID().toString(), pack.getServer(), serverName);
@@ -558,30 +559,37 @@ public class ForcePackVelocity implements ForcePackPlatform {
             final Optional<ResourcePackVersion> version = resourcePack.getVersion();
             log("Trying resource pack %s (%s)", resourcePack.getURL(), version.isEmpty() ? version.toString() : version.get().toString());
 
-            if (version.isEmpty()) {
-                anyVersionPack = resourcePack; // Pick first all-version resource pack
-                continue;
+            final boolean inVersion = version.isEmpty() || version.get().inVersion(packVersion);
+            if (!inVersion) continue;
+
+            if (version.isPresent()) {
+                hasVersionOverride = true;
             }
 
-            if (version.get().inVersion(packVersion)) {
-                validPacks.add(resourcePack);
-                log("Added resource pack %s", resourcePack.getURL());
-                if (protocolVersion.getProtocol() < 765) { // If < 1.20.3, only one pack can be applied.
-                    break;
-                }
+            validPacks.add(resourcePack);
+            log("Added resource pack %s", resourcePack.getURL());
+            if (protocolVersion.getProtocol() < 765) { // If < 1.20.3, only one pack can be applied.
+                break;
             }
         }
 
         if (!validPacks.isEmpty()) {
             log("Found multiple valid resource packs (%d)", validPacks.size());
+            // If we found version-specific resource packs, use those instead of the fallback
+            if (hasVersionOverride) {
+                validPacks = validPacks.stream().filter(pack -> pack.getVersion().isPresent()).collect(Collectors.toSet());
+            }
+
+            log("Found multiple valid resource packs (filtered to: %d)", validPacks.size());
+
             for (ResourcePack validPack : validPacks) {
                 log("Chosen resource pack %s", validPack.getURL());
             }
             return Optional.of(validPacks);
         }
 
-        log("Chosen resource pack is %s", anyVersionPack == null ? "null" : anyVersionPack.getURL());
-        return anyVersionPack == null ? Optional.empty() : Optional.of(Set.of(anyVersionPack));
+        log("No valid resource packs found");
+        return Optional.empty();
     }
 
     public PackHandler getPackHandler() {

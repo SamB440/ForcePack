@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public interface ForcePackPlatform extends ForcePackAPI {
 
@@ -86,36 +87,43 @@ public interface ForcePackPlatform extends ForcePackAPI {
 
         log("Searching for a resource pack with pack version " + packFormat);
 
-        ResourcePack anyVersionPack = null;
         Set<ResourcePack> validPacks = new HashSet<>();
+        boolean hasVersionOverride = false;
         for (ResourcePack resourcePack : getResourcePacks()) {
             final Optional<ResourcePackVersion> version = resourcePack.getVersion();
             log("Trying resource pack " + resourcePack.getURL() + " (" + (version.isEmpty() ? version.toString() : version.get().toString()) + ")");
 
-            if (version.isEmpty()) {
-                anyVersionPack = resourcePack; // Pick the first all-version resource pack
-                continue;
+            final boolean inVersion = version.isEmpty() || version.get().inVersion(packFormat);
+            if (!inVersion) continue;
+
+            if (version.isPresent()) {
+                hasVersionOverride = true;
             }
 
-            if (version.get().inVersion(packFormat)) {
-                validPacks.add(resourcePack);
-                log("Added resource pack " + resourcePack.getURL());
-                if (protocolVersion < 765) { // If < 1.20.3, only one pack can be applied.
-                    break;
-                }
+            validPacks.add(resourcePack);
+            log("Added resource pack " + resourcePack.getURL());
+            if (protocolVersion < 765) { // If < 1.20.3, only one pack can be applied.
+                break;
             }
         }
 
         if (!validPacks.isEmpty()) {
-            log("Found multiple valid resource packs (" + validPacks.size() + ")");
+            log("Found valid resource packs (" + validPacks.size() + ")");
+            // If we found version-specific resource packs, use those instead of the fallback
+            if (hasVersionOverride) {
+                validPacks = validPacks.stream().filter(pack -> pack.getVersion().isPresent()).collect(Collectors.toSet());
+            }
+
+            log("Found valid resource packs (filtered to: " + validPacks.size() + ")");
+
             for (ResourcePack validPack : validPacks) {
                 log("Chosen resource pack " + validPack.getURL());
             }
             return validPacks;
         }
 
-        log("Chosen resource pack is " + (anyVersionPack == null ? "null" : anyVersionPack.getURL()));
-        return anyVersionPack == null ? Set.of() : Set.of(anyVersionPack);
+        log("No valid resource packs found");
+        return null;
     }
 
     void log(String info, Object... format);
