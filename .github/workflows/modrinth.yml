@@ -1,0 +1,71 @@
+name: Daily Modrinth Publish
+
+on:
+  schedule:
+    # Runs at 00:00 UTC every day
+    - cron: '0 0 * * *'
+  # Allow manual triggering from the GitHub UI
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: 'Force run even if no recent commits (ignores commit check)'
+        required: false
+        default: 'false'
+        type: boolean
+  # Trigger when a new release is created
+  release:
+    types: [created]
+
+jobs:
+  check-commits-and-publish:
+    if: github.repository_owner == 'SamB440'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check if should run
+        id: check_run
+        run: |
+          # Always run for releases or forced manual runs
+          if [[ "${{ github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_run == 'true') }}" == "true" ]]; then
+            echo "::set-output name=should_run::true"
+            echo "Release or forced run - proceeding with Modrinth publish"
+          # For scheduled runs, check for recent commits
+          else
+            echo "Checking for commits in the last 24 hours..."
+            COMMITS=$(git log --since="24 hours ago" --pretty=format:'%H' | wc -l)
+            if [ "$COMMITS" -gt 0 ]; then
+              echo "Found $COMMITS commits in the last 24 hours"
+              echo "::set-output name=should_run::true"
+            else
+              echo "No commits found in the last 24 hours"
+              echo "::set-output name=should_run::false"
+            fi
+          fi
+
+      - name: Set up JDK 21
+        if: steps.check_run.outputs.should_run == 'true'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        if: steps.check_run.outputs.should_run == 'true'
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Publish to Modrinth
+        if: steps.check_run.outputs.should_run == 'true'
+        run: ./gradlew modrinth
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+
+      - name: Capture build artifacts
+        if: steps.check_run.outputs.should_run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Artifacts
+          path: |
+            **/build/libs/
+            */build/libs/

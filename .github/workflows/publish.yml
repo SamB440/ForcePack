@@ -6,6 +6,7 @@ on:
 
 jobs:
   build:
+    if: github.repository_owner == 'SamB440'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

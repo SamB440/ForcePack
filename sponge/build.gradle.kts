@@ -4,6 +4,7 @@ import org.spongepowered.plugin.metadata.model.PluginDependency
 plugins {
     `java-library`
     id("buildlogic.java-platform-conventions")
+    id("buildlogic.java-modrinth-conventions")
     id("org.spongepowered.gradle.plugin") version "2.3.0"
 }
 
@@ -68,4 +69,11 @@ tasks {
 
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
+}
+
+modrinth {
+    uploadFile.set(tasks.shadowJar)
+    versionName.set(versionName.get() + " - Sponge")
+    gameVersions.addAll("1.21.4", "1.21.5") // Must be an array, even with only one version
+    loaders.addAll("sponge") // Must also be an array - no need to specify this if you're using Loom or ForgeGradle
 }
