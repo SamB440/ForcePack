@@ -6,16 +6,18 @@ import org.incendo.cloud.annotations.AnnotationParser;
 import org.incendo.cloud.execution.ExecutionCoordinator;
 import org.incendo.cloud.sponge.SpongeCommandManager;
 import org.spongepowered.api.command.CommandCause;
+import org.spongepowered.api.registry.RegistryHolder;
 
 public class Commands {
 
-    public Commands(ForcePackSponge plugin) {
+    public Commands(ForcePackSponge plugin, RegistryHolder registryHolder) {
 
         final SpongeCommandManager<CommandCause> manager;
         try {
             manager = new SpongeCommandManager<>(
                     plugin.pluginContainer(),
                     ExecutionCoordinator.simpleCoordinator(),
+                    registryHolder,
                     SenderMapper.identity()
             );
         } catch (Exception e) {

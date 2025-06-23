@@ -38,11 +38,13 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.Server;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.command.Command;
 import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.event.EventManager;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.lifecycle.RegisterChannelEvent;
+import org.spongepowered.api.event.lifecycle.RegisterCommandEvent;
 import org.spongepowered.api.event.lifecycle.StartingEngineEvent;
 import org.spongepowered.api.network.ServerConnectionState;
 import org.spongepowered.api.network.channel.raw.RawDataChannel;
@@ -56,6 +58,7 @@ import org.spongepowered.plugin.builtin.jvm.Plugin;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -99,7 +102,6 @@ public class ForcePackSponge implements ForcePackPlatform {
         this.configDir = configDir;
         this.scheduler = new SpongeScheduler(this);
         this.loadConfig();
-        this.registerCommands();
         metrics.make(13677);
     }
 
@@ -381,14 +383,15 @@ public class ForcePackSponge implements ForcePackPlatform {
     private void registerListeners() {
         EventManager pm = Sponge.eventManager();
 
-        pm.registerListeners(pluginContainer, new ResourcePackListener(this));
-        pm.registerListeners(pluginContainer, new ExemptionListener(this));
+        pm.registerListeners(pluginContainer, new ResourcePackListener(this), MethodHandles.lookup());
+        pm.registerListeners(pluginContainer, new ExemptionListener(this), MethodHandles.lookup());
 
         PacketEvents.getAPI().getEventManager().registerListeners(new PacketListener(this));
     }
 
-    private void registerCommands() {
-        new Commands(this);
+    @Listener
+    private void onRegisterCommands(final RegisterCommandEvent<Command.Parameterized> event) {
+        new Commands(this, event.registryHolder());
     }
 
     private ConfigurationNode rootNode;
