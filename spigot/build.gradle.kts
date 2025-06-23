@@ -13,6 +13,15 @@ repositories {
             includeGroup("com.github.LoneDev6")
         }
     }
+    maven {
+        name = "grimacSnapshots"
+        url = uri("https://repo.grim.ac/snapshots")
+        content {
+            includeGroup("com.github.retrooper")
+            includeGroup("ac.grim.grimac")
+            includeGroup("ac.grim.packetevents")
+        }
+    }
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://repo.codemc.io/repository/maven-snapshots/")
 }
@@ -20,8 +29,8 @@ repositories {
 configurations {
     all {
         resolutionStrategy {
-            force("net.kyori:adventure-api:4.19.0")
-            force("net.kyori:adventure-bom:4.19.0")
+            force("net.kyori:adventure-api:4.22.0")
+            force("net.kyori:adventure-bom:4.22.0")
         }
     }
 }
@@ -31,7 +40,7 @@ dependencies {
     implementation(project(":folia"))
     implementation(project(":webserver", "shadow"))
 
-    compileOnly("io.papermc.paper:paper-api:1.21.3-R0.1-SNAPSHOT") {
+    compileOnly("io.papermc.paper:paper-api:1.21.6-R0.1-SNAPSHOT") {
         exclude("net.kyori") // avoid conflicts
     }
     compileOnly("com.viaversion:viaversion-api:4.9.2")
@@ -41,15 +50,15 @@ dependencies {
     implementation("org.incendo:cloud-paper:2.0.0-beta.10") {
         exclude("org.checkerframework")
     }
-    implementation("net.kyori:adventure-platform-bukkit:4.3.4") {
+    implementation("net.kyori:adventure-platform-bukkit:4.4.0") {
         exclude("net.kyori", "adventure-api") // not up-to-date - use minimessage version
     }
-    implementation("net.kyori:adventure-text-minimessage:4.19.0")
+    implementation("net.kyori:adventure-text-minimessage:4.22.0")
     implementation("com.convallyria.languagy:api:3.0.3-SNAPSHOT") {
         exclude("com.convallyria.languagy.libs")
     }
     implementation("org.bstats:bstats-bukkit:3.0.2")
-    implementation("com.github.GrimAnticheat.PacketEvents:packetevents-spigot:2.0-SNAPSHOT")
+    implementation("ac.grim.packetevents:packetevents-spigot:2.9.0+09654a9-SNAPSHOT")
 }
 
 tasks {
