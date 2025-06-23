@@ -15,7 +15,12 @@ fun executeGitCommand(vararg command: String): String {
 }
 
 fun latestCommitMessage(): String {
-    return executeGitCommand("log", "-1", "--pretty=%B")
+    val commits = executeGitCommand("log", "--since=24 hours ago", "--pretty=format:- %s")
+    return if (commits.isNotBlank()) {
+        "Recent changes (last 24 hours):\n$commits"
+    } else {
+        "No commits in the last 24 hours"
+    }
 }
 
 fun getChangelogSinceLastRelease(): String {
