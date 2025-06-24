@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for all branches and tags
 
       - name: Check if should run
         id: check_run
@@ -33,7 +35,13 @@ jobs:
             echo "Release or forced run - proceeding with Modrinth publish"
           # For scheduled runs, check for recent commits
           else
-            echo "Checking for commits in the last 24 hours..."
+            echo "=== Debug Information ==="
+            echo "Current time: $(date)"
+            echo "24 hours ago: $(date -d '24 hours ago')"
+            echo "Git log history:"
+            git log --since="24 hours ago" --pretty=format:'%h - %s (%cr)' || echo "Git log command failed"
+            
+            echo "\nChecking for commits in the last 24 hours..."
             COMMITS=$(git log --since="24 hours ago" --pretty=format:'%H' | wc -l)
             if [ "$COMMITS" -gt 0 ]; then
               echo "Found $COMMITS commits in the last 24 hours"
