@@ -42,9 +42,11 @@ jobs:
             git log --since="24 hours ago" --pretty=format:'%h - %s (%cr)' || echo "Git log command failed"
             
             echo "\nChecking for commits in the last 24 hours..."
-            COMMITS=$(git log --since="24 hours ago" --pretty=format:'%H' | wc -l)
-            if [ "$COMMITS" -gt 0 ]; then
-              echo "Found $COMMITS commits in the last 24 hours"
+
+            COMMIT_COUNT=$(git rev-list --count --since="24 hours ago" HEAD)
+            echo "Found $COMMIT_COUNT commits in the last 24 hours"
+            
+            if [ "$COMMIT_COUNT" -gt 0 ]; then
               echo "::set-output name=should_run::true"
             else
               echo "No commits found in the last 24 hours"
