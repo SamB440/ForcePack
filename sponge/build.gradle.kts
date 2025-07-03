@@ -74,6 +74,6 @@ tasks {
 modrinth {
     uploadFile.set(tasks.shadowJar)
     versionName.set(versionName.get() + " - Sponge")
-    gameVersions.addAll("1.21.4", "1.21.5", "1.21.6") // Must be an array, even with only one version
+    gameVersions.addAll("1.21.4", "1.21.5", "1.21.6", "1.21.7") // Must be an array, even with only one version
     loaders.addAll("sponge") // Must also be an array - no need to specify this if you're using Loom or ForgeGradle
 }

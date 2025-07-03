@@ -40,7 +40,7 @@ dependencies {
     implementation(project(":folia"))
     implementation(project(":webserver", "shadow"))
 
-    compileOnly("io.papermc.paper:paper-api:1.21.6-R0.1-SNAPSHOT") {
+    compileOnly("io.papermc.paper:paper-api:1.21.7-R0.1-SNAPSHOT") {
         exclude("net.kyori") // avoid conflicts
     }
     compileOnly("com.viaversion:viaversion-api:4.9.2")
@@ -58,7 +58,7 @@ dependencies {
         exclude("com.convallyria.languagy.libs")
     }
     implementation("org.bstats:bstats-bukkit:3.0.2")
-    implementation("ac.grim.packetevents:packetevents-spigot:2.9.0+09654a9-SNAPSHOT")
+    implementation("ac.grim.packetevents:packetevents-spigot:2.9.0+11c2b96-SNAPSHOT")
 }
 
 tasks {
