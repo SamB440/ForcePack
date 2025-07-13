@@ -60,10 +60,15 @@ modrinth {
     versionNumber.set(suffixedVersion)
 
     // Use the commit description for the changelog
-    val changelogContent: String = if (isRelease) {
-        getChangelogSinceLastRelease()
-    } else {
-        latestCommitMessage()
+    try {
+        val changelogContent: String = if (isRelease) {
+            getChangelogSinceLastRelease()
+        } else {
+            latestCommitMessage()
+        }
+        changelog.set(changelogContent)
+    } catch (e: Exception) {
+        println("Failed to generate changelog: ${e.message}. Was the repository cloned with tags?")
+        changelog.set("Failed to generate changelog: ${e.message}")
     }
-    changelog.set(changelogContent)
 }
