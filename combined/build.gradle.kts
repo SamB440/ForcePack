@@ -5,16 +5,16 @@ plugins {
 
 dependencies {
     implementation(project(":velocity", "shadow"))
-    implementation(project(":spigot", "shadow"))
+    implementation(project(":paper", "shadow"))
 }
 
 tasks {
     shadowJar {
-        archiveClassifier.set("spigot-velocity")
+        archiveClassifier.set("paper-velocity")
         minimize {
             exclude(project(":webserver"))
             exclude(project(":velocity"))
-            exclude(project(":spigot"))
+            exclude(project(":paper"))
         }
     }
 }
@@ -35,5 +35,5 @@ modrinth {
         "1.19", "1.19.1", "1.19.2", "1.19.3", "1.19.4",
         "1.20", "1.20.1", "1.20.2", "1.20.3", "1.20.4", "1.20.5", "1.20.6",
         "1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4", "1.21.5", "1.21.6", "1.21.7")
-    loaders.addAll("bukkit", "folia", "paper", "spigot", "velocity")
+    loaders.addAll("bukkit", "folia", "paper", "velocity")
 }

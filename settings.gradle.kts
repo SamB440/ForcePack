@@ -8,7 +8,7 @@ pluginManagement {
 }
 
 rootProject.name = "ForcePack"
-include("spigot")
+include("paper")
 include("sponge")
 include("velocity")
 include("api")
