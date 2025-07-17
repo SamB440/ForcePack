@@ -38,6 +38,10 @@ ForcePack facilitates forcing users to accept your resource pack, with utilities
 Available to download on:
 - [Modrinth](https://modrinth.com/plugin/forcepack)
 
+> [!IMPORTANT]
+> This plugin has been de-spigotified! Please use Paper instead.
+> Spigot is a hostile platform for developers and users.
+> 
 ## Features
 - Support for Paper/Folia, Velocity, Sponge
 - Support for 1.20.3+ multiple resource packs
