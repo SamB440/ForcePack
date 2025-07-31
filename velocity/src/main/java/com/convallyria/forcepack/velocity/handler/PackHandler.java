@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -40,7 +41,7 @@ public final class PackHandler {
 
     public PackHandler(final ForcePackVelocity plugin) {
         this.plugin = plugin;
-        this.waiting = new HashMap<>();
+        this.waiting = new ConcurrentHashMap<>();
     }
 
     public void processWaitingResourcePack(Player player, UUID packId) {
