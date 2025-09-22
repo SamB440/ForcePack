@@ -29,7 +29,6 @@ import com.convallyria.languagy.api.language.Language;
 import com.convallyria.languagy.api.language.Translator;
 import com.github.retrooper.packetevents.PacketEvents;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
-import io.papermc.lib.PaperLib;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bstats.bukkit.Metrics;
@@ -150,18 +149,6 @@ public final class ForcePackPaper extends JavaPlugin implements ForcePackPlatfor
 
     public Optional<ForcePackWebServer> getWebServer() {
         return Optional.ofNullable(webServer);
-    }
-
-    @Override
-    public void onLoad() {
-        if (PaperLib.isSpigot()) {
-            this.getLogger().severe("!!! STOP USING SPIGOT !!!");
-            this.getLogger().severe("Spigot is a platform that is hostile towards developers and users.");
-            this.getLogger().severe("Please use Paper instead. The plugin will be disabled.");
-            this.getLogger().severe("!!! STOP USING SPIGOT !!!");
-            PaperLib.suggestPaper(this, Level.SEVERE);
-            Bukkit.getPluginManager().disablePlugin(this);
-        }
     }
 
     @Override
