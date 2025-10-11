@@ -29,8 +29,8 @@ repositories {
 configurations {
     all {
         resolutionStrategy {
-            force("net.kyori:adventure-api:4.22.0")
-            force("net.kyori:adventure-bom:4.22.0")
+            force("net.kyori:adventure-api:4.25.0")
+            force("net.kyori:adventure-bom:4.25.0")
         }
     }
 }
@@ -40,25 +40,25 @@ dependencies {
     implementation(project(":folia"))
     implementation(project(":webserver", "shadow"))
 
-    compileOnly("io.papermc.paper:paper-api:1.21.7-R0.1-SNAPSHOT") {
+    compileOnly("io.papermc.paper:paper-api:1.21.10-R0.1-SNAPSHOT") {
         exclude("net.kyori") // avoid conflicts
     }
     compileOnly("com.viaversion:viaversion-api:4.9.2")
     compileOnly("io.netty:netty-all:4.1.105.Final")
     compileOnly("com.github.LoneDev6:api-itemsadder:3.6.1")
 
-    implementation("org.incendo:cloud-paper:2.0.0-beta.10") {
+    implementation("org.incendo:cloud-paper:2.0.0-beta.12") {
         exclude("org.checkerframework")
     }
-    implementation("net.kyori:adventure-platform-bukkit:4.4.0") {
+    implementation("net.kyori:adventure-platform-bukkit:4.4.1") {
         exclude("net.kyori", "adventure-api") // not up-to-date - use minimessage version
     }
-    implementation("net.kyori:adventure-text-minimessage:4.22.0")
+    implementation("net.kyori:adventure-text-minimessage:4.25.0")
     implementation("com.convallyria.languagy:api:3.0.3-SNAPSHOT") {
         exclude("com.convallyria.languagy.libs")
     }
     implementation("org.bstats:bstats-bukkit:3.0.2")
-    implementation("ac.grim.packetevents:packetevents-spigot:2.9.6-SNAPSHOT")
+    implementation("ac.grim.packetevents:packetevents-spigot:2.10.0-SNAPSHOT")
 }
 
 tasks {

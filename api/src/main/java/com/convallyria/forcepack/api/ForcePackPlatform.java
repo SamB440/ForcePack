@@ -67,14 +67,14 @@ public interface ForcePackPlatform extends ForcePackAPI {
 
         try {
             // One version?
-            final int fixedVersion = Integer.parseInt(versionId);
+            final double fixedVersion = Double.parseDouble(versionId);
             return ResourcePackVersion.of(fixedVersion, fixedVersion);
         } catch (NumberFormatException ignored) {
             try {
                 // Version range?
                 final String[] ranged = versionId.split("-");
-                final int min = Integer.parseInt(ranged[0]);
-                final int max = Integer.parseInt(ranged[1]);
+                final double min = Double.parseDouble(ranged[0]);
+                final double max = Double.parseDouble(ranged[1]);
                 return ResourcePackVersion.of(min, max);
             } catch (NumberFormatException | IndexOutOfBoundsException ignored2) {}
         }
@@ -83,7 +83,7 @@ public interface ForcePackPlatform extends ForcePackAPI {
     }
 
     default Set<ResourcePack> getPacksForVersion(int protocolVersion) {
-        final int packFormat = PackFormatResolver.getPackFormat(protocolVersion);
+        final double packFormat = PackFormatResolver.getPackFormat(protocolVersion);
 
         log("Searching for a resource pack with pack version " + packFormat);
 

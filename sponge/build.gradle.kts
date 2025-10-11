@@ -9,7 +9,7 @@ plugins {
 }
 
 sponge {
-    apiVersion("16.0.0-SNAPSHOT")
+    apiVersion("17.0.0-SNAPSHOT")
     loader {
         name(PluginLoaders.JAVA_PLAIN)
         version("1.0.0-SNAPSHOT")
@@ -46,7 +46,7 @@ dependencies {
     implementation(project(":api"))
     implementation(project(":webserver", "shadow"))
     // TODO use grim fork
-    implementation("com.github.retrooper:packetevents-sponge:2.9.5")
+    implementation("com.github.retrooper:packetevents-sponge:2.10.0-SNAPSHOT")
     implementation("org.bstats:bstats-sponge:3.0.2")
     implementation("org.incendo:cloud-sponge:2.0.0-SNAPSHOT") {
         exclude("org.checkerframework")
@@ -74,6 +74,6 @@ tasks {
 modrinth {
     uploadFile.set(tasks.shadowJar)
     versionName.set(versionName.get() + " - Sponge")
-    gameVersions.addAll("1.21.8") // Must be an array, even with only one version
+    gameVersions.addAll("1.21.8", "1.21.9", "1.21.10") // Must be an array, even with only one version
     loaders.addAll("sponge") // Must also be an array - no need to specify this if you're using Loom or ForgeGradle
 }

@@ -2,28 +2,28 @@ package com.convallyria.forcepack.api.resourcepack;
 
 public interface ResourcePackVersion {
 
-    int min();
+    double min();
 
-    int max();
+    double max();
 
     /**
      * @param versionId the pack format version to check
      * @return true if the specified version is in the range of this {@link ResourcePackVersion}
      */
-    default boolean inVersion(int versionId) {
+    default boolean inVersion(double versionId) {
         return versionId >= min() && versionId <= max();
     }
 
-    static ResourcePackVersion of(int min, int max) {
+    static ResourcePackVersion of(double min, double max) {
         return new ResourcePackVersion() {
 
             @Override
-            public int min() {
+            public double min() {
                 return min;
             }
 
             @Override
-            public int max() {
+            public double max() {
                 return max;
             }
         };

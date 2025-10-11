@@ -324,14 +324,14 @@ public class ForcePackVelocity implements ForcePackPlatform {
         ResourcePackVersion version = null;
         try {
             // One version?
-            final int fixedVersion = Integer.parseInt(id);
+            final double fixedVersion = Double.parseDouble(id);
             version = ResourcePackVersion.of(fixedVersion, fixedVersion);
         } catch (NumberFormatException ignored) {
             try {
                 // Version range?
                 final String[] ranged = id.split("-");
-                final int min = Integer.parseInt(ranged[0]);
-                final int max = Integer.parseInt(ranged[1]);
+                final double min = Double.parseDouble(ranged[0]);
+                final double max = Double.parseDouble(ranged[1]);
                 version = ResourcePackVersion.of(min, max);
             } catch (NumberFormatException | IndexOutOfBoundsException ignored2) {}
         }
@@ -434,14 +434,14 @@ public class ForcePackVelocity implements ForcePackPlatform {
         ResourcePackVersion version = null;
         try {
             // One version?
-            final int fixedVersion = Integer.parseInt(id);
+            final double fixedVersion = Double.parseDouble(id);
             version = ResourcePackVersion.of(fixedVersion, fixedVersion);
         } catch (NumberFormatException ignored) {
             try {
                 // Version range?
                 final String[] ranged = id.split("-");
-                final int min = Integer.parseInt(ranged[0]);
-                final int max = Integer.parseInt(ranged[1]);
+                final double min = Double.parseDouble(ranged[0]);
+                final double max = Double.parseDouble(ranged[1]);
                 version = ResourcePackVersion.of(min, max);
             } catch (NumberFormatException | IndexOutOfBoundsException ignored2) {}
         }
@@ -542,11 +542,11 @@ public class ForcePackVelocity implements ForcePackPlatform {
 
     public Optional<Set<ResourcePack>> getPacksByServerAndVersion(final String server, final ProtocolVersion version) {
         final int protocolVersion = version.getProtocol();
-        final int packFormat = PackFormatResolver.getPackFormat(protocolVersion);
+        final double packFormat = PackFormatResolver.getPackFormat(protocolVersion);
         return searchForValidPacks(resourcePacks, server, version, packFormat).or(() -> searchForValidPacks(globalResourcePacks, GLOBAL_SERVER_NAME, version, packFormat));
     }
 
-    private Optional<Set<ResourcePack>> searchForValidPacks(Set<ResourcePack> packs, String serverName, final ProtocolVersion protocolVersion, int packVersion) {
+    private Optional<Set<ResourcePack>> searchForValidPacks(Set<ResourcePack> packs, String serverName, final ProtocolVersion protocolVersion, double packVersion) {
         log("Searching for a resource pack with pack version %d", packVersion);
 
         Set<ResourcePack> validPacks = new HashSet<>(packs.size());
