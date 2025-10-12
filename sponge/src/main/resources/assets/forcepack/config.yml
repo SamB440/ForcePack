@@ -45,8 +45,10 @@ delay-pack-sending-by: 0
 # You need to make sure the port is open. Usually you can just add it via pterodactyl panel.
 web-server:
   enabled: false
+  protocol: "http://"
   server-ip: localhost
   port: 8080
+  port-on-url: true
 
 Server:
   packs:
