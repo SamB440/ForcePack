@@ -35,9 +35,15 @@
 
 ForcePack facilitates forcing users to accept your resource pack, with utilities such as live reloading, SHA-1 generation, and per-server support via velocity.
 
-You can find the Spigot resource at: https://www.spigotmc.org/resources/forcepack.45439/
+Available to download on:
+- [Modrinth](https://modrinth.com/plugin/forcepack)
 
+> [!IMPORTANT]
+> This plugin has been de-spigotified! Please use Paper instead.
+> Spigot is a hostile platform for developers and users.
+> 
 ## Features
+- Support for Paper/Folia, Velocity, Sponge
 - Support for 1.20.3+ multiple resource packs
 - Ability to set resource packs on a per-version basis
 - Local webserver resource pack hosting

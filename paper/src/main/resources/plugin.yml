@@ -1,0 +1,9 @@
+name: ForcePack
+main: com.convallyria.forcepack.paper.ForcePackPaper
+author: SamB440
+description: "Paper/Sponge/Velocity plugin to aid resource pack deployment and enforcement, among other utilities."
+website: https://fortitude.islandearth.net
+softdepend: [ViaVersion, ViaBackwards, ViaRewind, ProtocolLib, ProtocolSupport, Geyser-Spigot, ItemsAdder]
+version: '${version}'
+api-version: 1.13
+folia-supported: true

@@ -7,8 +7,10 @@ import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.incendo.cloud.annotations.Argument;
 import org.incendo.cloud.annotations.Command;
 import org.incendo.cloud.annotations.CommandDescription;
+import org.incendo.cloud.annotations.Default;
 import org.incendo.cloud.annotations.Permission;
 
 import java.util.UUID;
@@ -29,8 +31,9 @@ public class ForcePackCommand {
 
     @CommandDescription("Reloads the plugin config along with the resource pack")
     @Permission(Permissions.RELOAD)
-    @Command("vforcepack|velocityforcepack reload")
-    public void onReload(CommandSource commandSource) {
+    @Command("vforcepack|velocityforcepack reload [send]")
+    public void onReload(CommandSource commandSource,
+                         @Argument(value = "send", description = "Whether to send the updated resource pack to players") @Default("true") boolean send) {
         final CommandSource source = plugin.getServer().getConsoleCommandSource();
         final UUID possibleUUID = commandSource.pointers().getOrDefault(Identity.UUID, null);
         final Player sender = possibleUUID == null ? null : plugin.getServer().getPlayer(possibleUUID).orElse(null);
@@ -40,9 +43,11 @@ public class ForcePackCommand {
         plugin.reloadConfig();
         plugin.loadResourcePacks(sender);
 
-        for (Player player : plugin.getServer().getAllPlayers()) {
-            player.getCurrentServer().ifPresent(serverConnection ->
-                    plugin.getPackHandler().setPack(player, serverConnection));
+        if (send) {
+            for (Player player : plugin.getServer().getAllPlayers()) {
+                player.getCurrentServer().ifPresent(serverConnection ->
+                        plugin.getPackHandler().setPack(player, serverConnection));
+            }
         }
 
         Component doneMsg = Component.text("Done!").color(NamedTextColor.GREEN);

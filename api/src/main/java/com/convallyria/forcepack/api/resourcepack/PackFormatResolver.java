@@ -2,8 +2,16 @@ package com.convallyria.forcepack.api.resourcepack;
 
 public final class PackFormatResolver {
 
-    public static int getPackFormat(int protocol) {
+    public static double getPackFormat(int protocol) {
         switch (protocol) {
+            case 773: // 1.21.9-1.21.10
+                return 69;
+            case 772: // 1.21.7-1.21.8
+                return 64;
+            case 771: // 1.21.6
+                return 63;
+            case 770: // 1.21.5
+                return 55;
             case 769: // 1.21.4
                 return 46;
             case 768: // 1.21.2-1.21.3

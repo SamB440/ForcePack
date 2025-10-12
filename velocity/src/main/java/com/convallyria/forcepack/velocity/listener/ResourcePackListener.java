@@ -110,7 +110,11 @@ public class ResourcePackListener {
             // No longer applying, remove them from the list
             plugin.getPackHandler().processWaitingResourcePack(player, packByServer.getUUID());
             final String name = status == PlayerResourcePackStatusEvent.Status.SUCCESSFUL ? "SUCCESSFULLY_LOADED" : status.name();
-            currentServer.get().sendPluginMessage(PackHandler.FORCEPACK_STATUS_IDENTIFIER, (packByServer.getUUID().toString() + ";" + name + ";" + !plugin.getPackHandler().isWaiting(player)).getBytes(StandardCharsets.UTF_8));
+            final boolean waiting = plugin.getPackHandler().isWaiting(player);
+            currentServer.get().sendPluginMessage(PackHandler.FORCEPACK_STATUS_IDENTIFIER, (packByServer.getUUID().toString() + ";" + name + ";" + !waiting).getBytes(StandardCharsets.UTF_8));
+            plugin.getPackHandler().getForcePackPlayer(player).ifPresentOrElse(forcePackPlayer -> {
+                plugin.log("Current packs we are waiting for: %s", forcePackPlayer.getWaitingPacks());
+            }, () -> plugin.log("Waiting for? %s", waiting));
         }
 
         final String text = actions == null ? null : actions.getString("message");
@@ -167,11 +171,16 @@ public class ResourcePackListener {
         final Optional<ServerConnection> currentServer = player.getCurrentServer();
         if (currentServer.isEmpty()) return;
 
-        boolean geyser = plugin.getConfig().getBoolean("geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
-        boolean canBypass = player.hasPermission(Permissions.BYPASS) && plugin.getConfig().getBoolean("bypass-permission");
-        plugin.log(player.getUsername() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
-        if (!canBypass && !geyser) {
-            plugin.getPackHandler().setPack(player, currentServer.get());
+        if (plugin.temporaryExemptedPlayers.remove(player.getUniqueId())) {
+            plugin.log("Ignoring player " + player.getUsername() + " as they have a one-off exemption.");
+            return;
         }
+
+        plugin.getPackHandler().setPack(player, currentServer.get());
+    }
+
+    @Subscribe(order = PostOrder.LATE)
+    public void onQuit(DisconnectEvent event) {
+        plugin.temporaryExemptedPlayers.remove(event.getPlayer().getUniqueId());
     }
 }

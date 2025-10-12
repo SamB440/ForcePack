@@ -1,6 +1,6 @@
 package com.convallyria.forcepack.velocity;
 
-import com.convallyria.forcepack.api.ForcePackAPI;
+import com.convallyria.forcepack.api.ForcePackPlatform;
 import com.convallyria.forcepack.api.resourcepack.PackFormatResolver;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.resourcepack.ResourcePackVersion;
@@ -44,7 +44,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
 @Plugin(
         id = "forcepack",
         name = "ForcePack",
-        version = "1.3.7",
+        version = "1.3.72",
         description = "Force players to use your server resource pack.",
         url = "https://www.convallyria.com",
         dependencies = {
@@ -69,7 +69,7 @@ import java.util.stream.Collectors;
         },
         authors = {"SamB440"}
 )
-public class ForcePackVelocity implements ForcePackAPI {
+public class ForcePackVelocity implements ForcePackPlatform {
 
     public static final String EMPTY_SERVER_NAME = "ForcePack-Empty-Server";
     public static final String GLOBAL_SERVER_NAME = "ForcePack-Global-Server";
@@ -87,6 +87,7 @@ public class ForcePackVelocity implements ForcePackAPI {
     public Optional<ForcePackWebServer> getWebServer() {
         return Optional.ofNullable(webServer);
     }
+    public final Set<UUID> temporaryExemptedPlayers = new HashSet<>();
 
     @Inject
     public ForcePackVelocity(PluginContainer container, ProxyServer server, Logger logger, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory, CommandManager commandManager) {
@@ -235,7 +236,7 @@ public class ForcePackVelocity implements ForcePackAPI {
             });
         }
     }
-    
+
     private void registerResourcePack(VelocityConfig rootServerConfig, VelocityConfig resourcePack, String id, String name, String typeName, boolean groups, boolean verifyPacks, @Nullable Player player) {
         List<String> urls = resourcePack.getStringList("urls");
         if (urls.isEmpty()) {
@@ -322,9 +323,18 @@ public class ForcePackVelocity implements ForcePackAPI {
 
         ResourcePackVersion version = null;
         try {
-            final int versionId = Integer.parseInt(id);
-            version = () -> versionId;
-        } catch (NumberFormatException ignored) {}
+            // One version?
+            final double fixedVersion = Double.parseDouble(id);
+            version = ResourcePackVersion.of(fixedVersion, fixedVersion);
+        } catch (NumberFormatException ignored) {
+            try {
+                // Version range?
+                final String[] ranged = id.split("-");
+                final double min = Double.parseDouble(ranged[0]);
+                final double max = Double.parseDouble(ranged[1]);
+                version = ResourcePackVersion.of(min, max);
+            } catch (NumberFormatException | IndexOutOfBoundsException ignored2) {}
+        }
 
         if (groups) {
             final boolean exact = rootServerConfig.getBoolean("exact-match");
@@ -423,9 +433,18 @@ public class ForcePackVelocity implements ForcePackAPI {
 
         ResourcePackVersion version = null;
         try {
-            final int versionId = Integer.parseInt(id);
-            version = () -> versionId;
-        } catch (NumberFormatException ignored) {}
+            // One version?
+            final double fixedVersion = Double.parseDouble(id);
+            version = ResourcePackVersion.of(fixedVersion, fixedVersion);
+        } catch (NumberFormatException ignored) {
+            try {
+                // Version range?
+                final String[] ranged = id.split("-");
+                final double min = Double.parseDouble(ranged[0]);
+                final double max = Double.parseDouble(ranged[1]);
+                version = ResourcePackVersion.of(min, max);
+            } catch (NumberFormatException | IndexOutOfBoundsException ignored2) {}
+        }
 
         final VelocityResourcePack resourcePack = new VelocityResourcePack(this, GLOBAL_SERVER_NAME + "-" + url, url, hash, 0, null, version);
         resourcePacks.add(resourcePack);
@@ -447,16 +466,7 @@ public class ForcePackVelocity implements ForcePackAPI {
     }
 
     private void checkValidEnding(String url) {
-        List<String> validUrlEndings = Arrays.asList(".zip", "dl=1");
-        boolean hasEnding = false;
-        for (String validUrlEnding : validUrlEndings) {
-            if (url.endsWith(validUrlEnding)) {
-                hasEnding = true;
-                break;
-            }
-        }
-
-        if (!hasEnding) {
+        if (!isValidEnding(url)) {
             getLogger().error("Your URL has an invalid or unknown format. " +
                     "URLs must have no redirects and use the .zip extension. If you are using Dropbox, change dl=0 to dl=1.");
             getLogger().error("ForcePack will still load in the event this check is incorrect. Please make an issue or pull request if this is so.");
@@ -464,28 +474,16 @@ public class ForcePackVelocity implements ForcePackAPI {
     }
 
     private void checkForRehost(String url, String section) {
-        List<String> warnForHost = List.of("convallyria.com");
-        boolean rehosted = true;
-        for (String host : warnForHost) {
-            if (url.contains(host)) {
-                rehosted = false;
-                break;
-            }
-        }
-
-        if (!rehosted) {
+        if (isDefaultHost(url)) {
             getLogger().warn("[{}] You are using a default resource pack provided by the plugin. " +
                     " It's highly recommended you re-host this pack using the webserver or on a CDN such as https://mc-packs.net for faster load times. " +
                     "Leaving this as default potentially sends a lot of requests to my personal web server, which isn't ideal!", section);
             getLogger().warn("ForcePack will still load and function like normally.");
         }
 
-        List<String> blacklisted = List.of("mediafire.com");
-        for (String blacklistedSite : blacklisted) {
-            if (url.contains(blacklistedSite)) {
-                getLogger().error("Invalid resource pack site used! '{}' cannot be used for hosting resource packs!", blacklistedSite);
-            }
-        }
+        getBlacklistedSite(url).ifPresent(blacklistedSite -> {
+            getLogger().error("Invalid resource pack site used! '{}' cannot be used for hosting resource packs!", blacklistedSite);
+        });
     }
 
     @Nullable
@@ -532,49 +530,66 @@ public class ForcePackVelocity implements ForcePackAPI {
         return scheduler;
     }
 
+    @Override
+    public boolean exemptNextResourcePackSend(UUID uuid) {
+        return temporaryExemptedPlayers.add(uuid);
+    }
+
+    @Override
+    public Set<ResourcePack> getPacksForVersion(int protocolVersion) {
+        throw new IllegalStateException("Use getPacksByServerAndVersion for Velocity");
+    }
+
     public Optional<Set<ResourcePack>> getPacksByServerAndVersion(final String server, final ProtocolVersion version) {
         final int protocolVersion = version.getProtocol();
-        final int packFormat = PackFormatResolver.getPackFormat(protocolVersion);
+        final double packFormat = PackFormatResolver.getPackFormat(protocolVersion);
         return searchForValidPacks(resourcePacks, server, version, packFormat).or(() -> searchForValidPacks(globalResourcePacks, GLOBAL_SERVER_NAME, version, packFormat));
     }
 
-    private Optional<Set<ResourcePack>> searchForValidPacks(Set<ResourcePack> packs, String serverName, final ProtocolVersion protocolVersion, int packVersion) {
+    private Optional<Set<ResourcePack>> searchForValidPacks(Set<ResourcePack> packs, String serverName, final ProtocolVersion protocolVersion, double packVersion) {
         log("Searching for a resource pack with pack version %d", packVersion);
-        Set<ResourcePack> validPacks = new HashSet<>();
-        ResourcePack anyVersionPack = null;
+
+        Set<ResourcePack> validPacks = new HashSet<>(packs.size());
+        boolean hasVersionOverride = false;
         for (ResourcePack resourcePack : packs.stream().filter(pack -> {
             boolean matches = pack.getServer().equals(serverName) || (serverName.equals(GLOBAL_SERVER_NAME) && pack.getServer().contains(GLOBAL_SERVER_NAME));
             if (!matches) log("Filtering out %s: %s != %s", pack.getUUID().toString(), pack.getServer(), serverName);
             return matches;
         }).collect(Collectors.toList())) {
-            log("Trying resource pack %s (%s)", resourcePack.getURL(), resourcePack.getVersion().map(ResourcePackVersion::version).toString());
-
             final Optional<ResourcePackVersion> version = resourcePack.getVersion();
-            if (version.isEmpty()) {
-                if (anyVersionPack == null) anyVersionPack = resourcePack; // Pick first all-version resource pack
-                validPacks.add(resourcePack); // This is still a valid pack that we want to apply.
-                continue;
+            log("Trying resource pack %s (%s)", resourcePack.getURL(), version.isEmpty() ? version.toString() : version.get().toString());
+
+            final boolean inVersion = version.isEmpty() || version.get().inVersion(packVersion);
+            if (!inVersion) continue;
+
+            if (version.isPresent()) {
+                hasVersionOverride = true;
             }
 
-            if (version.get().version() == packVersion) {
-                validPacks.add(resourcePack);
-                log("Added resource pack %s", resourcePack.getURL());
-                if (protocolVersion.getProtocol() < 765) { // If < 1.20.3, only one pack can be applied.
-                    break;
-                }
+            validPacks.add(resourcePack);
+            log("Added resource pack %s", resourcePack.getURL());
+            if (protocolVersion.getProtocol() < 765) { // If < 1.20.3, only one pack can be applied.
+                break;
             }
         }
 
         if (!validPacks.isEmpty()) {
-            log("Found multiple valid resource packs (%d)", validPacks.size());
+            log("Found valid resource packs (%d)", validPacks.size());
+            // If we found version-specific resource packs, use those instead of the fallback
+            if (hasVersionOverride) {
+                validPacks = validPacks.stream().filter(pack -> pack.getVersion().isPresent()).collect(Collectors.toSet());
+            }
+
+            log("Found valid resource packs (filtered to: %d)", validPacks.size());
+
             for (ResourcePack validPack : validPacks) {
                 log("Chosen resource pack %s", validPack.getURL());
             }
             return Optional.of(validPacks);
         }
 
-        log("Chosen resource pack is %s", anyVersionPack == null ? "null" : anyVersionPack.getURL());
-        return anyVersionPack == null ? Optional.empty() : Optional.of(Set.of(anyVersionPack));
+        log("No valid resource packs found");
+        return Optional.empty();
     }
 
     public PackHandler getPackHandler() {
@@ -588,6 +603,7 @@ public class ForcePackVelocity implements ForcePackAPI {
         return this.miniMessage = MiniMessage.miniMessage();
     }
 
+    @Override
     public void log(String info, Object... format) {
         if (this.getConfig().getBoolean("debug")) this.getLogger().info(String.format(info, format));
     }

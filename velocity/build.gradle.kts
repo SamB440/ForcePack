@@ -1,3 +1,7 @@
+plugins {
+    id("buildlogic.java-platform-conventions")
+}
+
 repositories {
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
     maven("https://repo.papermc.io/repository/maven-public/")
@@ -13,7 +17,7 @@ dependencies {
 
     implementation("org.bstats:bstats-velocity:3.0.2")
 
-    implementation("org.incendo:cloud-velocity:2.0.0-beta.10") {
+    implementation("org.incendo:cloud-velocity:2.0.0-beta.12") {
         exclude("org.checkerframework")
     }
 }
@@ -22,5 +26,9 @@ tasks.shadowJar {
     minimize {
         exclude(project(":webserver"))
     }
+    mergeServiceFiles()
+    relocate("io.leangen.geantyref", "forcepack.libs.geantyref")
     relocate("org.bstats", "com.convallyria.forcepack.velocity.libs.bstats")
+    relocate("org.glassfish.jaxb", "com.convallyria.forcepack.libs.jaxb")
+    relocate("org.objectweb.asm", "com.convallyria.forcepack.libs.asm")
 }

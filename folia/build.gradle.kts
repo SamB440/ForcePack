@@ -1,5 +1,5 @@
-java {
-    disableAutoTargetJvm()
+plugins {
+    id("buildlogic.java-common-conventions")
 }
 
 repositories {
@@ -9,5 +9,5 @@ repositories {
 dependencies {
     compileOnly(project(":api"))
 
-    compileOnly("dev.folia:folia-api:1.19.4-R0.1-SNAPSHOT")
+    compileOnly("dev.folia:folia-api:1.21.6-R0.1-SNAPSHOT")
 }

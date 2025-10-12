@@ -1,0 +1,118 @@
+# Need help? Join our Discord: https://discord.gg/fh62mxU
+# ForcePack documentation: https://fortitude.islandearth.net/category/forcepack
+
+# If this is enabled, the plugin will be used purely for further compatibility with your Velocity proxy.
+# This is required for the prevent-movement feature to work when behind the velocity plugin.
+# Actions (excluding kicks) will still take place. Bypass permissions will also still be enabled.
+velocity-mode: false
+
+# If this is true, movement will be prevented until the resource pack is loaded.
+prevent-movement: true
+
+# If this is true, damage will be prevented to players currently loading the resource pack.
+prevent-damage: true
+
+# Appends the hash to your URL to fix this bug.
+enable-mc-164316-fix: true
+
+# Should ForcePack load on the first tick after the server has started?
+# Ensures we load after any plugin you may be hosting a resource pack on
+# So that you can use its hosting feature
+load-last: false
+
+# Should we use the 1.17+ force resource pack screen, or the old one?
+# You can still define a custom message that will show even if this is false for 1.17+ clients
+# Note that with this true, the custom disconnect message will not work because the client forcefully kicks itself
+use-new-force-pack-screen: true
+
+# Should we try and prevent hacked clients sending fake resource pack accept packets?
+# Still bypassable, but some are stupid and we are able to detect them.
+try-to-stop-fake-accept-hacks: true
+
+# Slow clients might take some time between accepting the pack and then successfully loading.
+# Option to send a title asking them to wait patiently
+send-loading-title: true
+
+# How many ticks to delay sending a resource pack by
+# Use this if you have a plugin teleporting someone after joining which closes the resource pack screen
+delay-pack-sending-by: 0
+
+# This configures the web server for force pack.
+# See https://fortitude.islandearth.net/forcepack/configuration#self-hosting
+# Note that you can leave the IP as localhost unless it is not working, as in most cases the plugin can automatically resolve it.
+# Having this enabled allows the use of the "forcepack://" protocol in resource pack URL
+# Enabling this DOES NOT mean you are forced to use a localhost resource pack.
+# You need to make sure the port is open. Usually you can just add it via pterodactyl panel.
+web-server:
+  enabled: false
+  server-ip: localhost
+  port: 8080
+
+Server:
+  packs:
+    all:
+      # The ResourcePack URL. This must be a direct URL, ending with .zip. For Dropbox URLs, add ?dl=1 to the end.
+      # To host a local file on the embedded webserver, change this to the relative path of the force pack folder prefixed by "forcepack://".
+      # For example, placing your resource pack as "plugins/ForcePack/pack.zip", the url will just be "forcepack://pack.zip".
+      # ONLY PLAYERS ON 1.20.3+ CAN RECEIVE MULTIPLE RESOURCE PACKS. The first URL/Hash pair will be taken for older client versions.
+      # URLs list and hashes list MUST BE THE SAME SIZE if generate-hash is disabled.
+      urls: ["https://www.convallyria.com/files/BlankPack.zip"]
+      # Whether to automatically generate the SHA-1 hash.
+      # The hash setting will be ignored if this is true, however it will fall back to that if the generation fails.
+      generate-hash: false
+      # See https://fortitude.islandearth.net/forcepack/configuration#getting-the-sha-1-hash-of-a-resource-pack
+      hashes: ["118AFFFC54CDCD308702F81BA24E03223F15FE5F"]
+    # Here you can specify a pack format version-specific resource pack. You would copy the section above, replacing "all" with the number.
+    # Note that the "all" section must be kept as a fallback.
+    # See https://minecraft.wiki/w/Pack_format.
+
+  Actions:
+    # To disable commands, you can do Commands: []
+    # List of valid actions: https://jd.advntr.dev/api/4.15.0/net/kyori/adventure/resource/ResourcePackStatus.html
+    # DOWNLOADED, FAILED_RELOAD, DISCARDED only apply to 1.20.3+ clients.
+    ACCEPTED:
+      kick: false
+      Commands:
+        - say [player] accepted the resource pack!
+    DOWNLOADED:
+      kick: false
+      Commands:
+        - say [player] finished downloading the resource pack!
+    SUCCESSFULLY_LOADED:
+      kick: false
+      Commands:
+        - say [player] successfully loaded the resource pack!
+    DECLINED:
+      kick: true
+      Commands:
+        - say [player] denied the resource pack!
+    FAILED_DOWNLOAD:
+      kick: true
+      Commands:
+        - say [player] failed to download the resource pack!
+    FAILED_RELOAD:
+      kick: true
+      Commands:
+        - say [player] failed to reload the resource pack!
+    DISCARDED:
+      kick: true
+      Commands:
+        - say [player] discarded the resource pack!
+
+  # Speed in ticks at which the ResourcePack prompt will be resent to the player (prevents escaping out)
+  Update GUI Speed: 20
+  # Whether to re-send the GUI. This will only update for clients <= 1.12.
+  Update GUI: true
+  # Should the plugin verify your URL + hash?
+  verify: true
+  # Should we resend the resource pack on reload? Any players that have already accepted will receive the updated one.
+  resend: true
+  # Should we forcefully send a resource pack that has an invalid size for the player's client version?
+  force-invalid-size: false
+  # Whether to ignore geyser players. Only enable this if you use geyser.
+  geyser: false
+  # Whether to enable the bypass permission. If you disable this, all OPs will no longer be able to bypass.
+  # But you should really fix your permissions instead.
+  bypass-permission: true
+  # Whether to enable debug mode. Prints some extra info.
+  debug: false
