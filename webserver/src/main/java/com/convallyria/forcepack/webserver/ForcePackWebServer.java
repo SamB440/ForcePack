@@ -23,16 +23,20 @@ public class ForcePackWebServer {
 
     private final Javalin app;
     private final Path dataFolder;
+    private final boolean usePort;
+    private final String protocol;
     private final String ipAddress;
     private final int port;
     private final Map<File, String> hostedPacks = new HashMap<>();
 
-    public ForcePackWebServer(Path dataFolder, String serverIp, int port) throws IOException {
+    public ForcePackWebServer(Path dataFolder, String protocol, String serverIp, int port, boolean usePort) throws IOException {
         JavalinLogger.enabled = false;
         JavalinLogger.startupInfo = false;
         this.app = Javalin.create(config -> config.showJavalinBanner = false).start(port);
         this.dataFolder = dataFolder;
         setupEndpoints();
+        this.usePort = usePort;
+        this.protocol = protocol;
         this.ipAddress = serverIp;
         this.port = port;
     }
@@ -54,7 +58,7 @@ public class ForcePackWebServer {
     }
 
     public String getUrl() {
-        return "http://" + ipAddress + ":" + port;
+        return protocol + ipAddress + (usePort? ":" + port : "");
     }
 
     public String getHostedEndpoint(String urlString) {

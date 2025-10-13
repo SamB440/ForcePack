@@ -47,9 +47,16 @@ delay-pack-sending-by: 0
 # Enabling this DOES NOT mean you are forced to use a localhost resource pack.
 # You need to make sure the port is open. Usually you can just add it via pterodactyl panel.
 web-server:
+  # Whether to enable the embedded web server. Only enable this if you want to self-host resource packs.
   enabled: false
+  # Protocol defines the protocol to use on the resource pack URL sent to players (you still need to use "forcepack://" in the config urls)
+  protocol: "http://"
+  # The IP address to run the web server on. Leave as localhost unless it is not working.
   server-ip: localhost
+  # The port to run the web server on. Make sure this port is open!
   port: 8080
+  # port-on-url defines whether to use the port in the URL (set to false when this service is behind a web proxy)
+  port-on-url: true
 
 Server:
   packs:

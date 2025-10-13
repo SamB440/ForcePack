@@ -143,7 +143,7 @@ public class ForcePackSponge implements ForcePackPlatform {
                     getLogger().info("Finished downloading required dependencies.");
                     final String configIp = getConfig().node("web-server", "server-ip").getString("localhost");
                     final String serverIp = !configIp.equals("localhost") ? configIp : ForcePackWebServer.getIp();
-                    this.webServer = new ForcePackWebServer(configDir, serverIp, getConfig().node("web-server", "port").getInt(8080));
+                    this.webServer = new ForcePackWebServer(configDir, getConfig().node("web-server", "protocol").getString("http://"), serverIp, getConfig().node("web-server", "port").getInt(8080), getConfig().node("web-server", "port-on-url").getBoolean(true));
                     getLogger().info("Started web server.");
                 } catch (IOException e) {
                     getLogger().error("Error starting web server: {}", e.getMessage());
