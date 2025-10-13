@@ -29,7 +29,7 @@ public class ForcePackWebServer {
     private final int port;
     private final Map<File, String> hostedPacks = new HashMap<>();
 
-    public ForcePackWebServer(Path dataFolder, String protocol, String serverIp, int port, Boolean usePort) throws IOException {
+    public ForcePackWebServer(Path dataFolder, String protocol, String serverIp, int port, boolean usePort) throws IOException {
         JavalinLogger.enabled = false;
         JavalinLogger.startupInfo = false;
         this.app = Javalin.create(config -> config.showJavalinBanner = false).start(port);
