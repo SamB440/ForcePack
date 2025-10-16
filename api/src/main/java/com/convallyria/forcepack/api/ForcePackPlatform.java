@@ -85,7 +85,7 @@ public interface ForcePackPlatform extends ForcePackAPI {
     default Set<ResourcePack> getPacksForVersion(int protocolVersion) {
         final double packFormat = PackFormatResolver.getPackFormat(protocolVersion);
 
-        log("Searching for a resource pack with pack version " + packFormat);
+        log("Searching for a resource pack with pack version %f", packFormat);
 
         Set<ResourcePack> validPacks = new HashSet<>();
         boolean hasVersionOverride = false;

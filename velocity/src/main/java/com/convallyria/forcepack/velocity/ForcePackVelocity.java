@@ -547,7 +547,7 @@ public class ForcePackVelocity implements ForcePackPlatform {
     }
 
     private Optional<Set<ResourcePack>> searchForValidPacks(Set<ResourcePack> packs, String serverName, final ProtocolVersion protocolVersion, double packVersion) {
-        log("Searching for a resource pack with pack version %d", packVersion);
+        log("Searching for a resource pack with pack version %f", packVersion);
 
         Set<ResourcePack> validPacks = new HashSet<>(packs.size());
         boolean hasVersionOverride = false;
