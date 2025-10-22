@@ -47,7 +47,7 @@ dependencies {
     compileOnly("io.netty:netty-all:4.1.105.Final")
     compileOnly("com.github.LoneDev6:api-itemsadder:3.6.1")
 
-    implementation("org.incendo:cloud-paper:2.0.0-beta.12") {
+    implementation("org.incendo:cloud-paper:2.0.0-beta.13") {
         exclude("org.checkerframework")
     }
     implementation("net.kyori:adventure-platform-bukkit:4.4.1") {
