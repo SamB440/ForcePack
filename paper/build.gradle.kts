@@ -58,7 +58,7 @@ dependencies {
         exclude("com.convallyria.languagy.libs")
     }
     implementation("org.bstats:bstats-bukkit:3.0.2")
-    implementation("ac.grim.packetevents:packetevents-spigot:2.10.0-SNAPSHOT")
+    implementation("ac.grim.packetevents:packetevents-spigot:2.10.1-SNAPSHOT")
 }
 
 tasks {
