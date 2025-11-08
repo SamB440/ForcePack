@@ -157,7 +157,7 @@ public final class ForcePackPaper extends JavaPlugin implements ForcePackPlatfor
         this.createConfig();
 
         PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
-        PacketEvents.getAPI().getSettings().debug(debug()).preViaInjection(true).checkForUpdates(false);
+        PacketEvents.getAPI().getSettings().debug(debug()).preViaInjection(true).reEncodeByDefault(false).checkForUpdates(false);
         PacketEvents.getAPI().load();
 
         GeyserUtil.isGeyserInstalledHere = Bukkit.getPluginManager().getPlugin("Geyser-Spigot") != null;

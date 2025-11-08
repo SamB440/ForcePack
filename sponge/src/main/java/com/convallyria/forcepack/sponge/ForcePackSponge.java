@@ -119,7 +119,7 @@ public class ForcePackSponge implements ForcePackPlatform {
         registerTranslations();
 
         PacketEvents.setAPI(SpongePacketEventsBuilder.build(pluginContainer));
-        PacketEvents.getAPI().getSettings().debug(debug()).checkForUpdates(false);
+        PacketEvents.getAPI().getSettings().debug(debug()).reEncodeByDefault(false).checkForUpdates(false);
         PacketEvents.getAPI().load();
 
         GeyserUtil.isGeyserInstalledHere = Sponge.pluginManager().plugin("geyser-sponge").isPresent();
