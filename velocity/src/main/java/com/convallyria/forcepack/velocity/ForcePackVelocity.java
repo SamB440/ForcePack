@@ -323,23 +323,8 @@ public class ForcePackVelocity implements ForcePackPlatform {
 
         ResourcePackVersion version = null;
         try {
-            // One version?
-            final double fixedVersion = Double.parseDouble(id);
-            version = ResourcePackVersion.of(fixedVersion, fixedVersion);
-        } catch (NumberFormatException ignored) {
-            try {
-                // Version range?
-                final String[] ranged = id.split("-");
-                final double min = Double.parseDouble(ranged[0]);
-                final double max;
-                if (ranged[1].isEmpty()) {
-                    max = Integer.MAX_VALUE;
-                } else {
-                    max = Double.parseDouble(ranged[1]);
-                }
-                version = ResourcePackVersion.of(min, max);
-            } catch (NumberFormatException | IndexOutOfBoundsException ignored2) {}
-        }
+            version = getVersionFromId(id);
+        } catch (IllegalArgumentException ignored) {}
 
         if (groups) {
             final boolean exact = rootServerConfig.getBoolean("exact-match");
@@ -387,21 +372,25 @@ public class ForcePackVelocity implements ForcePackPlatform {
         final boolean enableGlobal = globalPack.getBoolean("enable");
         if (!enableGlobal) return;
 
-        final Map<String, VelocityConfig> configs = new HashMap<>();
+        final Map<ResourcePackVersion, VelocityConfig> configs = new HashMap<>();
 
         final VelocityConfig versionConfig = globalPack.getConfig("version");
         if (versionConfig != null) {
             log("Detected versioned resource packs for global pack");
             for (String versionId : versionConfig.getKeys()) {
-                configs.put(versionId, versionConfig.getConfig(versionId));
-                log("Added version config %s for global pack", versionId);
+                try {
+                    configs.put(getVersionFromId(versionId), versionConfig.getConfig(versionId));
+                    log("Added version config %s for global pack", versionId);
+                } catch (IllegalArgumentException e) {
+                    logger.error(e.getMessage());
+                }
             }
         }
 
         // Register the default only if it has data associated with it
         if (globalPack.getString("url") != null || !globalPack.getStringList("urls").isEmpty()) {
             // Add the default fallback
-            configs.put("default", globalPack);
+            configs.put(null, globalPack);
             log("Registered default global pack");
         }
 
@@ -430,7 +419,7 @@ public class ForcePackVelocity implements ForcePackPlatform {
         });
     }
 
-    private void registerGlobalResourcePack(VelocityConfig globalPack, String id, String url, String hash) {
+    private void registerGlobalResourcePack(VelocityConfig globalPack, @Nullable ResourcePackVersion version, String url, String hash) {
         url = this.checkLocalHostUrl(url);
         this.checkValidEnding(url);
         this.checkForRehost(url, "global-pack");
@@ -440,26 +429,6 @@ public class ForcePackVelocity implements ForcePackPlatform {
 
         if (getConfig().getBoolean("enable-mc-164316-fix", false)) {
             url = url + "#" + hash;
-        }
-
-        ResourcePackVersion version = null;
-        try {
-            // One version?
-            final double fixedVersion = Double.parseDouble(id);
-            version = ResourcePackVersion.of(fixedVersion, fixedVersion);
-        } catch (NumberFormatException ignored) {
-            try {
-                // Version range?
-                final String[] ranged = id.split("-");
-                final double min = Double.parseDouble(ranged[0]);
-                final double max;
-                if (ranged[1].isEmpty()) {
-                    max = Integer.MAX_VALUE;
-                } else {
-                    max = Double.parseDouble(ranged[1]);
-                }
-                version = ResourcePackVersion.of(min, max);
-            } catch (NumberFormatException | IndexOutOfBoundsException ignored2) {}
         }
 
         final VelocityResourcePack resourcePack = new VelocityResourcePack(this, GLOBAL_SERVER_NAME + "-" + url, url, hash, 0, null, version);
