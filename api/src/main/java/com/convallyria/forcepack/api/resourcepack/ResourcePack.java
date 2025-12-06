@@ -7,6 +7,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.UUID;
 
 public abstract class ResourcePack implements IResourcePack {
@@ -80,4 +81,16 @@ public abstract class ResourcePack implements IResourcePack {
 	public int hashCode() {
 		return Objects.hash(uuid, getServer());
 	}
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", ResourcePack.class.getSimpleName() + "[", "]")
+                .add("uuid=" + uuid)
+                .add("server='" + server + "'")
+                .add("url='" + url + "'")
+                .add("hash='" + hash + "'")
+                .add("size=" + size)
+                .add("packVersion=" + packVersion)
+                .toString();
+    }
 }

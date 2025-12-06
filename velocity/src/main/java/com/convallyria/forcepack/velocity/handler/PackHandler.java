@@ -8,6 +8,7 @@ import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.convallyria.forcepack.velocity.player.ForcePackVelocityPlayer;
+import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
@@ -22,6 +23,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,10 +39,13 @@ public final class PackHandler {
 
     private final ForcePackVelocity plugin;
     private final Map<UUID, ForcePackPlayer> waiting;
+    private final Map<UUID, Set<PendingResourcePackSend>> pendingTasks;
 
     public PackHandler(final ForcePackVelocity plugin) {
         this.plugin = plugin;
         this.waiting = new ConcurrentHashMap<>();
+        this.pendingTasks = new ConcurrentHashMap<>();
+        plugin.getServer().getEventManager().register(plugin, DisconnectEvent.class, this::onDisconnect);
     }
 
     public void processWaitingResourcePack(Player player, UUID packId) {
@@ -78,19 +83,35 @@ public final class PackHandler {
         return waitingPacks.stream().anyMatch(pack -> pack.getUUID().equals(packId));
     }
 
-    public void removeFromWaiting(Player player) {
+    private void onDisconnect(DisconnectEvent event) {
+        removeFromWaiting(event.getPlayer());
+        pendingTasks.remove(event.getPlayer().getUniqueId());
+    }
+
+    private void removeFromWaiting(Player player) {
         waiting.remove(player.getUniqueId());
     }
 
-    public void addToWaiting(Player player, @NonNull Set<ResourcePack> packs) {
+    private void addToWaiting(Player player, @NonNull ResourcePack pack) {
         waiting.compute(player.getUniqueId(), (a, existing) -> {
             ForcePackPlayer newPlayer = existing != null ? existing : new ForcePackVelocityPlayer(plugin, player);
-            newPlayer.getWaitingPacks().addAll(packs);
+            newPlayer.getWaitingPacks().add(pack);
             return newPlayer;
         });
     }
 
     public void setPack(final Player player, final ServerConnection server) {
+        // The player connected to a new server
+        // Therefore, any pending resource pack sends from the last server should be cancelled
+        final Set<PendingResourcePackSend> pending = pendingTasks.remove(player.getUniqueId());
+        if (pending != null) {
+            for (PendingResourcePackSend pendingResourcePackSend : pending) {
+                pendingResourcePackSend.getTask().cancel();
+                processWaitingResourcePack(player, pendingResourcePackSend.getResourcePack().getUUID());
+                plugin.log("Cancelled a pending resource pack send due to server switch for " + player.getUsername() + ", " + pendingResourcePackSend.getResourcePack());
+            }
+        }
+
         boolean geyser = plugin.getConfig().getBoolean("geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
         boolean canBypass = player.hasPermission(Permissions.BYPASS) && plugin.getConfig().getBoolean("bypass-permission");
         plugin.log(player.getUsername() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
@@ -185,6 +206,7 @@ public final class PackHandler {
         // will be forcefully closed by the server if we don't delay it for a second.
         final boolean update = plugin.getConfig().getBoolean("update-gui", true);
         AtomicReference<ScheduledTask> task = new AtomicReference<>();
+        AtomicReference<PendingResourcePackSend> pendingSend = new AtomicReference<>();
         final Scheduler.TaskBuilder builder = plugin.getServer().getScheduler().buildTask(plugin, () -> {
             for (ResourcePackInfo appliedResourcePack : player.getAppliedResourcePacks()) {
                 // Check the pack they have applied now is the one we're looking for.
@@ -194,6 +216,8 @@ public final class PackHandler {
             }
 
             plugin.log("Applying resource pack " + resourcePack.getUUID().toString() + " to " + player.getUsername() + ".");
+            final Set<PendingResourcePackSend> pendingSends = pendingTasks.get(player.getUniqueId());
+            pendingSends.remove(pendingSend.get());
             resourcePack.setResourcePack(player.getUniqueId());
         }).delay(1L, TimeUnit.SECONDS);
 
@@ -202,8 +226,39 @@ public final class PackHandler {
             builder.repeat(speed, TimeUnit.MILLISECONDS);
         }
 
-        addToWaiting(player, Set.of(resourcePack));
-        task.set(builder.schedule());
+        addToWaiting(player, resourcePack);
+        final ScheduledTask scheduledTask = builder.schedule();
+        final PendingResourcePackSend pendingResourcePackSend = new PendingResourcePackSend(scheduledTask, resourcePack);
+        pendingSend.set(pendingResourcePackSend);
+        pendingTasks.compute(player.getUniqueId(), (u, pending) -> {
+            if (pending == null) {
+                pending = new HashSet<>(4);
+            }
+
+            pending.add(pendingResourcePackSend);
+            return pending;
+        });
+        task.set(scheduledTask);
+        plugin.log("Added pending resource pack to " + player.getUsername() + ": " + resourcePack);
+    }
+
+    private static class PendingResourcePackSend {
+
+        private final ScheduledTask task;
+        private final ResourcePack resourcePack;
+
+        public PendingResourcePackSend(ScheduledTask task, ResourcePack resourcePack) {
+            this.task = task;
+            this.resourcePack = resourcePack;
+        }
+
+        public ScheduledTask getTask() {
+            return task;
+        }
+
+        public ResourcePack getResourcePack() {
+            return resourcePack;
+        }
     }
 
     public Optional<ForcePackPlayer> getForcePackPlayer(Player player) {
