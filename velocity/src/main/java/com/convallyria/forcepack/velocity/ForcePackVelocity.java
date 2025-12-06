@@ -331,7 +331,12 @@ public class ForcePackVelocity implements ForcePackPlatform {
                 // Version range?
                 final String[] ranged = id.split("-");
                 final double min = Double.parseDouble(ranged[0]);
-                final double max = Double.parseDouble(ranged[1]);
+                final double max;
+                if (ranged[1].isEmpty()) {
+                    max = Integer.MAX_VALUE;
+                } else {
+                    max = Double.parseDouble(ranged[1]);
+                }
                 version = ResourcePackVersion.of(min, max);
             } catch (NumberFormatException | IndexOutOfBoundsException ignored2) {}
         }
@@ -394,8 +399,7 @@ public class ForcePackVelocity implements ForcePackPlatform {
         }
 
         // Register the default only if it has data associated with it
-        final VelocityConfig actionsConfig = globalPack.getConfig("actions");
-        if (actionsConfig != null) {
+        if (globalPack.getString("url") != null || !globalPack.getStringList("urls").isEmpty()) {
             // Add the default fallback
             configs.put("default", globalPack);
             log("Registered default global pack");
@@ -448,7 +452,12 @@ public class ForcePackVelocity implements ForcePackPlatform {
                 // Version range?
                 final String[] ranged = id.split("-");
                 final double min = Double.parseDouble(ranged[0]);
-                final double max = Double.parseDouble(ranged[1]);
+                final double max;
+                if (ranged[1].isEmpty()) {
+                    max = Integer.MAX_VALUE;
+                } else {
+                    max = Double.parseDouble(ranged[1]);
+                }
                 version = ResourcePackVersion.of(min, max);
             } catch (NumberFormatException | IndexOutOfBoundsException ignored2) {}
         }

@@ -74,7 +74,12 @@ public interface ForcePackPlatform extends ForcePackAPI {
                 // Version range?
                 final String[] ranged = versionId.split("-");
                 final double min = Double.parseDouble(ranged[0]);
-                final double max = Double.parseDouble(ranged[1]);
+                final double max;
+                if (ranged[1].isEmpty()) {
+                    max = Integer.MAX_VALUE;
+                } else {
+                    max = Double.parseDouble(ranged[1]);
+                }
                 return ResourcePackVersion.of(min, max);
             } catch (NumberFormatException | IndexOutOfBoundsException ignored2) {}
         }
