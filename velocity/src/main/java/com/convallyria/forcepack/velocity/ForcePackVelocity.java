@@ -564,7 +564,7 @@ public class ForcePackVelocity implements ForcePackPlatform {
             return matches;
         }).collect(Collectors.toList())) {
             final Optional<ResourcePackVersion> version = resourcePack.getVersion();
-            log("Trying resource pack %s (%s)", resourcePack.getURL(), version.isEmpty() ? version.toString() : version.get().toString());
+            log("Trying resource pack %s (%s)", resourcePack.getURL(), version.map(resourcePackVersion -> resourcePackVersion.min() + "-" + resourcePackVersion.max()).orElse("none"));
 
             final boolean inVersion = version.isEmpty() || version.get().inVersion(packVersion);
             if (!inVersion) continue;
