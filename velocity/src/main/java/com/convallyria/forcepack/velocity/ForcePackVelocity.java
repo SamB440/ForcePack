@@ -383,8 +383,7 @@ public class ForcePackVelocity implements ForcePackPlatform {
         if (!enableGlobal) return;
 
         final Map<String, VelocityConfig> configs = new HashMap<>();
-        // Add the default fallback
-        configs.put("default", globalPack);
+
         final VelocityConfig versionConfig = globalPack.getConfig("version");
         if (versionConfig != null) {
             log("Detected versioned resource packs for global pack");
@@ -392,6 +391,14 @@ public class ForcePackVelocity implements ForcePackPlatform {
                 configs.put(versionId, versionConfig.getConfig(versionId));
                 log("Added version config %s for global pack", versionId);
             }
+        }
+
+        // Register the default only if it has data associated with it
+        final VelocityConfig actionsConfig = globalPack.getConfig("actions");
+        if (actionsConfig != null) {
+            // Add the default fallback
+            configs.put("default", globalPack);
+            log("Registered default global pack");
         }
 
         configs.forEach((id, config) -> {
