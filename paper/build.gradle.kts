@@ -40,7 +40,7 @@ dependencies {
     implementation(project(":folia"))
     implementation(project(":webserver", "shadow"))
 
-    compileOnly("io.papermc.paper:paper-api:1.21.10-R0.1-SNAPSHOT") {
+    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT") {
         exclude("net.kyori") // avoid conflicts
     }
     compileOnly("com.viaversion:viaversion-api:4.9.2")
