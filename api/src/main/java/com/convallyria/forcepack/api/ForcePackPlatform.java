@@ -128,7 +128,7 @@ public interface ForcePackPlatform extends ForcePackAPI {
         }
 
         log("No valid resource packs found");
-        return null;
+        return Set.of();
     }
 
     void log(String info, Object... format);

@@ -42,6 +42,17 @@ repositories {
     }
 }
 
+configurations {
+    all {
+        resolutionStrategy {
+            force("net.kyori:adventure-api:4.25.0")
+            force("net.kyori:adventure-bom:4.25.0")
+            force("net.kyori:adventure-nbt:4.25.0")
+            force("net.kyori:examination:4.25.0")
+        }
+    }
+}
+
 dependencies {
     implementation(project(":api"))
     implementation(project(":webserver", "shadow"))
