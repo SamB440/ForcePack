@@ -58,7 +58,7 @@ dependencies {
         exclude("com.convallyria.languagy.libs")
     }
     implementation("org.bstats:bstats-bukkit:3.0.2")
-    implementation("com.github.retrooper:packetevents-spigot:2.11.1+60a2c34-SNAPSHOT")
+    implementation("com.github.retrooper:packetevents-spigot:2.11.1+4ac4d81-SNAPSHOT")
 }
 
 tasks {
