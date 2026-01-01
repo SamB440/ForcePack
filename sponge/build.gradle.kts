@@ -35,8 +35,19 @@ sponge {
 
 repositories {
     repositories {
+        mavenLocal()
         maven("https://repo.convallyria.com/releases")
         maven("https://repo.convallyria.com/snapshots")
+        maven("https://repo.empirewar.org/snapshots")
+        maven {
+            name = "grimacSnapshots"
+            url = uri("https://repo.grim.ac/snapshots")
+            content {
+                includeGroup("com.github.retrooper")
+                includeGroup("ac.grim.grimac")
+                includeGroup("ac.grim.packetevents")
+            }
+        }
         maven("https://repo.codemc.io/repository/maven-snapshots/")
         maven("https://repo.viaversion.com")
     }
@@ -53,17 +64,23 @@ configurations {
     }
 }
 
+val adventureApiNbt by configurations.creating
+
 dependencies {
     implementation(project(":api"))
     implementation(project(":webserver", "shadow"))
-    // TODO use grim fork
-    implementation("com.github.retrooper:packetevents-sponge:2.11.1-SNAPSHOT")
+    implementation("com.github.retrooper:packetevents-sponge:2.11.1+4ac4d81-SNAPSHOT")
     implementation("org.bstats:bstats-sponge:3.0.2")
     implementation("org.incendo:cloud-sponge:2.0.0-SNAPSHOT") {
         exclude("org.checkerframework")
         exclude("io.leangen.geantyref")
     }
 
+    // We won't shade the entirety of adventure-api, only two specific classes we need.
+    // BECAUSE SOMEONE AT ADVENTURE DECIDED PUTTING THE NBT PACKAGE IN API WAS A GOOD IDEA
+    adventureApiNbt("net.kyori:adventure-api:4.25.0")
+
+    compileOnly("io.netty:netty-all:4.1.105.Final")
     compileOnly("com.google.guava:guava:33.4.0-jre")
     compileOnly("com.viaversion:viaversion-api:4.9.2")
 }
@@ -74,11 +91,18 @@ tasks {
             exclude(project(":webserver"))
         }
 
+        // BECAUSE SOMEONE AT ADVENTURE DECIDED PUTTING THE NBT PACKAGE IN API WAS A GOOD IDEA
+        from(
+            adventureApiNbt.resolve().map { dep ->
+                zipTree(dep).matching {
+                    include("net/kyori/adventure/nbt/api/**")
+                }
+            }
+        )
+
         relocate("org.bstats", "forcepack.libs.bstats")
         relocate("net.kyori.adventure.nbt", "forcepack.libs.adventure.nbt")
         relocate("net.kyori.examination", "forcepack.libs.adventure.ex")
-
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 }
 
