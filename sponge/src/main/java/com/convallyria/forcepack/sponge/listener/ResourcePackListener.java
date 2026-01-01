@@ -54,8 +54,13 @@ public class ResourcePackListener {
         final ServerPlayer player = event.getPlayer();
         final UUID id = event.getID();
 
+        final boolean velocityMode = getConfig().node("velocity-mode").getBoolean();
+
         boolean geyser = getConfig().node("Server", "geyser").getBoolean() && GeyserUtil.isBedrockPlayer(player.uniqueId());
-        boolean canBypass = player.hasPermission(Permissions.BYPASS) && getConfig().node("Server", "bypass-permission").getBoolean();
+        boolean canBypass = player.hasPermission(Permissions.BYPASS)
+                && getConfig().node("Server", "bypass-permission").getBoolean()
+                // Bypass should be handled by velocity instead.
+                && !velocityMode;
         plugin.log(player.name() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
 
         if (canBypass || geyser) {
@@ -70,7 +75,7 @@ public class ResourcePackListener {
         final ResourcePackStatus status = event.getStatus();
         plugin.log(player.name() + " sent status: " + status);
 
-        final boolean velocityMode = getConfig().node("velocity-mode").getBoolean();
+
         if (!velocityMode && tryValidateHacks(player, event, status)) return;
 
         // If we did not set this resource pack, ignore
@@ -240,8 +245,11 @@ public class ResourcePackListener {
     public void onPlayerJoin(ServerSideConnectionEvent.Join event) {
         ServerPlayer player = event.player();
 
+        final boolean velocityMode = getConfig().node("velocity-mode").getBoolean();
         boolean geyser = getConfig().node("Server", "geyser").getBoolean() && GeyserUtil.isBedrockPlayer(player.uniqueId());
-        boolean canBypass = player.hasPermission(Permissions.BYPASS) && getConfig().node("Server", "bypass-permission").getBoolean();
+        boolean canBypass = player.hasPermission(Permissions.BYPASS)
+                && getConfig().node("Server", "bypass-permission").getBoolean()
+                && !velocityMode;
         plugin.log(player.name() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
 
         if (canBypass || geyser) return;

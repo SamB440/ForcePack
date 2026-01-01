@@ -45,7 +45,10 @@ public class ResourcePackListener implements Listener {
         final UUID id = event.getID();
 
         boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
-        boolean canBypass = player.hasPermission(Permissions.BYPASS) && getConfig().getBoolean("Server.bypass-permission");
+        boolean canBypass = player.hasPermission(Permissions.BYPASS)
+                && getConfig().getBoolean("Server.bypass-permission")
+                // Bypass should be handled by velocity instead.
+                && !plugin.velocityMode;
         plugin.log(player.getName() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
 
         if (canBypass || geyser) {
@@ -209,7 +212,9 @@ public class ResourcePackListener implements Listener {
         if (player.hasMetadata("NPC") || player.hasMetadata("fake-player")) return;
 
         boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
-        boolean canBypass = player.hasPermission(Permissions.BYPASS) && getConfig().getBoolean("Server.bypass-permission");
+        boolean canBypass = player.hasPermission(Permissions.BYPASS)
+                && getConfig().getBoolean("Server.bypass-permission")
+                && !plugin.velocityMode;
         plugin.log(player.getName() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
 
         if (canBypass || geyser) return;
