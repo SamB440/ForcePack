@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
 @Plugin(
         id = "forcepack",
         name = "ForcePack",
-        version = "1.3.74",
+        version = "1.3.75-SNAPSHOT",
         description = "Force players to use your server resource pack.",
         url = "https://www.convallyria.com",
         dependencies = {
