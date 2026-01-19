@@ -74,12 +74,25 @@ public abstract class ResourcePack implements IResourcePack {
 		if (this == o) return true;
 		if (!(o instanceof ResourcePack)) return false;
 		ResourcePack that = (ResourcePack) o;
-		return Objects.equals(uuid, that.uuid) && Objects.equals(getServer(), that.getServer());
+		return Objects.equals(uuid, that.uuid)
+				&& Objects.equals(getServer(), that.getServer())
+				&& sameVersion(packVersion, that.packVersion);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(uuid, getServer());
+		return Objects.hash(uuid, getServer(), versionHash(packVersion));
+	}
+
+	private static boolean sameVersion(@Nullable ResourcePackVersion left, @Nullable ResourcePackVersion right) {
+		if (left == right) return true;
+		if (left == null || right == null) return false;
+		return Double.compare(left.min(), right.min()) == 0 && Double.compare(left.max(), right.max()) == 0;
+	}
+
+	private static int versionHash(@Nullable ResourcePackVersion version) {
+		if (version == null) return 0;
+		return Objects.hash(version.min(), version.max());
 	}
 
     @Override
