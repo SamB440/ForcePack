@@ -13,6 +13,7 @@ import com.convallyria.forcepack.velocity.command.Commands;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.convallyria.forcepack.velocity.handler.PackHandler;
 import com.convallyria.forcepack.velocity.listener.ResourcePackListener;
+import com.convallyria.forcepack.velocity.listener.ServerRegistrationListener;
 import com.convallyria.forcepack.velocity.resourcepack.VelocityResourcePack;
 import com.convallyria.forcepack.velocity.schedule.VelocityScheduler;
 import com.convallyria.forcepack.webserver.ForcePackWebServer;
@@ -53,6 +54,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -162,6 +164,7 @@ public class ForcePackVelocity implements ForcePackPlatform {
     private void registerListeners() {
         final EventManager eventManager = server.getEventManager();
         eventManager.register(this, new ResourcePackListener(this));
+        eventManager.register(this, new ServerRegistrationListener(this));
 
         if (!getConfig().getBoolean("disable-commands-until-loaded", false)) return;
         eventManager.register(this, CommandExecuteEvent.class, event -> {
@@ -214,17 +217,7 @@ public class ForcePackVelocity implements ForcePackPlatform {
         for (String name : root.getKeys()) {
             log("Checking %s - %s", typeName, name);
             final VelocityConfig serverConfig = root.getConfig(name);
-            final Map<String, VelocityConfig> configs = new HashMap<>();
-            // Add the default fallback
-            configs.put("default", serverConfig.getConfig("resourcepack"));
-            final VelocityConfig versionConfig = serverConfig.getConfig("version");
-            if (versionConfig != null) {
-                log("Detected versioned resource packs for %s", name);
-                for (String versionId : versionConfig.getKeys()) {
-                    configs.put(versionId, versionConfig.getConfig(versionId).getConfig("resourcepack"));
-                    log("Added version config %s for %s", versionId, name);
-                }
-            }
+            final Map<String, VelocityConfig> configs = getPackConfigs(serverConfig, name);
 
             configs.forEach((id, config) -> {
                 if (config == null) {
@@ -237,7 +230,68 @@ public class ForcePackVelocity implements ForcePackPlatform {
         }
     }
 
-    private void registerResourcePack(VelocityConfig rootServerConfig, VelocityConfig resourcePack, String id, String name, String typeName, boolean groups, boolean verifyPacks, @Nullable Player player) {
+    public Map<String, VelocityConfig> getPackConfigs(VelocityConfig serverConfig, String name) {
+        final Map<String, VelocityConfig> configs = new HashMap<>();
+        // Add the default fallback
+        configs.put("default", serverConfig.getConfig("resourcepack"));
+        final VelocityConfig versionConfig = serverConfig.getConfig("version");
+        if (versionConfig != null) {
+            log("Detected versioned resource packs for %s", name);
+            for (String versionId : versionConfig.getKeys()) {
+                configs.put(versionId, versionConfig.getConfig(versionId).getConfig("resourcepack"));
+                log("Added version config %s for %s", versionId, name);
+            }
+        }
+        return configs;
+    }
+
+    public void registerResourcePack(VelocityConfig rootServerConfig, VelocityConfig resourcePack, String id, String name, String typeName, boolean groups, boolean verifyPacks, @Nullable Player player) {
+        processResourcePackConfig(resourcePack, id, name, (url, hash) -> {
+            this.handleRegister(rootServerConfig, resourcePack, name, id, typeName, url, hash, groups, verifyPacks, player);
+        });
+    }
+
+    private void handleRegister(VelocityConfig rootServerConfig, VelocityConfig resourcePack, String name, String id, String typeName, String url, @Nullable String hash, boolean groups, boolean verifyPacks, @Nullable Player player) {
+        if (groups) {
+            final boolean exact = rootServerConfig.getBoolean("exact-match");
+            for (String serverName : rootServerConfig.getStringList("servers")) {
+                for (RegisteredServer registeredServer : server.getAllServers()) {
+                    final String serverInfoName = registeredServer.getServerInfo().getName();
+                    final boolean matches = exact ?
+                            serverInfoName.equals(serverName) :
+                            serverInfoName.contains(serverName);
+                    if (!matches) continue;
+
+                    VelocityResourcePack pack = createResourcePack(resourcePack, name, id, typeName, url, hash, verifyPacks, serverInfoName, name, player);
+                    if (pack != null) {
+                        resourcePacks.add(pack);
+                        log("Added resource pack for server %s (%s)", serverInfoName, pack.getUUID().toString());
+                    }
+                }
+            }
+        } else {
+            VelocityResourcePack pack = createResourcePack(resourcePack, name, id, typeName, url, hash, verifyPacks, name, null, player);
+            if (pack != null) {
+                resourcePacks.add(pack);
+            }
+        }
+    }
+
+    public void registerResourcePackForServer(VelocityConfig resourcePack, String id, String groupName, String typeName, boolean verifyPacks, String targetServerName, @Nullable Player player) {
+        processResourcePackConfig(resourcePack, id, groupName, (url, hash) -> {
+            this.handleRegisterForServer(resourcePack, groupName, id, typeName, url, hash, verifyPacks, targetServerName, player);
+        });
+    }
+
+    private void handleRegisterForServer(VelocityConfig resourcePack, String name, String id, String typeName, String url, @Nullable String hash, boolean verifyPacks, String targetServerName, @Nullable Player player) {
+        VelocityResourcePack pack = createResourcePack(resourcePack, name, id, typeName, url, hash, verifyPacks, targetServerName, name, player);
+        if (pack != null) {
+            resourcePacks.add(pack);
+            log("Added resource pack for server %s (%s)", targetServerName, pack.getUUID().toString());
+        }
+    }
+
+    private void processResourcePackConfig(VelocityConfig resourcePack, String id, String name, BiConsumer<String, String> action) {
         List<String> urls = resourcePack.getStringList("urls");
         if (urls.isEmpty()) {
            urls = List.of(resourcePack.getString("url", ""));
@@ -257,11 +311,12 @@ public class ForcePackVelocity implements ForcePackPlatform {
         for (int i = 0; i < urls.size(); i++) {
             final String url = urls.get(i);
             final String hash = i >= hashes.size() ? null : hashes.get(i);
-            this.handleRegister(rootServerConfig, resourcePack, name, id, typeName, url, hash, groups, verifyPacks, player);
+            action.accept(url, hash);
         }
     }
 
-    private void handleRegister(VelocityConfig rootServerConfig, VelocityConfig resourcePack, String name, String id, String typeName, String url, @Nullable String hash, boolean groups, boolean verifyPacks, @Nullable Player player) {
+    @Nullable
+    private VelocityResourcePack createResourcePack(VelocityConfig resourcePack, String name, String id, String typeName, String url, @Nullable String hash, boolean verifyPacks, String targetServerName, @Nullable String groupName, @Nullable Player player) {
         final ConsoleCommandSource consoleSender = this.getServer().getConsoleCommandSource();
         if (url.isEmpty()) {
             logger.error("No URL found for {}. Did you set up the config correctly?", name);
@@ -310,7 +365,7 @@ public class ForcePackVelocity implements ForcePackPlatform {
                     this.getLogger().error("Your config hash returned: {}", data.getConfigHash());
                     this.getLogger().error("Please provide a correct SHA-1 hash!");
                     this.getLogger().error("-----------------------------------------------");
-                    return;
+                    return null;
                 } else {
                     Component hashMsg = Component.text("Hash verification complete for " + typeName + " " + name + " (" + id + ").").color(NamedTextColor.GREEN);
                     consoleSender.sendMessage(hashMsg);
@@ -326,23 +381,7 @@ public class ForcePackVelocity implements ForcePackPlatform {
             version = getVersionFromId(id);
         } catch (IllegalArgumentException ignored) {}
 
-        if (groups) {
-            final boolean exact = rootServerConfig.getBoolean("exact-match");
-            for (String serverName : rootServerConfig.getStringList("servers")) {
-                for (RegisteredServer registeredServer : server.getAllServers()) {
-                    final String serverInfoName = registeredServer.getServerInfo().getName();
-                    final boolean matches = exact ?
-                            serverInfoName.equals(serverName) :
-                            serverInfoName.contains(serverName);
-                    if (!matches) continue;
-                    final VelocityResourcePack pack = new VelocityResourcePack(this, serverInfoName, url, hash, sizeInMB.get(), name, version);
-                    resourcePacks.add(pack);
-                    log("Added resource pack for server %s (%s)", serverInfoName, pack.getUUID().toString());
-                }
-            }
-        } else {
-            resourcePacks.add(new VelocityResourcePack(this, name, url, hash, sizeInMB.get(), null, version));
-        }
+        return new VelocityResourcePack(this, targetServerName, url, hash, sizeInMB.get(), groupName, version);
     }
 
     private void checkUnload() {
@@ -395,27 +434,8 @@ public class ForcePackVelocity implements ForcePackPlatform {
         }
 
         configs.forEach((id, config) -> {
-            List<String> urls = config.getStringList("urls");
-            if (urls.isEmpty()) {
-                urls = List.of(config.getString("url", ""));
-            }
-
-            List<String> hashes = config.getStringList("hashes");
-            if (hashes.isEmpty()) {
-                hashes = List.of(config.getString("hash", ""));
-            }
-
-            final boolean generateHash = config.getBoolean("generate-hash", false);
-            if (!generateHash && urls.size() != hashes.size()) {
-                getLogger().error("[global-pack] There are not the same amount of URLs and hashes! Please provide a hash for every resource pack URL! ({})", id);
-                getLogger().error("Hint: Enabling generate-hash will auto-generate missing hashes");
-            }
-
-            for (int i = 0; i < urls.size(); i++) {
-                final String url = urls.get(i);
-                final String hash = i >= hashes.size() ? null : hashes.get(i);
-                this.registerGlobalResourcePack(config, id, url, hash);
-            }
+            processResourcePackConfig(config, id == null ? null : id.toString(), "global-pack",
+                    (url, hash) -> this.registerGlobalResourcePack(config, id, url, hash));
         });
     }
 
@@ -591,5 +611,10 @@ public class ForcePackVelocity implements ForcePackPlatform {
     @Override
     public void log(String info, Object... format) {
         if (this.getConfig().getBoolean("debug")) this.getLogger().info(String.format(info, format));
+    }
+
+    public void addResourcePack(String serverName, VelocityResourcePack pack) {
+        resourcePacks.add(pack);
+        log("Added resource pack for server %s (%s)", serverName, pack.getUUID().toString());
     }
 }
