@@ -22,13 +22,24 @@ dependencies {
     }
 }
 
-tasks.shadowJar {
-    minimize {
-        exclude(project(":webserver"))
+tasks{
+    compileJava {
+        options.release.set(17)
     }
-    mergeServiceFiles()
-    relocate("io.leangen.geantyref", "forcepack.libs.geantyref")
-    relocate("org.bstats", "com.convallyria.forcepack.velocity.libs.bstats")
-    relocate("org.glassfish.jaxb", "com.convallyria.forcepack.libs.jaxb")
-    relocate("org.objectweb.asm", "com.convallyria.forcepack.libs.asm")
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    shadowJar {
+        minimize {
+            exclude(project(":webserver"))
+        }
+        mergeServiceFiles()
+        relocate("io.leangen.geantyref", "forcepack.libs.geantyref")
+        relocate("org.bstats", "com.convallyria.forcepack.velocity.libs.bstats")
+        relocate("org.glassfish.jaxb", "com.convallyria.forcepack.libs.jaxb")
+        relocate("org.objectweb.asm", "com.convallyria.forcepack.libs.asm")
+    }
 }
