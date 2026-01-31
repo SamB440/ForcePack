@@ -39,6 +39,7 @@ public class ServerRegistrationListener {
 
                 configs.forEach((id, config) -> {
                     if (config == null) return;
+                    // serverName is used both as the config name and target server name
                     plugin.registerResourcePackForServer(config, id, serverName, "server", plugin.getConfig().getBoolean("verify-resource-packs"), serverName, null);
                 });
                 return;
