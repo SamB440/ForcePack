@@ -21,15 +21,34 @@ public class ServerRegistrationListener {
     public void onServerRegistered(ServerRegisteredEvent event) {
         RegisteredServer registeredServer = event.registeredServer();
         String serverName = registeredServer.getServerInfo().getName();
-        VelocityConfig groups = plugin.getConfig().getConfig("groups");
-
-        if (groups == null) return;
 
         // Check if we already have packs for this server
         boolean hasPack = plugin.getResourcePacks().stream()
                 .anyMatch(pack -> pack.getServer().equals(serverName));
 
         if (hasPack) return;
+
+        // Check the "servers" configuration first
+        VelocityConfig servers = plugin.getConfig().getConfig("servers");
+        if (servers != null) {
+            VelocityConfig serverConfig = servers.getConfig(serverName);
+            if (serverConfig != null) {
+                plugin.log("New server %s matches servers configuration, adding resource packs...", serverName);
+
+                final Map<String, VelocityConfig> configs = plugin.getPackConfigs(serverConfig, serverName);
+
+                configs.forEach((id, config) -> {
+                    if (config == null) return;
+                    // serverName is used both as the config name and target server name
+                    plugin.registerResourcePackForServer(config, id, serverName, "server", plugin.getConfig().getBoolean("verify-resource-packs"), serverName, null);
+                });
+                return;
+            }
+        }
+
+        // Check the "groups" configuration
+        VelocityConfig groups = plugin.getConfig().getConfig("groups");
+        if (groups == null) return;
 
         for (String groupName : groups.getKeys()) {
             VelocityConfig groupConfig = groups.getConfig(groupName);
