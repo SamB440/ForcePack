@@ -1,9 +1,13 @@
 package com.convallyria.forcepack.api.resourcepack;
 
+// https://minecraft.wiki/w/Pack_format
+// https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Protocol_version_numbers
 public final class PackFormatResolver {
 
     public static double getPackFormat(int protocol) {
         switch (protocol) {
+            case 775: // 26.1
+                return 84;
             case 774: // 1.21.11
                 return 75;
             case 773: // 1.21.9-1.21.10

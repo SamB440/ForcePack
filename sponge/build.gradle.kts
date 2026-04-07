@@ -69,7 +69,7 @@ val adventureApiNbt by configurations.creating
 dependencies {
     implementation(project(":api"))
     implementation(project(":webserver", "shadow"))
-    implementation("com.github.retrooper:packetevents-sponge:2.11.1+4ac4d81-SNAPSHOT")
+    implementation("com.github.retrooper:packetevents-sponge:2.12.0+70a2380-SNAPSHOT")
     implementation("org.bstats:bstats-sponge:3.0.2")
     implementation("org.incendo:cloud-sponge:2.0.0-SNAPSHOT") {
         exclude("org.checkerframework")
