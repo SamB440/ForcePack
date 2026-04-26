@@ -10,18 +10,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Fetch all history for all branches and tags
 
-      - name: Setup JDK 21
-        uses: actions/setup-java@v4
+      - name: Setup JDK 25
+        uses: actions/setup-java@v5
         with:
-          java-version: '21'
+          java-version: '25'
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4 # Handles Gradle wrapper validation and basic caching
+        uses: gradle/actions/setup-gradle@v6 # Handles Gradle wrapper validation and basic caching
 
       - name: Build and Publish to Convallyria repository
         run: ./gradlew build publish
@@ -30,7 +30,7 @@ jobs:
           MAVEN_PASSWORD: ${{ secrets.REPO_PASSWORD }}
 
       - name: Capture build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Artifacts
           path: |

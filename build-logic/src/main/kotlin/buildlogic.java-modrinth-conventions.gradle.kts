@@ -1,25 +1,32 @@
-import java.io.ByteArrayOutputStream
-
 plugins {
     id("com.modrinth.minotaur")
 }
 
 // Helper methods
 fun executeGitCommand(vararg command: String): String {
-    val byteOut = ByteArrayOutputStream()
-    exec {
+    return providers.exec {
         commandLine = listOf("git", *command)
-        standardOutput = byteOut
-    }
-    return byteOut.toString(Charsets.UTF_8.name()).trim()
+    }.standardOutput.asText.get().trim()
 }
 
-fun latestCommitMessage(): String {
-    val commits = executeGitCommand("log", "--since=24 hours ago", "--pretty=format:- %s")
-    return if (commits.isNotBlank()) {
-        "Recent changes (last 24 hours):\n$commits"
-    } else {
-        "No commits in the last 24 hours"
+fun latestCommitChangelog(): String {
+    val shortHash = executeGitCommand("log", "-1", "--pretty=format:%h")
+    val fullHash = executeGitCommand("log", "-1", "--pretty=format:%H")
+    val author = executeGitCommand("log", "-1", "--pretty=format:%an")
+    val date = executeGitCommand("log", "-1", "--pretty=format:%ad", "--date=short")
+    val subject = executeGitCommand("log", "-1", "--pretty=format:%s")
+    val body = executeGitCommand("log", "-1", "--pretty=format:%b")
+
+    return buildString {
+        appendLine("### Commit [`$shortHash`](https://github.com/SamB440/ForcePack/commit/$fullHash)")
+        appendLine()
+        appendLine("**$subject**")
+        if (body.isNotBlank()) {
+            appendLine()
+            appendLine(body.trim())
+        }
+        appendLine()
+        append("by $author on $date")
     }
 }
 
@@ -28,8 +35,12 @@ fun getChangelogSinceLastRelease(): String {
     val latestTag = executeGitCommand("describe", "--tags", "--abbrev=0")
     val currentVersion = project.version.toString()
 
-    // Get all commits between the latest tag and HEAD
-    val commits = executeGitCommand("log", "--pretty=format:- %s", "$latestTag..HEAD")
+    // Get all commits between the latest tag and HEAD, including short hash links
+    val commits = executeGitCommand(
+        "log",
+        "--pretty=format:- %s ([`%h`](https://github.com/SamB440/ForcePack/commit/%H))",
+        "$latestTag..HEAD"
+    )
         .lines()
         .filter { it.isNotBlank() }
         .joinToString("\n")
@@ -64,7 +75,7 @@ modrinth {
         val changelogContent: String = if (isRelease) {
             getChangelogSinceLastRelease()
         } else {
-            latestCommitMessage()
+            latestCommitChangelog()
         }
         changelog.set(changelogContent)
     } catch (e: Exception) {

@@ -3,6 +3,7 @@ pluginManagement {
     includeBuild("build-logic")
 
     repositories {
+        gradlePluginPortal()
         maven("https://repo.spongepowered.org/repository/maven-public/") // Sponge
     }
 }
