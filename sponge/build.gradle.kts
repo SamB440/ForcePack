@@ -69,7 +69,7 @@ val adventureApiNbt by configurations.creating
 dependencies {
     implementation(project(":api"))
     implementation(project(":webserver", "shadow"))
-    implementation("com.github.retrooper:packetevents-sponge:2.12.2+22c9961-SNAPSHOT")
+    implementation("com.github.retrooper:packetevents-sponge:2.12.2+24443d4-SNAPSHOT")
     implementation("org.bstats:bstats-sponge:3.0.2")
     implementation("org.incendo:cloud-sponge:2.0.0-SNAPSHOT") {
         exclude("org.checkerframework")
@@ -103,6 +103,18 @@ tasks {
         relocate("org.bstats", "forcepack.libs.bstats")
         relocate("net.kyori.adventure.nbt", "forcepack.libs.adventure.nbt")
         relocate("net.kyori.examination", "forcepack.libs.adventure.ex")
+
+        // packetevents classes are already relocated by buildlogic.java-common-conventions
+        // (com.github.retrooper.packetevents -> forcepack.libs.pe.api, io.github.retrooper.packetevents -> forcepack.libs.pe.impl).
+        // Rename the bundled mapping assets so a standalone packetevents install can't
+        // accidentally load our (potentially older) copy via the classloader, and vice
+        // versa. The matching customResourceProvider in ForcePackSponge translates
+        // lookups back to this renamed path.
+        eachFile {
+            if (path.startsWith("assets/mappings/")) {
+                path = "assets/forcepack-sponge-packetevents/mappings/" + path.removePrefix("assets/mappings/")
+            }
+        }
     }
 }
 
