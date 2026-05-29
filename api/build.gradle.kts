@@ -19,14 +19,15 @@ dependencies {
     compileOnly("org.geysermc.floodgate:api:2.2.4-SNAPSHOT")
 }
 
+shadow {
+    // skip shadow jar from publishing.
+    addShadowVariantIntoJavaComponent = false
+}
+
 publishing {
     publications {
         create<MavenPublication>("forcepack") {
             from(components["java"])
-
-            // skip shadow jar from publishing. Workaround for https://github.com/johnrengelman/shadow/issues/651
-            val javaComponent = components["java"] as AdhocComponentWithVariants
-            javaComponent.withVariantsFromConfiguration(configurations["shadowRuntimeElements"]) { skip() }
         }
     }
 
