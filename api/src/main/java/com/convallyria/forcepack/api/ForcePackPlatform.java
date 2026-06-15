@@ -5,7 +5,7 @@ import com.convallyria.forcepack.api.resourcepack.ResourcePack;
 import com.convallyria.forcepack.api.resourcepack.ResourcePackVersion;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -92,7 +92,7 @@ public interface ForcePackPlatform extends ForcePackAPI {
 
         log("Searching for a resource pack with pack version %f", packFormat);
 
-        Set<ResourcePack> validPacks = new HashSet<>();
+        Set<ResourcePack> validPacks = new LinkedHashSet<>();
         boolean hasVersionOverride = false;
         for (ResourcePack resourcePack : getResourcePacks()) {
             final Optional<ResourcePackVersion> version = resourcePack.getVersion();
@@ -107,16 +107,22 @@ public interface ForcePackPlatform extends ForcePackAPI {
 
             validPacks.add(resourcePack);
             log("Added resource pack " + resourcePack.getURL());
-            if (protocolVersion < 765) { // If < 1.20.3, only one pack can be applied.
-                break;
-            }
         }
 
         if (!validPacks.isEmpty()) {
             log("Found valid resource packs (" + validPacks.size() + ")");
-            // If we found version-specific resource packs, use those instead of the fallback
+            // If we found version-specific resource packs, use those instead of the fallback.
+            // This must happen before reducing to a single pack below, otherwise the fallback
+            // ("all") pack could be chosen over a version-specific override (see issue #120).
             if (hasVersionOverride) {
-                validPacks = validPacks.stream().filter(pack -> pack.getVersion().isPresent()).collect(Collectors.toSet());
+                validPacks = validPacks.stream().filter(pack -> pack.getVersion().isPresent()).collect(Collectors.toCollection(LinkedHashSet::new));
+            }
+
+            // If the player is on a version older than 1.20.3, only one pack can be applied.
+            if (protocolVersion < 765 && validPacks.size() > 1) {
+                final ResourcePack chosen = validPacks.iterator().next();
+                validPacks = new LinkedHashSet<>();
+                validPacks.add(chosen);
             }
 
             log("Found valid resource packs (filtered to: " + validPacks.size() + ")");

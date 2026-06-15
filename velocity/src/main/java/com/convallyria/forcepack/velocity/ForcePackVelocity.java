@@ -47,6 +47,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -534,7 +535,7 @@ public class ForcePackVelocity implements ForcePackPlatform {
     private Optional<Set<ResourcePack>> searchForValidPacks(Set<ResourcePack> packs, String serverName, final ProtocolVersion protocolVersion, double packVersion) {
         log("Searching for a resource pack with pack version %f", packVersion);
 
-        Set<ResourcePack> validPacks = new HashSet<>(packs.size());
+        Set<ResourcePack> validPacks = new LinkedHashSet<>(packs.size());
         boolean hasVersionOverride = false;
         for (ResourcePack resourcePack : packs.stream().filter(pack -> {
             boolean matches = pack.getServer().equals(serverName) || (serverName.equals(GLOBAL_SERVER_NAME) && pack.getServer().contains(GLOBAL_SERVER_NAME));
@@ -553,16 +554,22 @@ public class ForcePackVelocity implements ForcePackPlatform {
 
             validPacks.add(resourcePack);
             log("Added resource pack %s", resourcePack.getURL());
-            if (protocolVersion.getProtocol() < 765) { // If < 1.20.3, only one pack can be applied.
-                break;
-            }
         }
 
         if (!validPacks.isEmpty()) {
             log("Found valid resource packs (%d)", validPacks.size());
-            // If we found version-specific resource packs, use those instead of the fallback
+            // If we found version-specific resource packs, use those instead of the fallback.
+            // This must happen before reducing to a single pack below, otherwise the fallback
+            // ("all") pack could be chosen over a version-specific override (see issue #120).
             if (hasVersionOverride) {
-                validPacks = validPacks.stream().filter(pack -> pack.getVersion().isPresent()).collect(Collectors.toSet());
+                validPacks = validPacks.stream().filter(pack -> pack.getVersion().isPresent()).collect(Collectors.toCollection(LinkedHashSet::new));
+            }
+
+            // If the player is on a version older than 1.20.3, only one pack can be applied.
+            if (protocolVersion.getProtocol() < 765 && validPacks.size() > 1) {
+                final ResourcePack chosen = validPacks.iterator().next();
+                validPacks = new LinkedHashSet<>();
+                validPacks.add(chosen);
             }
 
             log("Found valid resource packs (filtered to: %d)", validPacks.size());
