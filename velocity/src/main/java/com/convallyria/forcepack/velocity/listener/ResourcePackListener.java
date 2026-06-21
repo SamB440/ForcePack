@@ -10,11 +10,13 @@ import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.convallyria.forcepack.velocity.handler.PackHandler;
 import com.convallyria.forcepack.velocity.resourcepack.VelocityResourcePack;
 import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.event.EventTask;
 import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.PlayerResourcePackStatusEvent;
 import com.velocitypowered.api.event.player.ServerPostConnectEvent;
+import com.velocitypowered.api.event.player.configuration.PlayerConfigurationEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
@@ -37,8 +39,10 @@ public class ResourcePackListener {
     @Subscribe(order = PostOrder.EARLY)
     public void onPackStatus(PlayerResourcePackStatusEvent event) {
         final Player player = event.getPlayer();
-        final Optional<ServerConnection> currentServer = player.getCurrentServer();
-        if (currentServer.isEmpty()) {
+        final ServerConnection currentServer = player.getCurrentServer()
+                .or(() -> plugin.getPackHandler().getConfigurationPhaseServer(player))
+                .orElse(null);
+        if (currentServer == null) {
             plugin.log(player.getUsername() + "'s server does not exist.");
             return;
         }
@@ -46,7 +50,7 @@ public class ResourcePackListener {
         final PlayerResourcePackStatusEvent.Status status = event.getStatus();
 
         // Check if the server they're on has a resource pack
-        final String serverName = currentServer.get().getServerInfo().getName();
+        final String serverName = currentServer.getServerInfo().getName();
         final ResourcePackInfo packInfo = event.getPackInfo(); // Returns null on < 1.20.3 clients, and if a UUID isn't provided I guess?
         final UUID id = packInfo == null ? null : packInfo.getId();
         if (id != null) plugin.log(player.getUsername() + " sent response id '%s'", id.toString());
@@ -106,12 +110,12 @@ public class ResourcePackListener {
 
         // Declined/failed is valid and should be allowed, server owner decides whether they get kicked
         if (status != PlayerResourcePackStatusEvent.Status.ACCEPTED && status != PlayerResourcePackStatusEvent.Status.DOWNLOADED && !kick) {
-            plugin.log("Sent player '%s' plugin message downstream to '%s' for status '%s'", player.getUsername(), currentServer.get().getServerInfo().getName(), status.name());
+            plugin.log("Sent player '%s' plugin message downstream to '%s' for status '%s'", player.getUsername(), currentServer.getServerInfo().getName(), status.name());
             // No longer applying, remove them from the list
             plugin.getPackHandler().processWaitingResourcePack(player, packByServer.getUUID());
             final String name = status == PlayerResourcePackStatusEvent.Status.SUCCESSFUL ? "SUCCESSFULLY_LOADED" : status.name();
             final boolean waiting = plugin.getPackHandler().isWaiting(player);
-            currentServer.get().sendPluginMessage(PackHandler.FORCEPACK_STATUS_IDENTIFIER, (packByServer.getUUID().toString() + ";" + name + ";" + !waiting).getBytes(StandardCharsets.UTF_8));
+            currentServer.sendPluginMessage(PackHandler.FORCEPACK_STATUS_IDENTIFIER, (packByServer.getUUID().toString() + ";" + name + ";" + !waiting).getBytes(StandardCharsets.UTF_8));
             plugin.getPackHandler().getForcePackPlayer(player).ifPresentOrElse(forcePackPlayer -> {
                 plugin.log("Current packs we are waiting for: %s", forcePackPlayer.getWaitingPacks());
             }, () -> plugin.log("Waiting for? %s", waiting));
@@ -166,10 +170,23 @@ public class ResourcePackListener {
     }
 
     @Subscribe(order = PostOrder.EARLY)
+    public EventTask onConfigure(PlayerConfigurationEvent event) {
+        if (!plugin.getConfig().getBoolean("use-configuration-phase", false)) return null;
+        final Player player = event.player();
+        plugin.log("Handling resource pack for %s during the configuration phase.", player.getUsername());
+        return plugin.getPackHandler().handleConfigurationPhase(player, event.server());
+    }
+
+    @Subscribe(order = PostOrder.EARLY)
     public void onJoin(ServerPostConnectEvent event) {
         final Player player = event.getPlayer();
         final Optional<ServerConnection> currentServer = player.getCurrentServer();
         if (currentServer.isEmpty()) return;
+
+        if (plugin.getPackHandler().takeConfigurationPhaseHandled(player)) {
+            plugin.log("Not sending resource pack to %s on join as it was handled during the configuration phase.", player.getUsername());
+            return;
+        }
 
         if (plugin.temporaryExemptedPlayers.remove(player.getUniqueId())) {
             plugin.log("Ignoring player " + player.getUsername() + " as they have a one-off exemption.");

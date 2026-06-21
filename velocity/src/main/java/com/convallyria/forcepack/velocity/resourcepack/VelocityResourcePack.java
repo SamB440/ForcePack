@@ -55,7 +55,8 @@ public final class VelocityResourcePack extends ResourcePack {
         if (server.contains(ForcePackVelocity.GLOBAL_SERVER_NAME)) {
             serverConfig = velocityPlugin.getConfig().getConfig("global-pack");
             final List<String> excluded = serverConfig.getStringList("exclude");
-            final Optional<ServerConnection> currentServer = player.getCurrentServer();
+            final Optional<ServerConnection> currentServer = player.getCurrentServer()
+                    .or(() -> velocityPlugin.getPackHandler().getConfigurationPhaseServer(player));
             if (currentServer.isPresent()) {
                 if (excluded.contains(currentServer.get().getServerInfo().getName())) return;
             } else {

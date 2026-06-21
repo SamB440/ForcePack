@@ -8,6 +8,7 @@ import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.velocity.ForcePackVelocity;
 import com.convallyria.forcepack.velocity.config.VelocityConfig;
 import com.convallyria.forcepack.velocity.player.ForcePackVelocityPlayer;
+import com.velocitypowered.api.event.EventTask;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.Player;
@@ -29,6 +30,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -41,18 +43,70 @@ public final class PackHandler {
     private final Map<UUID, ForcePackPlayer> waiting;
     private final Map<UUID, Set<PendingResourcePackSend>> pendingTasks;
 
+    private final Map<UUID, CompletableFuture<Void>> configurationPhaseCompletions;
+    private final Map<UUID, ServerConnection> configurationPhaseServers;
+    private final Set<UUID> configurationPhaseHandled;
+
     public PackHandler(final ForcePackVelocity plugin) {
         this.plugin = plugin;
         this.waiting = new ConcurrentHashMap<>();
         this.pendingTasks = new ConcurrentHashMap<>();
+        this.configurationPhaseCompletions = new ConcurrentHashMap<>();
+        this.configurationPhaseServers = new ConcurrentHashMap<>();
+        this.configurationPhaseHandled = ConcurrentHashMap.newKeySet();
         plugin.getServer().getEventManager().register(plugin, DisconnectEvent.class, this::onDisconnect);
+    }
+
+    public EventTask handleConfigurationPhase(final Player player, final ServerConnection server) {
+        final UUID uuid = player.getUniqueId();
+        configurationPhaseHandled.add(uuid);
+
+        if (plugin.temporaryExemptedPlayers.remove(uuid)) {
+            plugin.log("Ignoring player " + player.getUsername() + " as they have a one-off exemption.");
+            return null;
+        }
+
+        configurationPhaseServers.put(uuid, server);
+        setPack(player, server);
+
+        if (!isWaiting(player)) {
+            // No pack needs to be applied, allow the configuration phase to continue immediately.
+            configurationPhaseServers.remove(uuid);
+            return null;
+        }
+
+        final CompletableFuture<Void> future = new CompletableFuture<>();
+        configurationPhaseCompletions.put(uuid, future);
+        plugin.log("Holding configuration phase for %s until their resource pack(s) are resolved.", player.getUsername());
+        return EventTask.resumeWhenComplete(future);
+    }
+
+    public boolean takeConfigurationPhaseHandled(final Player player) {
+        return configurationPhaseHandled.remove(player.getUniqueId());
+    }
+
+    public Optional<ServerConnection> getConfigurationPhaseServer(final Player player) {
+        return Optional.ofNullable(configurationPhaseServers.get(player.getUniqueId()));
+    }
+
+    private void completeConfigurationPhase(final UUID uuid) {
+        configurationPhaseServers.remove(uuid);
+        final CompletableFuture<Void> future = configurationPhaseCompletions.remove(uuid);
+        if (future != null) {
+            future.complete(null);
+        }
+    }
+
+    private void discardConfigurationPhase(final UUID uuid) {
+        configurationPhaseServers.remove(uuid);
+        configurationPhaseCompletions.remove(uuid);
     }
 
     public void processWaitingResourcePack(Player player, UUID packId) {
         final UUID playerId = player.getUniqueId();
         // If the player is on a version older than 1.20.3, they can only have one resource pack.
         if (player.getProtocolVersion().getProtocol() < ProtocolVersion.MINECRAFT_1_20_3.getProtocol()) {
-            removeFromWaiting(player);
+            removeFromWaiting(player, true);
             return;
         }
 
@@ -62,7 +116,7 @@ public final class PackHandler {
         });
 
         if (newPlayer == null || newPlayer.getWaitingPacks().isEmpty()) {
-            removeFromWaiting(player);
+            removeFromWaiting(player, true);
         }
     }
 
@@ -84,12 +138,18 @@ public final class PackHandler {
     }
 
     private void onDisconnect(DisconnectEvent event) {
-        removeFromWaiting(event.getPlayer());
+        removeFromWaiting(event.getPlayer(), false);
         pendingTasks.remove(event.getPlayer().getUniqueId());
+        configurationPhaseHandled.remove(event.getPlayer().getUniqueId());
     }
 
-    private void removeFromWaiting(Player player) {
+    private void removeFromWaiting(Player player, boolean resumeConfigurationPhase) {
         waiting.remove(player.getUniqueId());
+        if (resumeConfigurationPhase) {
+            completeConfigurationPhase(player.getUniqueId());
+        } else {
+            discardConfigurationPhase(player.getUniqueId());
+        }
     }
 
     private void addToWaiting(Player player, @NonNull ResourcePack pack) {
