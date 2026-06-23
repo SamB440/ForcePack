@@ -16,7 +16,6 @@ import com.convallyria.forcepack.paper.integration.ItemsAdderIntegration;
 import com.convallyria.forcepack.paper.listener.ExemptionListener;
 import com.convallyria.forcepack.paper.listener.PacketListener;
 import com.convallyria.forcepack.paper.listener.ResourcePackListener;
-import com.convallyria.forcepack.paper.listener.VelocityMessageListener;
 import com.convallyria.forcepack.paper.player.ForcePackPaperPlayer;
 import com.convallyria.forcepack.paper.resourcepack.PaperResourcePack;
 import com.convallyria.forcepack.paper.schedule.BukkitScheduler;
@@ -24,9 +23,6 @@ import com.convallyria.forcepack.paper.translation.Translations;
 import com.convallyria.forcepack.paper.util.ProtocolUtil;
 import com.convallyria.forcepack.webserver.ForcePackWebServer;
 import com.convallyria.forcepack.webserver.downloader.WebServerDependencyDownloader;
-import com.convallyria.languagy.api.adventure.AdventurePlatform;
-import com.convallyria.languagy.api.language.Language;
-import com.convallyria.languagy.api.language.Translator;
 import com.github.retrooper.packetevents.PacketEvents;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
@@ -35,7 +31,6 @@ import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -61,7 +56,7 @@ import java.util.stream.Collectors;
 
 public final class ForcePackPaper extends JavaPlugin implements ForcePackPlatform {
 
-    private Translator translator;
+    private final MiniMessage miniMessage = MiniMessage.miniMessage();
     private PlatformScheduler<?> scheduler;
     private final Map<ResourcePackVersion, Set<ResourcePack>> resourcePacks = new HashMap<>();
     public boolean velocityMode;
@@ -70,6 +65,14 @@ public final class ForcePackPaper extends JavaPlugin implements ForcePackPlatfor
 
     public final Set<UUID> temporaryExemptedPlayers = new HashSet<>();
 
+    public MiniMessage miniMessage() {
+        return miniMessage;
+    }
+
+    public BukkitAudiences adventure() {
+        return adventure;
+    }
+
     @Override
     public Set<ResourcePack> getResourcePacks() {
         return resourcePacks.values().stream()
@@ -77,7 +80,7 @@ public final class ForcePackPaper extends JavaPlugin implements ForcePackPlatfor
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
-    public Set<ResourcePack> getPacksForVersion(Player player) {
+    public Set<ResourcePack> getPacksForVersion(UUID player) {
         final int protocolVersion = ProtocolUtil.getProtocolVersion(player);
         return getPacksForVersion(protocolVersion);
     }
@@ -92,17 +95,16 @@ public final class ForcePackPaper extends JavaPlugin implements ForcePackPlatfor
         return temporaryExemptedPlayers.add(uuid);
     }
 
-    private final Map<UUID, ForcePackPlayer> waiting = new HashMap<>();
+    private final Map<UUID, ForcePackPaperPlayer> waiting = new HashMap<>();
 
-    public void processWaitingResourcePack(Player player, UUID packId) {
-        final UUID playerId = player.getUniqueId();
+    public void processWaitingResourcePack(UUID player, UUID packId) {
         // If the player is on a version older than 1.20.3, they can only have one resource pack.
         if (ProtocolUtil.getProtocolVersion(player) < 765) {
             removeFromWaiting(player);
             return;
         }
 
-        final ForcePackPlayer newPlayer = waiting.computeIfPresent(playerId, (a, forcePackPlayer) -> {
+        final ForcePackPlayer newPlayer = waiting.computeIfPresent(player, (a, forcePackPlayer) -> {
             final Set<ResourcePack> packs = forcePackPlayer.getWaitingPacks();
             packs.removeIf(pack -> pack.getUUID().equals(packId));
             return forcePackPlayer;
@@ -113,15 +115,15 @@ public final class ForcePackPaper extends JavaPlugin implements ForcePackPlatfor
         }
     }
 
-    public Optional<ForcePackPlayer> getForcePackPlayer(Player player) {
-        return Optional.ofNullable(waiting.get(player.getUniqueId()));
+    public Optional<ForcePackPaperPlayer> getForcePackPlayer(UUID player) {
+        return Optional.ofNullable(waiting.get(player));
     }
 
-    public boolean isWaiting(Player player) {
-        return waiting.containsKey(player.getUniqueId());
+    public boolean isWaiting(UUID player) {
+        return waiting.containsKey(player);
     }
 
-    public boolean isWaitingFor(Player player, UUID packId) {
+    public boolean isWaitingFor(UUID player, UUID packId) {
         if (!isWaiting(player)) return false;
 
         // If the player is on a version older than 1.20.3, they can only have one resource pack.
@@ -129,17 +131,17 @@ public final class ForcePackPaper extends JavaPlugin implements ForcePackPlatfor
             return true;
         }
 
-        final Set<ResourcePack> waitingPacks = waiting.get(player.getUniqueId()).getWaitingPacks();
+        final Set<ResourcePack> waitingPacks = waiting.get(player).getWaitingPacks();
         return waitingPacks.stream().anyMatch(pack -> pack.getUUID().equals(packId));
     }
 
-    public void removeFromWaiting(Player player) {
-        waiting.remove(player.getUniqueId());
+    public void removeFromWaiting(UUID uuid) {
+        waiting.remove(uuid);
     }
 
-    public void addToWaiting(UUID uuid, @NonNull Set<ResourcePack> packs) {
-        waiting.compute(uuid, (a, existing) -> {
-            ForcePackPlayer newPlayer = existing != null ? existing : new ForcePackPaperPlayer(uuid);
+    public ForcePackPaperPlayer addToWaiting(UUID uuid, @NonNull Set<ResourcePack> packs) {
+        return waiting.compute(uuid, (a, existing) -> {
+            ForcePackPaperPlayer newPlayer = existing != null ? existing : new ForcePackPaperPlayer(uuid);
             newPlayer.getWaitingPacks().addAll(packs);
             return newPlayer;
         });
@@ -163,12 +165,10 @@ public final class ForcePackPaper extends JavaPlugin implements ForcePackPlatfor
         GeyserUtil.isGeyserInstalledHere = Bukkit.getPluginManager().getPlugin("Geyser-Spigot") != null;
 
         this.adventure = BukkitAudiences.create(this);
-        MiniMessage miniMessage = MiniMessage.miniMessage();
         this.velocityMode = getConfig().getBoolean("velocity-mode");
         this.scheduler = FoliaScheduler.RUNNING_FOLIA ? new FoliaScheduler(this) : new BukkitScheduler(this);
         this.registerListeners();
         this.registerCommands();
-        this.translator = Translator.of(this, "lang", Language.BRITISH_ENGLISH, debug(), AdventurePlatform.create(miniMessage, adventure));
         PacketEvents.getAPI().init();
 
         // Convert legacy config
@@ -227,7 +227,6 @@ public final class ForcePackPaper extends JavaPlugin implements ForcePackPlatfor
     public void onDisable() {
         PacketEvents.getAPI().terminate();
         if (webServer != null) webServer.shutdown();
-        if (translator != null) translator.close();
         if (this.adventure != null) {
             this.adventure.close();
             this.adventure = null;
@@ -362,8 +361,10 @@ public final class ForcePackPaper extends JavaPlugin implements ForcePackPlatfor
     private void registerListeners() {
         PluginManager pm = Bukkit.getPluginManager();
         if (velocityMode) {
+            // Proxy resource pack statuses (play + configuration phase) are handled directly
+            // via PacketEvents in PacketListener, as Bukkit's plugin messaging only delivers
+            // during the play phase.
             getLogger().info("Enabled velocity listener");
-            this.getServer().getMessenger().registerIncomingPluginChannel(this, "forcepack:status", new VelocityMessageListener(this));
         }
 
         pm.registerEvents(new ResourcePackListener(this), this);
@@ -448,10 +449,6 @@ public final class ForcePackPaper extends JavaPlugin implements ForcePackPlatfor
                 getLogger().severe("This will cause ForcePack to not function correctly. You MUST remove the resource pack URL from server.properties!");
             }
         }
-    }
-
-    public Translator getTranslator() {
-        return translator;
     }
 
     public boolean debug() {

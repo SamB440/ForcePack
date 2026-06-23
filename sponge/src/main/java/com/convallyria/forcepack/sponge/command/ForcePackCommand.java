@@ -61,6 +61,7 @@ public class ForcePackCommand {
                 final Set<ResourcePack> resourcePacks = plugin.getPacksForVersion(player.uniqueId());
                 final ForcePackSpongePlayer fpPlayer = plugin.addToWaiting(player.uniqueId(), resourcePacks);
                 fpPlayer.setConnection(player.connection());
+                plugin.addToWaiting(player.uniqueId(), resourcePacks);
                 if (ProtocolUtil.getProtocolVersion(player.uniqueId()) >= 765) { // 1.20.3+
                     ProtocolUtil.sendPacketBypassingVia(player.uniqueId(), new WrapperPlayServerResourcePackRemove((UUID) null));
                 }

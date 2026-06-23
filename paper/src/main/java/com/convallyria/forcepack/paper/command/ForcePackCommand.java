@@ -48,7 +48,7 @@ public class ForcePackCommand {
         Bukkit.getPluginManager().callEvent(new ForcePackReloadEvent());
         if (!plugin.velocityMode && send) {
             for (Player player : Bukkit.getOnlinePlayers()) {
-                if (plugin.isWaiting(player)) continue;
+                if (plugin.isWaiting(player.getUniqueId())) continue;
                 boolean geyser = plugin.getConfig().getBoolean("Server.geyser") && GeyserUtil.isBedrockPlayer(player.getUniqueId());
                 boolean canBypass = player.hasPermission(Permissions.BYPASS) && plugin.getConfig().getBoolean("Server.bypass-permission");
                 plugin.log(player.getName() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
@@ -56,10 +56,10 @@ public class ForcePackCommand {
 
                 Translations.RELOADING.send(player);
 
-                final Set<ResourcePack> resourcePacks = plugin.getPacksForVersion(player);
+                final Set<ResourcePack> resourcePacks = plugin.getPacksForVersion(player.getUniqueId());
                 plugin.addToWaiting(player.getUniqueId(), resourcePacks);
-                if (ProtocolUtil.getProtocolVersion(player) >= 765) { // 1.20.3+
-                    ProtocolUtil.sendPacketBypassingVia(player, new WrapperPlayServerResourcePackRemove((UUID) null));
+                if (ProtocolUtil.getProtocolVersion(player.getUniqueId()) >= 765) { // 1.20.3+
+                    ProtocolUtil.sendPacketBypassingVia(player.getUniqueId(), new WrapperPlayServerResourcePackRemove((UUID) null));
                 }
                 resourcePacks.forEach(pack -> pack.setResourcePack(player.getUniqueId()));
             }
