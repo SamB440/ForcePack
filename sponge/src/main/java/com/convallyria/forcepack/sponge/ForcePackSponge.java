@@ -40,14 +40,15 @@ import org.spongepowered.api.Server;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.Command;
 import org.spongepowered.api.config.ConfigDir;
-import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.event.EventManager;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.lifecycle.RegisterChannelEvent;
 import org.spongepowered.api.event.lifecycle.RegisterCommandEvent;
 import org.spongepowered.api.event.lifecycle.StartingEngineEvent;
 import org.spongepowered.api.network.ServerConnectionState;
+import org.spongepowered.api.network.channel.ChannelBuf;
 import org.spongepowered.api.network.channel.raw.RawDataChannel;
+import org.spongepowered.api.profile.GameProfile;
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.loader.ConfigurationLoader;
@@ -172,22 +173,21 @@ public class ForcePackSponge implements ForcePackPlatform {
         }
     }
 
-    public Set<ResourcePack> getPacksForVersion(ServerPlayer player) {
+    public Set<ResourcePack> getPacksForVersion(UUID player) {
         final int protocolVersion = ProtocolUtil.getProtocolVersion(player);
         return getPacksForVersion(protocolVersion);
     }
 
-    private final Map<UUID, ForcePackPlayer> waiting = new HashMap<>();
+    private final Map<UUID, ForcePackSpongePlayer> waiting = new HashMap<>();
 
-    public void processWaitingResourcePack(ServerPlayer player, UUID packId) {
-        final UUID playerId = player.uniqueId();
+    public void processWaitingResourcePack(UUID player, UUID packId) {
         // If the player is on a version older than 1.20.3, they can only have one resource pack.
         if (ProtocolUtil.getProtocolVersion(player) < 765) {
             removeFromWaiting(player);
             return;
         }
 
-        final ForcePackPlayer newPlayer = waiting.computeIfPresent(playerId, (a, forcePackPlayer) -> {
+        final ForcePackPlayer newPlayer = waiting.computeIfPresent(player, (a, forcePackPlayer) -> {
             final Set<ResourcePack> packs = forcePackPlayer.getWaitingPacks();
             packs.removeIf(pack -> pack.getUUID().equals(packId));
             return forcePackPlayer;
@@ -198,15 +198,15 @@ public class ForcePackSponge implements ForcePackPlatform {
         }
     }
 
-    public Optional<ForcePackPlayer> getForcePackPlayer(ServerPlayer player) {
-        return Optional.ofNullable(waiting.get(player.uniqueId()));
+    public Optional<ForcePackSpongePlayer> getForcePackPlayer(UUID player) {
+        return Optional.ofNullable(waiting.get(player));
     }
 
-    public boolean isWaiting(ServerPlayer player) {
-        return waiting.containsKey(player.uniqueId());
+    public boolean isWaiting(UUID player) {
+        return waiting.containsKey(player);
     }
 
-    public boolean isWaitingFor(ServerPlayer player, UUID packId) {
+    public boolean isWaitingFor(UUID player, UUID packId) {
         if (!isWaiting(player)) return false;
 
         // If the player is on a version older than 1.20.3, they can only have one resource pack.
@@ -214,17 +214,17 @@ public class ForcePackSponge implements ForcePackPlatform {
             return true;
         }
 
-        final Set<ResourcePack> waitingPacks = waiting.get(player.uniqueId()).getWaitingPacks();
+        final Set<ResourcePack> waitingPacks = waiting.get(player).getWaitingPacks();
         return waitingPacks.stream().anyMatch(pack -> pack.getUUID().equals(packId));
     }
 
-    public void removeFromWaiting(ServerPlayer player) {
-        waiting.remove(player.uniqueId());
+    public void removeFromWaiting(UUID uuid) {
+        waiting.remove(uuid);
     }
 
-    public void addToWaiting(UUID uuid, @NonNull Set<ResourcePack> packs) {
-        waiting.compute(uuid, (a, existing) -> {
-            ForcePackPlayer newPlayer = existing != null ? existing : new ForcePackSpongePlayer(Sponge.server().player(uuid).orElseThrow());
+    public ForcePackSpongePlayer addToWaiting(UUID uuid, @NonNull Set<ResourcePack> packs) {
+        return waiting.compute(uuid, (a, existing) -> {
+            ForcePackSpongePlayer newPlayer = existing != null ? existing : new ForcePackSpongePlayer(uuid);
             newPlayer.getWaitingPacks().addAll(packs);
             return newPlayer;
         });
@@ -368,18 +368,32 @@ public class ForcePackSponge implements ForcePackPlatform {
     public void onRegisterChannels(RegisterChannelEvent event) {
         if (!getConfig().node("velocity-mode").getBoolean()) return;
         getLogger().info("Enabled velocity listener");
+
         final RawDataChannel channel = event.register(ResourceKey.of("forcepack", "status"), RawDataChannel.class);
         channel.play().addHandler(ServerConnectionState.Game.class, (message, state) -> {
-            final ServerPlayer player = state.player();
-            final String data = new String(message.readBytes(message.available()));
-            final String[] split = data.split(";");
-            log("Posted event");
-
-            final ResourcePackStatus status = ResourcePackStatus.valueOf(split[1]);
-            final UUID packId = UUID.fromString(split[0]);
-            final boolean proxyRemove = Boolean.parseBoolean(split[2]);
-            getScheduler().executeAsync(() -> Sponge.eventManager().post(new MultiVersionResourcePackStatusEvent(player, packId, status, true, proxyRemove)));
+            handlePackStatusMessage(state.profile(), message);
         });
+
+        channel.play().addHandler(ServerConnectionState.Configuration.class, (message, state) -> {
+            handlePackStatusMessage(state.profile(), message);
+        });
+    }
+
+    private void handlePackStatusMessage(GameProfile profile, ChannelBuf message) {
+        final ForcePackSpongePlayer player = getForcePackPlayer(profile.uniqueId()).orElse(null);
+        if (player == null) {
+            // Player isn't valid - wasn't added at auth
+            return;
+        }
+
+        final String data = new String(message.readBytes(message.available()));
+        final String[] split = data.split(";");
+        log("Posted event");
+
+        final ResourcePackStatus status = ResourcePackStatus.valueOf(split[1]);
+        final UUID packId = UUID.fromString(split[0]);
+        final boolean proxyRemove = Boolean.parseBoolean(split[2]);
+        Sponge.eventManager().post(new MultiVersionResourcePackStatusEvent(profile, player.getConnection(), packId, status, true, proxyRemove));
     }
 
     private void registerListeners() {

@@ -139,7 +139,7 @@ public final class ForcePackPaper extends JavaPlugin implements ForcePackPlatfor
 
     public void addToWaiting(UUID uuid, @NonNull Set<ResourcePack> packs) {
         waiting.compute(uuid, (a, existing) -> {
-            ForcePackPlayer newPlayer = existing != null ? existing : new ForcePackPaperPlayer(Bukkit.getPlayer(uuid));
+            ForcePackPlayer newPlayer = existing != null ? existing : new ForcePackPaperPlayer(uuid);
             newPlayer.getWaitingPacks().addAll(packs);
             return newPlayer;
         });

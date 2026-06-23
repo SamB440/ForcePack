@@ -154,7 +154,7 @@ public final class PackHandler {
 
     private void addToWaiting(Player player, @NonNull ResourcePack pack) {
         waiting.compute(player.getUniqueId(), (a, existing) -> {
-            ForcePackPlayer newPlayer = existing != null ? existing : new ForcePackVelocityPlayer(plugin, player);
+            ForcePackPlayer newPlayer = existing != null ? existing : new ForcePackVelocityPlayer(plugin, player.getUniqueId());
             newPlayer.getWaitingPacks().add(pack);
             return newPlayer;
         });

@@ -8,15 +8,20 @@ import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.viaversion.viaversion.api.Via;
 import org.spongepowered.api.Sponge;
-import org.spongepowered.api.entity.living.player.server.ServerPlayer;
+
+import java.util.UUID;
 
 public class ProtocolUtil {
 
-    public static int getProtocolVersion(ServerPlayer player) {
+    public static int getProtocolVersion(UUID player) {
         final boolean viaversion = Sponge.pluginManager().plugin("viaversion").isPresent();
-        return viaversion
-                ? Via.getAPI().getPlayerVersion(player)
-                : PacketEvents.getAPI().getPlayerManager().getUser(player).getClientVersion().getProtocolVersion();
+        if (viaversion) {
+            return Via.getAPI().getPlayerVersion(player);
+        }
+
+        final Object channel = PacketEvents.getAPI().getProtocolManager().getChannel(player);
+        final User user = PacketEvents.getAPI().getProtocolManager().getUser(channel);
+        return user.getClientVersion().getProtocolVersion();
     }
 
     private static boolean warnedBadPlugin;
@@ -24,8 +29,10 @@ public class ProtocolUtil {
     /**
      * Sends a packet to a player bypassing viaversion.
      */
-    public static void sendPacketBypassingVia(ServerPlayer player, PacketWrapper<?> packet) {
-        final User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
+    public static void sendPacketBypassingVia(UUID player, PacketWrapper<?> packet) {
+        final Object channel = PacketEvents.getAPI().getProtocolManager().getChannel(player);
+        final User user = PacketEvents.getAPI().getProtocolManager().getUser(channel);
+
         // This can only ever happen if there is a bad plugin creating NPCs AND adding them to the online player map
         if (user == null) {
             if (!warnedBadPlugin) {
@@ -37,7 +44,6 @@ public class ProtocolUtil {
             return;
         }
 
-        final Object channel = user.getChannel();
         if (!ChannelHelper.isOpen(channel)) return;
 
         sendBypassingPacket(user, channel, packet);
