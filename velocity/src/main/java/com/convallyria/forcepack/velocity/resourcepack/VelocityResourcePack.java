@@ -45,7 +45,7 @@ public final class VelocityResourcePack extends ResourcePack {
         final Player player = velocityPlugin.getServer().getPlayer(uuid).orElse(null);
         if (player == null) return;
 
-        final ResourcePackInfo.Builder infoBuilder = velocityPlugin.getServer()
+        ResourcePackInfo.Builder infoBuilder = velocityPlugin.getServer()
                 .createResourcePackBuilder(getURL())
                 .setHash(getHashSum())
                 .setId(this.uuid)
@@ -63,13 +63,19 @@ public final class VelocityResourcePack extends ResourcePack {
                 velocityPlugin.log("Unable to check global resource pack exclusion list as player is not in a server!?");
             }
         } else {
-            serverConfig = velocityPlugin.getConfig().getConfig("servers").getConfig(server);
+            if (group != null) {
+                serverConfig = velocityPlugin.getConfig().getConfig("groups").getConfig(group);
+            } else {
+                serverConfig = velocityPlugin.getConfig().getConfig("servers").getConfig(server);
+            }
         }
 
         if (serverConfig != null) {
             final String promptText = serverConfig.getConfig("resourcepack").getString("prompt");
-            final Component promptComponent = velocityPlugin.getMiniMessage().deserialize(promptText);
-            infoBuilder.setPrompt(promptComponent);
+            if (promptText != null) {
+                final Component promptComponent = velocityPlugin.getMiniMessage().deserialize(promptText);
+                infoBuilder = infoBuilder.setPrompt(promptComponent);
+            }
         }
 
         final ResourcePackInfo built = infoBuilder.build();
