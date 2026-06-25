@@ -40,7 +40,7 @@ public final class SpongeResourcePack extends ResourcePack {
         final ServerPlayer player = Sponge.server().player(uuid).orElse(null);
         if (player == null) return; // Either the player disconnected or this is an NPC
 
-        spongePlugin.getForcePackPlayer(player).ifPresent(forcePackPlayer -> {
+        spongePlugin.getForcePackPlayer(uuid).ifPresent(forcePackPlayer -> {
             forcePackPlayer.getChecks().forEach(check -> check.sendPack(this));
         });
 
@@ -48,6 +48,6 @@ public final class SpongeResourcePack extends ResourcePack {
                 spongePlugin.getConfig().node("use-new-force-pack-screen").getBoolean(true),
                 Component.join(JoinConfiguration.newlines(), Component.translatable("forcepack.prompt_text")));
 
-        ProtocolUtil.sendPacketBypassingVia(player, send);
+        ProtocolUtil.sendPacketBypassingVia(uuid, send);
     }
 }

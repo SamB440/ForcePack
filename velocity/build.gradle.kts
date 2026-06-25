@@ -2,6 +2,10 @@ plugins {
     id("buildlogic.java-platform-conventions")
 }
 
+tasks.compileJava {
+    options.release.set(17)
+}
+
 repositories {
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
     maven("https://repo.papermc.io/repository/maven-public/")

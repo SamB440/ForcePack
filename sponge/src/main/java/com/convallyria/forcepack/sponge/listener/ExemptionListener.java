@@ -20,7 +20,7 @@ public class ExemptionListener {
 
         event.cause().first(ServerPlayer.class).ifPresent(damager -> {
             if (damager.equals(event.entity())) return;
-            if (plugin.isWaiting(damager)) {
+            if (plugin.isWaiting(damager.uniqueId())) {
                 event.setCancelled(true);
                 plugin.log("Cancelled damage for damager '" + damager.name() + "' due to resource pack not applied.");
             }
@@ -28,7 +28,7 @@ public class ExemptionListener {
 
         if (event.entity() instanceof ServerPlayer) {
             ServerPlayer damaged = (ServerPlayer) event.entity();
-            if (plugin.isWaiting(damaged)) {
+            if (plugin.isWaiting(damaged.uniqueId())) {
                 event.setCancelled(true);
                 plugin.log("Cancelled damage for player '" + damaged.name() + "' due to resource pack not applied.");
             }
@@ -41,7 +41,7 @@ public class ExemptionListener {
         if (!plugin.getConfig().node("prevent-movement").getBoolean()) return;
 
         ServerPlayer player = (ServerPlayer) event.entity();
-        if (plugin.isWaiting(player)) {
+        if (plugin.isWaiting(player.uniqueId())) {
             event.setCancelled(true);
             plugin.log("Cancelled movement for player '" + player.name() + "' due to resource pack not applied.");
         }

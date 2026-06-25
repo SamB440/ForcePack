@@ -54,9 +54,6 @@ dependencies {
         exclude("net.kyori", "adventure-api") // not up-to-date - use minimessage version
     }
     implementation("net.kyori:adventure-text-minimessage:4.25.0")
-    implementation("com.convallyria.languagy:api:3.0.3-SNAPSHOT") {
-        exclude("com.convallyria.languagy.libs")
-    }
     implementation("org.bstats:bstats-bukkit:3.0.2")
     implementation("com.github.retrooper:packetevents-spigot:2.12.2+6dca3cc-SNAPSHOT")
 }

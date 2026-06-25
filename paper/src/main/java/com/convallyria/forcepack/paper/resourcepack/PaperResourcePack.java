@@ -41,14 +41,14 @@ public final class PaperResourcePack extends ResourcePack {
         final Player player = Bukkit.getPlayer(uuid);
         if (player == null) return; // Either the player disconnected or this is an NPC
 
-        paperPlugin.getForcePackPlayer(player).ifPresent(forcePackPlayer -> {
+        paperPlugin.getForcePackPlayer(uuid).ifPresent(forcePackPlayer -> {
             forcePackPlayer.getChecks().forEach(check -> check.sendPack(this));
         });
 
         WrapperPlayServerResourcePackSend send = new WrapperPlayServerResourcePackSend(getUUID(), url, getHash(),
                 paperPlugin.getConfig().getBoolean("use-new-force-pack-screen", true),
-                Component.join(JoinConfiguration.newlines(), Translations.PROMPT_TEXT.getProper(player)));
+                Component.join(JoinConfiguration.newlines(), Translations.PROMPT_TEXT.get()));
 
-        ProtocolUtil.sendPacketBypassingVia(player, send);
+        ProtocolUtil.sendPacketBypassingVia(uuid, send);
     }
 }

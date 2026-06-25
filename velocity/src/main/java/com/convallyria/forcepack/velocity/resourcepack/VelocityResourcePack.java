@@ -45,7 +45,7 @@ public final class VelocityResourcePack extends ResourcePack {
         final Player player = velocityPlugin.getServer().getPlayer(uuid).orElse(null);
         if (player == null) return;
 
-        final ResourcePackInfo.Builder infoBuilder = velocityPlugin.getServer()
+        ResourcePackInfo.Builder infoBuilder = velocityPlugin.getServer()
                 .createResourcePackBuilder(getURL())
                 .setHash(getHashSum())
                 .setId(this.uuid)
@@ -55,20 +55,27 @@ public final class VelocityResourcePack extends ResourcePack {
         if (server.contains(ForcePackVelocity.GLOBAL_SERVER_NAME)) {
             serverConfig = velocityPlugin.getConfig().getConfig("global-pack");
             final List<String> excluded = serverConfig.getStringList("exclude");
-            final Optional<ServerConnection> currentServer = player.getCurrentServer();
+            final Optional<ServerConnection> currentServer = player.getCurrentServer()
+                    .or(() -> velocityPlugin.getPackHandler().getConfigurationPhaseServer(player));
             if (currentServer.isPresent()) {
                 if (excluded.contains(currentServer.get().getServerInfo().getName())) return;
             } else {
                 velocityPlugin.log("Unable to check global resource pack exclusion list as player is not in a server!?");
             }
         } else {
-            serverConfig = velocityPlugin.getConfig().getConfig("servers").getConfig(server);
+            if (group != null) {
+                serverConfig = velocityPlugin.getConfig().getConfig("groups").getConfig(group);
+            } else {
+                serverConfig = velocityPlugin.getConfig().getConfig("servers").getConfig(server);
+            }
         }
 
         if (serverConfig != null) {
             final String promptText = serverConfig.getConfig("resourcepack").getString("prompt");
-            final Component promptComponent = velocityPlugin.getMiniMessage().deserialize(promptText);
-            infoBuilder.setPrompt(promptComponent);
+            if (promptText != null) {
+                final Component promptComponent = velocityPlugin.getMiniMessage().deserialize(promptText);
+                infoBuilder = infoBuilder.setPrompt(promptComponent);
+            }
         }
 
         final ResourcePackInfo built = infoBuilder.build();

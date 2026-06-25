@@ -3,11 +3,12 @@ package com.convallyria.forcepack.sponge.event;
 import net.kyori.adventure.resource.ResourcePackStatus;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.event.Cancellable;
 import org.spongepowered.api.event.Cause;
 import org.spongepowered.api.event.EventContext;
 import org.spongepowered.api.event.impl.AbstractEvent;
+import org.spongepowered.api.network.ServerSideConnection;
+import org.spongepowered.api.profile.GameProfile;
 
 import java.util.UUID;
 
@@ -16,7 +17,8 @@ import java.util.UUID;
  */
 public class MultiVersionResourcePackStatusEvent extends AbstractEvent implements Cancellable {
 
-    private final ServerPlayer player;
+    private final GameProfile profile;
+    private final ServerSideConnection connection;
     private final Cause cause;
     private final UUID id;
     private final ResourcePackStatus status;
@@ -24,8 +26,11 @@ public class MultiVersionResourcePackStatusEvent extends AbstractEvent implement
     private final boolean proxyRemove;
     private boolean cancel;
 
-    public MultiVersionResourcePackStatusEvent(@NonNull final ServerPlayer who, @NonNull UUID id, @NonNull ResourcePackStatus resourcePackStatus, boolean proxy, boolean proxyRemove) {
-        this.player = who;
+    public MultiVersionResourcePackStatusEvent(@NonNull final GameProfile who, @NonNull final ServerSideConnection connection,
+                                               @NonNull UUID id, @NonNull ResourcePackStatus resourcePackStatus,
+                                               boolean proxy, boolean proxyRemove) {
+        this.profile = who;
+        this.connection = connection;
         this.id = id;
         this.status = resourcePackStatus;
         this.proxy = proxy;
@@ -34,12 +39,21 @@ public class MultiVersionResourcePackStatusEvent extends AbstractEvent implement
     }
 
     /**
-     * Returns the player involved in this event
-     * @return Player who is involved in this event
+     * Returns the profile involved in this event
+     * @return Profile who is involved in this event
      */
     @NonNull
-    public final ServerPlayer getPlayer() {
-        return player;
+    public final GameProfile getProfile() {
+        return profile;
+    }
+
+    /**
+     * Returns the connection involved in this event
+     * @return Connection involved in this event
+     */
+    @NonNull
+    public final ServerSideConnection getConnection() {
+        return connection;
     }
 
     /**

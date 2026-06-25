@@ -2,9 +2,9 @@ package com.convallyria.forcepack.sponge.command;
 
 import com.convallyria.forcepack.api.permission.Permissions;
 import com.convallyria.forcepack.api.resourcepack.ResourcePack;
-import com.convallyria.forcepack.api.utils.GeyserUtil;
 import com.convallyria.forcepack.sponge.ForcePackSponge;
 import com.convallyria.forcepack.sponge.event.ForcePackReloadEvent;
+import com.convallyria.forcepack.sponge.player.ForcePackSpongePlayer;
 import com.convallyria.forcepack.sponge.util.ProtocolUtil;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerResourcePackRemove;
@@ -48,18 +48,22 @@ public class ForcePackCommand {
         Sponge.eventManager().post(new ForcePackReloadEvent());
         if (!plugin.getConfig().node("velocity-mode").getBoolean() && send) {
             for (ServerPlayer player : Sponge.server().onlinePlayers()) {
-                if (plugin.isWaiting(player)) continue;
-                boolean geyser = plugin.getConfig().node("Server", "geyser").getBoolean() && GeyserUtil.isBedrockPlayer(player.uniqueId());
-                boolean canBypass = player.hasPermission(Permissions.BYPASS) && plugin.getConfig().node("Server", "bypass-permission").getBoolean();
-                plugin.log(player.name() + "'s exemptions: geyser, " + geyser + ". permission, " + canBypass + ".");
-                if (geyser || canBypass) continue;
+                if (plugin.isWaiting(player.uniqueId())) {
+                    // Player is already responding to a resource pack sent to them
+                    // TODO: How do we fix this properly?
+                    continue;
+                }
+
+                if (!ForcePackSpongePlayer.profileIsValid(plugin, player.profile())) continue;
 
                 player.sendMessage(Component.translatable("forcepack.reloading"));
 
-                final Set<ResourcePack> resourcePacks = plugin.getPacksForVersion(player);
+                final Set<ResourcePack> resourcePacks = plugin.getPacksForVersion(player.uniqueId());
+                final ForcePackSpongePlayer fpPlayer = plugin.addToWaiting(player.uniqueId(), resourcePacks);
+                fpPlayer.setConnection(player.connection());
                 plugin.addToWaiting(player.uniqueId(), resourcePacks);
-                if (ProtocolUtil.getProtocolVersion(player) >= 765) { // 1.20.3+
-                    ProtocolUtil.sendPacketBypassingVia(player, new WrapperPlayServerResourcePackRemove((UUID) null));
+                if (ProtocolUtil.getProtocolVersion(player.uniqueId()) >= 765) { // 1.20.3+
+                    ProtocolUtil.sendPacketBypassingVia(player.uniqueId(), new WrapperPlayServerResourcePackRemove((UUID) null));
                 }
                 resourcePacks.forEach(pack -> pack.setResourcePack(player.uniqueId()));
             }
