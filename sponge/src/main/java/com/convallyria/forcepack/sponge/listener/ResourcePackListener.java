@@ -52,7 +52,8 @@ public class ResourcePackListener {
     public void onStatus(MultiVersionResourcePackStatusEvent event) {
         final GameProfile player = event.getProfile();
 
-        if (!plugin.isWaiting(player.uniqueId())) {
+        final ForcePackSpongePlayer forcePackPlayer = plugin.getForcePackPlayer(player.uniqueId()).orElse(null);
+        if (forcePackPlayer == null) {
             // Player isn't valid - wasn't added at auth
             return;
         }

@@ -30,6 +30,7 @@ import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 
 import java.lang.reflect.Constructor;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,7 +51,8 @@ public class ResourcePackListener implements Listener {
         final GameProfile profile = event.getProfile();
         final UUID uuid = profile.uniqueId();
 
-        if (!plugin.isWaiting(uuid)) {
+        final ForcePackPaperPlayer forcePackPlayer = plugin.getForcePackPlayer(uuid).orElse(null);
+        if (forcePackPlayer == null) {
             // Player isn't valid - wasn't added to waiting (exempt or not yet tracked)
             return;
         }
@@ -97,8 +99,6 @@ public class ResourcePackListener implements Listener {
             return;
         }
 
-        final ForcePackPaperPlayer forcePackPlayer = plugin.getForcePackPlayer(uuid).orElseThrow();
-
         final boolean kick = getConfig().getBoolean("Server.Actions." + status.name() + ".kick");
 
         switch (status) {
@@ -110,9 +110,7 @@ public class ResourcePackListener implements Listener {
                 if (kick) {
                     forcePackPlayer.closeConnection(Component.join(JoinConfiguration.newlines(), Translations.DECLINED.get()));
                 } else {
-                    ensureMainThread(() -> {
-                        forcePackPlayer.player().ifPresent(Translations.DECLINED::send);
-                    });
+                    ensureMainThread(() -> forcePackPlayer.player().ifPresent(Translations.DECLINED::send));
                 }
 
                 sentAccept.remove(uuid);
@@ -135,13 +133,11 @@ public class ResourcePackListener implements Listener {
                 if (kick) {
                     forcePackPlayer.closeConnection(Component.join(JoinConfiguration.newlines(), Translations.ACCEPTED.get()));
                 } else {
-                    ensureMainThread(() -> {
-                        forcePackPlayer.player().ifPresent(player -> {
-                            Translations.ACCEPTED.send(player);
-                            boolean sendTitle = plugin.getConfig().getBoolean("send-loading-title");
-                            if (sendTitle) player.sendTitle(null, null, 0, 0, 0); // resetTitle doesn't clear subtitle
-                        });
-                    });
+                    ensureMainThread(() -> forcePackPlayer.player().ifPresent(player -> {
+                        Translations.ACCEPTED.send(player);
+                        boolean sendTitle = plugin.getConfig().getBoolean("send-loading-title");
+                        if (sendTitle) player.sendTitle(null, null, 0, 0, 0); // resetTitle doesn't clear subtitle
+                    }));
                 }
                 break;
             }
