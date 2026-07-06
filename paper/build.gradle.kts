@@ -67,6 +67,10 @@ tasks {
 
         minimize {
             exclude(project(":webserver"))
+            // keep adventure intact: minimize strips classes referenced only via
+            // META-INF/services (e.g. GsonDataComponentValueConverterProvider),
+            // which mergeServiceFiles still declares -> ServiceConfigurationError
+            exclude(dependency("net.kyori:.*:.*"))
         }
         mergeServiceFiles()
         relocate("io.leangen.geantyref", "forcepack.libs.geantyref")
