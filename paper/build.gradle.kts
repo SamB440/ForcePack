@@ -47,7 +47,7 @@ dependencies {
     compileOnly("io.netty:netty-all:4.1.105.Final")
     compileOnly("com.github.LoneDev6:api-itemsadder:3.6.1")
 
-    implementation("org.incendo:cloud-paper:2.0.0-beta.17") {
+    implementation("org.incendo:cloud-paper:2.0.1") {
         exclude("org.checkerframework")
     }
     implementation("net.kyori:adventure-platform-bukkit:4.4.1") {
@@ -55,7 +55,7 @@ dependencies {
     }
     implementation("net.kyori:adventure-text-minimessage:4.25.0")
     implementation("org.bstats:bstats-bukkit:3.0.2")
-    implementation("com.github.retrooper:packetevents-spigot:2.13.1+4d40422-SNAPSHOT")
+    implementation("com.github.retrooper:packetevents-spigot:2.14.1+b1f9403-SNAPSHOT")
 }
 
 tasks {
