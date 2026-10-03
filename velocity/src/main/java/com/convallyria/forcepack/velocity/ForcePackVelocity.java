@@ -45,8 +45,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -103,8 +103,8 @@ public class ForcePackVelocity implements ForcePackPlatform {
 
     private VelocityConfig config;
     private PackHandler packHandler;
-    private final Set<ResourcePack> globalResourcePacks = new HashSet<>();
-    private final Set<ResourcePack> resourcePacks = new HashSet<>();
+    private final Set<ResourcePack> globalResourcePacks = new LinkedHashSet<>();
+    private final Set<ResourcePack> resourcePacks = new LinkedHashSet<>();
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
@@ -215,7 +215,7 @@ public class ForcePackVelocity implements ForcePackPlatform {
         for (String name : root.getKeys()) {
             log("Checking %s - %s", typeName, name);
             final VelocityConfig serverConfig = root.getConfig(name);
-            final Map<String, VelocityConfig> configs = new HashMap<>();
+            final Map<String, VelocityConfig> configs = new LinkedHashMap<>();
             // Add the default fallback
             configs.put("default", serverConfig.getConfig("resourcepack"));
             final VelocityConfig versionConfig = serverConfig.getConfig("version");
@@ -373,7 +373,7 @@ public class ForcePackVelocity implements ForcePackPlatform {
         final boolean enableGlobal = globalPack.getBoolean("enable");
         if (!enableGlobal) return;
 
-        final Map<ResourcePackVersion, VelocityConfig> configs = new HashMap<>();
+        final Map<ResourcePackVersion, VelocityConfig> configs = new LinkedHashMap<>();
 
         final VelocityConfig versionConfig = globalPack.getConfig("version");
         if (versionConfig != null) {

@@ -66,6 +66,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -106,7 +107,7 @@ public class ForcePackSponge implements ForcePackPlatform {
         metrics.make(13677);
     }
 
-    private final Map<ResourcePackVersion, Set<ResourcePack>> resourcePacks = new HashMap<>();
+    private final Map<ResourcePackVersion, Set<ResourcePack>> resourcePacks = new LinkedHashMap<>();
 
     @Override
     public Set<ResourcePack> getResourcePacks() {
@@ -355,7 +356,7 @@ public class ForcePackSponge implements ForcePackPlatform {
         final String finalUrl = url;
         final String finalHash = hash;
         resourcePacks.compute(version, (u, existingPacks) -> {
-            Set<ResourcePack> packs = existingPacks == null ? new HashSet<>() : existingPacks;
+            Set<ResourcePack> packs = existingPacks == null ? new LinkedHashSet<>() : existingPacks;
             final SpongeResourcePack pack = new SpongeResourcePack(this, finalUrl, finalHash, sizeMB.get(), version);
             packs.add(pack);
             this.getLogger().info("Generated resource pack ({}) for version {} with id {}", pack.getURL(), version == null ? "all" : version, pack.getUUID());

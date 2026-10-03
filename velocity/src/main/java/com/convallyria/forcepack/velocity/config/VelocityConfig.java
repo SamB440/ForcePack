@@ -10,7 +10,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +21,7 @@ public class VelocityConfig {
 
     public VelocityConfig(final ForcePackVelocity plugin) {
         final File file = new File(plugin.getDataDirectory() + File.separator + "config.toml");
-        CommentedFileConfig conf = CommentedFileConfig.of(file, TomlFormat.instance());
+        CommentedFileConfig conf = CommentedFileConfig.builder(file, TomlFormat.instance()).preserveInsertionOrder().build();
         conf.load();
         conf.close();
 
@@ -103,6 +103,6 @@ public class VelocityConfig {
     }
 
     public Collection<? extends String> getKeys() {
-        return new HashSet<>(config.valueMap().keySet());
+        return new LinkedHashSet<>(config.valueMap().keySet());
     }
 }

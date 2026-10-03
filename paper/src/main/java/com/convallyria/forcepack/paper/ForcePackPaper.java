@@ -42,6 +42,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +59,7 @@ public final class ForcePackPaper extends JavaPlugin implements ForcePackPlatfor
 
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
     private PlatformScheduler<?> scheduler;
-    private final Map<ResourcePackVersion, Set<ResourcePack>> resourcePacks = new HashMap<>();
+    private final Map<ResourcePackVersion, Set<ResourcePack>> resourcePacks = new LinkedHashMap<>();
     public boolean velocityMode;
 
     private BukkitAudiences adventure;
@@ -349,7 +350,7 @@ public final class ForcePackPaper extends JavaPlugin implements ForcePackPlatfor
         final String finalUrl = url;
         final String finalHash = hash;
         resourcePacks.compute(version, (u, existingPacks) -> {
-            Set<ResourcePack> packs = existingPacks == null ? new HashSet<>() : existingPacks;
+            Set<ResourcePack> packs = existingPacks == null ? new LinkedHashSet<>() : existingPacks;
             final PaperResourcePack pack = new PaperResourcePack(this, finalUrl, finalHash, sizeMB.get(), version);
             packs.add(pack);
             this.getLogger().info("Generated resource pack (" + pack.getURL() + ") for version " + (version == null ? "all" : version) + " with id " + pack.getUUID());
