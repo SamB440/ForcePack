@@ -13,6 +13,10 @@ import org.incendo.cloud.annotations.CommandDescription;
 import org.incendo.cloud.annotations.Default;
 import org.incendo.cloud.annotations.Permission;
 
+import com.electronwill.nightconfig.core.file.CommentedFileConfig;
+import com.electronwill.nightconfig.toml.TomlFormat;
+
+import java.io.File;
 import java.util.UUID;
 
 public class ForcePackCommand {
@@ -53,5 +57,62 @@ public class ForcePackCommand {
         Component doneMsg = Component.text("Done!").color(NamedTextColor.GREEN);
         source.sendMessage(doneMsg);
         if (sender != null) sender.sendMessage(doneMsg);
+    }
+
+    @CommandDescription("Updates the resource pack hash (and optional URL), saves config, and reloads packs for players")
+    @Permission(Permissions.RELOAD)
+    @Command("vforcepack|velocityforcepack update <hash> [url]")
+    public void onUpdate(CommandSource commandSource,
+                         @Argument(value = "hash", description = "The new SHA-1 hash") String newHash,
+                         @Argument(value = "url", description = "Optional new pack URL") @Default("") String newUrl) {
+        final CommandSource source = plugin.getServer().getConsoleCommandSource();
+        final UUID possibleUUID = commandSource.pointers().getOrDefault(Identity.UUID, null);
+        final Player sender = possibleUUID == null ? null : plugin.getServer().getPlayer(possibleUUID).orElse(null);
+
+        String cleanHash = newHash.trim();
+        if (cleanHash.startsWith("#")) {
+            cleanHash = cleanHash.substring(1);
+        }
+
+        Component startMsg = Component.text("Updating resource pack hash to " + cleanHash + "...").color(NamedTextColor.YELLOW);
+        source.sendMessage(startMsg);
+        if (sender != null) sender.sendMessage(startMsg);
+
+        try {
+            File file = new File(plugin.getDataDirectory() + File.separator + "config.toml");
+            CommentedFileConfig conf = CommentedFileConfig.builder(file, TomlFormat.instance()).preserveInsertionOrder().build();
+            conf.load();
+
+            // Update in global-pack if present
+            if (conf.contains("global-pack.hash")) {
+                conf.set("global-pack.hash", cleanHash);
+                if (!newUrl.isEmpty()) {
+                    conf.set("global-pack.url", newUrl);
+                }
+            }
+
+            conf.save();
+            conf.close();
+
+            plugin.getLogger().info("Saved new hash {} to config.toml", cleanHash);
+
+            plugin.reloadConfig();
+            plugin.loadResourcePacks(sender);
+
+            for (Player player : plugin.getServer().getAllPlayers()) {
+                player.getCurrentServer().ifPresent(serverConnection ->
+                        plugin.getPackHandler().setPack(player, serverConnection));
+            }
+
+            Component doneMsg = Component.text("ForcePack hash updated to " + cleanHash + " and packs sent!").color(NamedTextColor.GREEN);
+            source.sendMessage(doneMsg);
+            if (sender != null) sender.sendMessage(doneMsg);
+
+        } catch (Exception e) {
+            plugin.getLogger().error("Failed to update config.toml: {}", e.getMessage(), e);
+            Component errMsg = Component.text("Failed to update ForcePack: " + e.getMessage()).color(NamedTextColor.RED);
+            source.sendMessage(errMsg);
+            if (sender != null) sender.sendMessage(errMsg);
+        }
     }
 }

@@ -271,6 +271,13 @@ public class ForcePackVelocity implements ForcePackPlatform {
         AtomicInteger sizeInMB = new AtomicInteger();
 
         url = this.checkLocalHostUrl(url);
+        if (hash != null && !hash.isEmpty()) {
+            url = url.replace("{hash}", hash)
+                     .replace("{HASH}", hash.toUpperCase())
+                     .replace("{hash_lower}", hash.toLowerCase())
+                     .replace("%hash%", hash)
+                     .replace("%HASH%", hash.toUpperCase());
+        }
         this.checkValidEnding(url);
         this.checkForRehost(url, name);
 
@@ -422,6 +429,13 @@ public class ForcePackVelocity implements ForcePackPlatform {
 
     private void registerGlobalResourcePack(VelocityConfig globalPack, @Nullable ResourcePackVersion version, String url, String hash) {
         url = this.checkLocalHostUrl(url);
+        if (hash != null && !hash.isEmpty()) {
+            url = url.replace("{hash}", hash)
+                     .replace("{HASH}", hash.toUpperCase())
+                     .replace("{hash_lower}", hash.toLowerCase())
+                     .replace("%hash%", hash)
+                     .replace("%HASH%", hash.toUpperCase());
+        }
         this.checkValidEnding(url);
         this.checkForRehost(url, "global-pack");
 
