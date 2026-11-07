@@ -45,6 +45,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -298,6 +299,11 @@ public final class ForcePackPaper extends JavaPlugin implements ForcePackPlatfor
             } catch (Exception e) {
                 getLogger().log(Level.SEVERE, "Unable to auto-generate resource pack hash, reverting to config setting", e);
             }
+        }
+
+        // Velocity only forwards a hash to the client if it is lowercase hex
+        if (hash != null) {
+            hash = hash.toLowerCase(Locale.ROOT);
         }
 
         if (getConfig().getBoolean("enable-mc-164316-fix")) {
