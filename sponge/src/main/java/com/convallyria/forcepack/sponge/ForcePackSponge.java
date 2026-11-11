@@ -308,6 +308,11 @@ public class ForcePackSponge implements ForcePackPlatform {
             }
         }
 
+        // Velocity only forwards a hash to the client if it is lowercase hex
+        if (hash != null) {
+            hash = hash.toLowerCase(Locale.ROOT);
+        }
+
         if (getConfig().node("enable-mc-164316-fix").getBoolean()) {
             url = url + "#" + hash;
         }
