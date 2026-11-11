@@ -50,14 +50,24 @@ public interface ForcePackPlatform extends ForcePackAPI {
      */
     default boolean isValidEnding(String url) {
         List<String> validUrlEndings = Arrays.asList(".zip", "dl=1");
-        boolean hasEnding = false;
         for (String validUrlEnding : validUrlEndings) {
             if (url.endsWith(validUrlEnding)) {
-                hasEnding = true;
-                break;
+                return true;
             }
         }
-        return hasEnding;
+        int queryOrFragIdx = url.indexOf('?');
+        if (queryOrFragIdx == -1) {
+            queryOrFragIdx = url.indexOf('#');
+        }
+        if (queryOrFragIdx != -1) {
+            String cleanPath = url.substring(0, queryOrFragIdx);
+            for (String validUrlEnding : validUrlEndings) {
+                if (cleanPath.endsWith(validUrlEnding)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     default ResourcePackVersion getVersionFromId(String versionId) {

@@ -11,9 +11,21 @@ public class GeyserUtil {
 
     public static boolean isBedrockPlayer(final UUID player) {
         if (isGeyserInstalledHere) {
-            return GeyserApi.api().isBedrockPlayer(player);
-        } else {
-            return FloodgateApi.getInstance().isFloodgatePlayer(player) || FloodgateApi.getInstance().isFloodgateId(player);
+            try {
+                return GeyserApi.api().isBedrockPlayer(player);
+            } catch (Throwable ignored) {
+                // Geyser still starting, reloading or failed: fall back to Floodgate
+            }
         }
+
+        try {
+            final FloodgateApi floodgate = FloodgateApi.getInstance();
+            if (floodgate != null) {
+                return floodgate.isFloodgatePlayer(player) || floodgate.isFloodgateId(player);
+            }
+        } catch (Throwable ignored) {
+            // Neither Geyser nor Floodgate is available (NoClassDefFoundError): treat as Java player
+        }
+        return false;
     }
 }

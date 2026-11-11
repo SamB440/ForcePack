@@ -24,7 +24,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -139,7 +138,10 @@ public final class PackHandler {
 
     private void onDisconnect(DisconnectEvent event) {
         removeFromWaiting(event.getPlayer(), false);
-        pendingTasks.remove(event.getPlayer().getUniqueId());
+        final Set<PendingResourcePackSend> pending = pendingTasks.remove(event.getPlayer().getUniqueId());
+        if (pending != null) {
+            pending.forEach(send -> send.getTask().cancel());
+        }
         configurationPhaseHandled.remove(event.getPlayer().getUniqueId());
     }
 
@@ -275,8 +277,14 @@ public final class PackHandler {
                 }
             }
 
-            plugin.log("Applying resource pack " + resourcePack.getUUID().toString() + " to " + player.getUsername() + ".");
             final Set<PendingResourcePackSend> pendingSends = pendingTasks.get(player.getUniqueId());
+            if (pendingSends == null) {
+                // Player disconnected or switched server, the send was cancelled while this task was already queued
+                if (task.get() != null) task.get().cancel();
+                return;
+            }
+
+            plugin.log("Applying resource pack " + resourcePack.getUUID().toString() + " to " + player.getUsername() + ".");
             pendingSends.remove(pendingSend.get());
             resourcePack.setResourcePack(player.getUniqueId());
         }).delay(1L, TimeUnit.SECONDS);
@@ -292,7 +300,7 @@ public final class PackHandler {
         pendingSend.set(pendingResourcePackSend);
         pendingTasks.compute(player.getUniqueId(), (u, pending) -> {
             if (pending == null) {
-                pending = new HashSet<>(4);
+                pending = ConcurrentHashMap.newKeySet(4);
             }
 
             pending.add(pendingResourcePackSend);
